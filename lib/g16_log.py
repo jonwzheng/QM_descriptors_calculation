@@ -35,15 +35,16 @@ class G16Log:
         else:
             self.GetChargeMult()
             self.GetCoords()
-            self.GetNPA()
+#            self.GetNPA()
             self.GetCPU()
             self.GetFreq()
             self.GetG()
+            self.GetH_S_DFT()
             self.GetSCF()
-            self.GetMulliken()
-            self.GetNMR()
-            self.GetHirshfeld()
-            self.GetHOMOLUMO()
+#            self.GetMulliken()
+#            self.GetNMR()
+#            self.GetHirshfeld()
+#            self.GetHOMOLUMO()
 
     def GetTermination(self):
         with open(self.file) as fh:
@@ -72,6 +73,7 @@ class G16Log:
                     break
 
     def GetCPU(self):
+        self.CPU = None
         with open(self.file) as fh:
             for line in (fh):
                 if line.find("Job cpu time") > -1:
@@ -111,6 +113,7 @@ class G16Log:
         self.Coords = np.array(Coords)
 
     def GetG(self):
+        self.G = None
         with open(self.file) as fh:
             txt = fh.readlines()
 
@@ -120,6 +123,21 @@ class G16Log:
                 m = re.search('-?\d+\.\d+', line)
                 if m:
                     self.G = float(m.group(0))
+                    break
+
+    def GetH_S_DFT(self):
+        self.H_DFT = None
+        self.S_DFT = None
+        with open(self.file) as fh:
+            txt = fh.readlines()
+
+        txt = [x.strip() for x in txt]
+        for i, line in enumerate(txt):
+            if line.find('Total    ') > -1:
+                m = re.findall('-?\d+\.?\d+', line)
+                if len(m) == 3:
+                    self.H_DFT = float(m[0])
+                    self.S_DFT = float(m[2])
                     break
 
     def GetFreq(self):

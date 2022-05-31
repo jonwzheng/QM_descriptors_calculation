@@ -26,22 +26,26 @@ def xtb_optimization(folder, sdf, xtb_path, logger):
             shutil.move('xtbopt.sdf', '{}_opt.sdf'.format(file_name))
             os.remove('{}.sdf'.format(file_name))
 
-        with open(file_name + '_freq.log', 'w') as out:
-            subprocess.call([xtb_command, '{}_opt.sdf'.format(file_name), '-ohess'], stdout=out,
-                            stderr=out)
+#        with open(file_name + '_freq.log', 'w') as out:
+#            subprocess.call([xtb_command, '{}_opt.sdf'.format(file_name), '-ohess'], stdout=out,
+#                            stderr=out)
 
-            os.remove('hessian')
-            os.remove('vibspectrum')
+#            os.remove('hessian')
+#            os.remove('vibspectrum')
 
-        log = XtbLog('{}_freq.log'.format(file_name))
+#        log = XtbLog('{}_freq.log'.format(file_name))
+    except:
+        raise RuntimeError('xtb optimization did not finish for {}'.format(file_name))
+
     finally:
         os.chdir(pwd)
+        return '{}_opt.sdf'.format(file_name)
 
-    if log.termination:
-        peaks = log.wavenum
-        if np.min(peaks) < 0:
-            raise RuntimeError('imaginary frequency found for {}'.format(file_name))
-        else:
-            return '{}_opt.sdf'.format(file_name)
-    else:
-        raise RuntimeError('xtb optimization did not finish for {}'.format(file_name))
+#    if log.termination:
+#        peaks = log.wavenum
+#        if np.min(peaks) < 0:
+#            raise RuntimeError('imaginary frequency found for {}'.format(file_name))
+#        else:
+        
+#    else:
+#        

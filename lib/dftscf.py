@@ -5,7 +5,7 @@ from .file_parser import mol2xyz, xyz2com
 from .grab_QM_descriptors import read_log
 
 
-def dft_scf(folder, sdf, g16_path, level_of_theory, n_procs, logger):
+def dft_scf(folder, sdf, g16_path, level_of_theory, n_procs, logger, jobtype):
     basename = os.path.basename(sdf)
 
     parent_folder = os.getcwd()
@@ -20,60 +20,86 @@ def dft_scf(folder, sdf, g16_path, level_of_theory, n_procs, logger):
 
         g16_command = os.path.join(g16_path, 'g16')
         QM_descriptors = {}
-        for jobtype in ['neutral', 'plus1', 'minus1']:
-            if not os.path.isdir(jobtype):
-                os.mkdir(jobtype)
 
-            if jobtype == 'neutral':
-                charge = 0
-                mult = 1
-                head = '%chk={}.chk\n%nprocshared={}\n# b3lyp/def2svp nmr=GIAO scf=(maxcycle=512, xqc) ' \
-                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(file_name, n_procs)
-            elif jobtype == 'plus1':
-                charge = 1
-                mult = 2
-                head = '%chk={}.chk\n%nprocshared={}\n# b3lyp/def2svp scf=(maxcycle=512, xqc) ' \
-                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(file_name, n_procs)
-            elif jobtype == 'minus1':
-                charge = -1
-                mult = 2
-                head = '%chk={}.chk\n%nprocshared={}\n# b3lyp/def2svp scf=(maxcycle=512, xqc) ' \
-                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(file_name, n_procs)
+        if not os.path.isdir(jobtype):
+            os.mkdir(jobtype)
 
+        if jobtype == 'neutral':
+            charge = 0
+            mult = 1
+        elif jobtype == 'plus1':
+            charge = 1
+            mult = 1
+        elif jobtype == 'minus1':
+            charge = -1
+            mult = 1
 
-            os.chdir(jobtype)
-            comfile = file_name + '.gjf'
-            xyz2com(xyz, head=head, comfile=comfile, charge=charge, mult=mult, footer='$NBO BNDIDX $END\n')
+        head = '%chk={}.chk\n%nprocshared={}\n# {} scf=(maxcycle=512, xqc) opt freq iop(2/9=2000)' \
+                '\n'.format(file_name, n_procs, level_of_theory)
 
-            logfile = file_name + '.log'
-            outfile = file_name + '.out'
-            with open(outfile, 'w') as out:
-                subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
-                QM_descriptors[jobtype] = read_log(logfile)
-            os.chdir(pwd)
+        os.chdir(jobtype)
+        comfile = file_name + '.gjf'
+        xyz2com(xyz, head=head, comfile=comfile, charge=charge, mult=mult, footer='$NBO BNDIDX $END\n')
 
-        QM_descriptor_return = QM_descriptors['neutral']
+        logfile = file_name + '.log'
+        outfile = file_name + '.out'
+        with open(outfile, 'w') as out:
+            subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
+            QM_descriptors[jobtype] = read_log(logfile)
+        os.chdir(pwd)
 
-        # charges and fukui indices
-        for charge in ['mulliken_charge', 'hirshfeld_charges', 'NPA_Charge']:
-            QM_descriptor_return['{}_plus1'.format(charge)] = QM_descriptors['plus1'][charge]
-            QM_descriptor_return['{}_minus1'.format(charge)] = QM_descriptors['minus1'][charge]
-
-            QM_descriptor_return['{}_fukui_elec'.format(charge)] = QM_descriptors['neutral'][charge] - \
-                                                                   QM_descriptors['minus1'][charge]
-            QM_descriptor_return['{}_fukui_neu'.format(charge)] = QM_descriptors['plus1'][charge] - \
-                                                                   QM_descriptors['neutral'][charge]
-
-        # spin density
-        for spin in ['mulliken_spin_density', 'hirshfeld_spin_density']:
-            QM_descriptor_return['{}_plus1'.format(spin)] = QM_descriptors['plus1'][spin]
-            QM_descriptor_return['{}_minus1'.format(charge)] = QM_descriptors['minus1'][spin]
-
-        # SCF
-        QM_descriptor_return['SCF_plus1'] = QM_descriptors['plus1']['SCF']
-        QM_descriptor_return['SCF_minus1'] = QM_descriptors['minus1']['SCF']
+        QM_descriptor_return = QM_descriptors[jobtype]
 
         os.remove(sdf)
+    finally:
+        os.chdir(parent_folder)
+
+    return QM_descriptor_return
+
+
+def dft_scf_dft_only(folder, chk, g16_path, level_of_theory, n_procs, logger, jobtype):
+    basename = os.path.basename(chk)
+
+    parent_folder = os.getcwd()
+
+
+    try:
+        file_name = os.path.splitext(basename)[0]
+
+
+        pwd = os.getcwd()
+
+        g16_command = os.path.join(g16_path, 'g16')
+        QM_descriptors = {}
+
+        if not os.path.isdir(jobtype):
+            os.mkdir(jobtype)
+
+        if jobtype == 'neutral':
+            charge = 0
+            mult = 1
+        elif jobtype == 'plus1':
+            charge = 1
+            mult = 1
+        elif jobtype == 'minus1':
+            charge = -1
+            mult = 1
+
+        head = '%chk={}.chk\n%nprocshared={}\n# {} scf=(maxcycle=512, xqc) sp Guess=Read Geom=AllCheckpoint iop(2/9=2000)' \
+                '\n'.format(file_name, n_procs, level_of_theory)
+
+        comfile = file_name + '.gjf'
+        with open(comfile, 'w') as com:
+            com.write(head)
+
+        logfile = file_name + '.log'
+        outfile = file_name + '.out'
+        with open(outfile, 'w') as out:
+            subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
+            QM_descriptors[jobtype] = read_log(logfile)
+
+        QM_descriptor_return = QM_descriptors[jobtype]
+
     finally:
         os.chdir(parent_folder)
 
