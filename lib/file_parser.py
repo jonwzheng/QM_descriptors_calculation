@@ -92,6 +92,3 @@ def _GetNPACharge(txt):
 
 
 
-
-
-

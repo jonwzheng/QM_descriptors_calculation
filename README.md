@@ -47,7 +47,7 @@ can be either str or int.
 
 ### Output
 The code will generate three folders, as specified by the 
-arguments '--MMFF_conf_folder', '--xtb_folder', '--DFT_folder', which hold results for 
+arguments '--FF_conf_folder', '--xtb_folder', '--DFT_folder', which hold results for 
 MMFF conformer searching, semi-empirical optimization, and DFT electronic structure calculations, 
 respectively.
 

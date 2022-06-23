@@ -35,14 +35,20 @@ class G16Log:
         else:
             self.GetChargeMult()
             self.GetCoords()
-            self.GetNPA()
+            try:
+                self.GetNPA()
+            except:
+                pass
             self.GetCPU()
             self.GetFreq()
             self.GetG()
             self.GetSCF()
             self.GetMulliken()
             self.GetNMR()
-            self.GetHirshfeld()
+            try:
+                self.GetHirshfeld()
+            except:
+                pass
             self.GetHOMOLUMO()
 
     def GetTermination(self):
@@ -88,7 +94,7 @@ class G16Log:
             starting = False
             found_coord = False
             for line in (fh):
-                if line.find('orientation') > -1:
+                if line.find('Standard orientation') > -1:
                     starting = True
                     AtomsNum = []
                     AtomsType = []
@@ -127,6 +133,13 @@ class G16Log:
             txt = fh.readlines()
 
         txt = [x.strip() for x in txt]
+
+        freqs = []
+        for line in txt:
+            if 'Frequencies --' in line:
+                splits = line.split()
+                freqs.extend(float(freq) for freq in splits[2:])
+
         for i, line in enumerate(txt):
             if line.find('Integrated intensity (I) in km.mol^-1') > -1:
                 txt = txt[i+2:]
@@ -204,6 +217,9 @@ class G16Log:
         if com_wavenumbers:
             self.com_wavenumbers = com_wavenumbers
             self.com_intensities = com_intensities
+
+        if freqs:
+            self.har_frequencies = freqs
 
     def GetMulliken(self):
         with open(self.file) as fh:
@@ -484,7 +500,10 @@ class XtbLog:
             pass
             #self.GetError()
         else:
-            self.GetFreq()
+            try:
+                self.GetFreq()
+            except:
+                pass
             self.GetE()
 
     def GetTermination(self):
@@ -549,4 +568,3 @@ class XtbLog:
             m = re.search('TOTAL FREE ENERGY\s+(-?\d+\.\d+)', line)
             if m:
                 self.G = float(m[1])
-

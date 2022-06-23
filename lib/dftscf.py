@@ -4,9 +4,11 @@ import os
 import subprocess
 from .file_parser import mol2xyz, xyz2com
 from .grab_QM_descriptors import read_log
+from .g16_log import G16Log
+from .utils import write_mol_to_sdf
 
 
-def dft_scf(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge):
+def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge):
     basename = os.path.basename(sdf)
 
     parent_folder = os.getcwd()
@@ -90,3 +92,37 @@ def dft_scf(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, ba
         os.chdir(parent_folder)
 
     return QM_descriptors_return
+
+def dft_scf_opt(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
+    basename = os.path.basename(sdf)
+    file_name = os.path.splitext(basename)[0]
+    scratch_dir = os.path.join(folder, file_name)
+
+    parent_dir = os.getcwd()
+
+    os.chdir(scratch_dir)
+
+    mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
+    xyz = mol2xyz(mol)
+
+    g16_command = os.path.join(g16_path, 'g16')
+    head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(file_name, n_procs, job_ram, level_of_theory)
+
+    comfile = file_name + '.gjf'
+    xyz2com(xyz, head=head, comfile=comfile, charge=base_charge, mult=mult, footer='\n')
+
+    logfile = file_name + '.log'
+    outfile = file_name + '.out'
+    with open(outfile, 'w') as out:
+        subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
+
+    log = G16Log(logfile)
+    conf = mol.GetConformer()
+    for i in range(mol.GetNumAtoms()):
+        conf.SetAtomPosition(i, log.Coords[i,:])
+    write_mol_to_sdf(mol, f'{file_name}_opt.sdf')
+
+    os.remove(sdf)
+    os.chdir(parent_dir)
+
+    return f'{file_name}_opt.sdf'
