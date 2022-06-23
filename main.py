@@ -38,7 +38,7 @@ parser.add_argument('--nconf', type=int, default=800,
 parser.add_argument('-max_conf_try', type=int, default=2000,
                     help='maximum attempt for conformer generating, '
                          'this is useful for molecules with many chiral centers.')
-parser.add_argument('-rmspre', type=float, required=False,
+parser.add_argument('-rmspre', type=float, required=False, default=0.1,
                         help='rms threshold pre optimization')
 parser.add_argument('--rmspost', type=float, required=False, default=0.4,
                     help='rms threshold post FF minimization')
