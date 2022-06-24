@@ -45,10 +45,11 @@ def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_th
 
         log = G16Log(logfile)
         if log.termination and np.min(log.har_frequencies) > 0:
-            conf_ids_ens.append((conf_ind, log.E))
+            mol.SetProp('ConfEnergies', str(log.E*627.5) + ' kcal/mol') #convert to kcal/mol
             conf = mol.GetConformer()
             for i in range(mol.GetNumAtoms()):
                 conf.SetAtomPosition(i, log.Coords[i,:])
+            conf_ids_ens.append((conf_ind, log.E))
         else:
             logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
         os.chdir(child_dir)
