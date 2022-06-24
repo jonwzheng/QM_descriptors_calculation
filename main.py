@@ -133,7 +133,7 @@ submit_dir = os.path.abspath(os.getcwd())
 project_dir = os.path.abspath(os.path.join(args.output_folder, f"{args.output_folder}_{args.task_id}"))
 
 try:
-    done_jobs_record.load(project_dir, args)
+    done_jobs_record.load(project_dir, args.task_id)
     logger.info("this is a restart job...")
     logger.info("loading completed job ids...")
 except:
@@ -205,7 +205,7 @@ for conf_sdf in conf_sdfs:
                                 args.gaussian_xtb_opt_job_ram, charge, mult)
         logger.info(f'GFN2-XTB optimization and frequency calculation for {mol_id} completed')
         done_jobs_record.XTB_opt_freq.append(mol_id)
-        done_jobs_record.save(project_dir, args)
+        done_jobs_record.save(project_dir, args.task_id)
     except Exception as e:
         logger.error('XTB optimization for {} failed'.format(os.path.splitext(conf_sdf)[0]))
         logger.error(traceback.format_exc())
@@ -230,12 +230,11 @@ for xtb_opt_sdf in xtb_opt_sdfs:
                                 logger, args.DFT_opt_job_ram, charge, mult)
         logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
         done_jobs_record.DFT_opt_freq.append(mol_id)
-        done_jobs_record.save(project_dir, args)
+        done_jobs_record.save(project_dir, args.task_id)
     except Exception as e:
         logger.error('DFT optimization for {} failed'.format(os.path.splitext(conf_sdf)[0]))
         logger.error(traceback.format_exc())
         os.chdir(project_dir)
-opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.COSMO]
 logger.info('DFT optimization and frequency calculation finished.')
 logger.info('='*80)
 
@@ -244,6 +243,7 @@ os.makedirs(args.COSMO_folder, exist_ok=True)
 logger.info('load solvent file...')
 df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
 df_pure = df_pure.reset_index()
+opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
 for opt_sdf in opt_sdfs:
     try:
@@ -254,9 +254,7 @@ for opt_sdf in opt_sdfs:
         mol_id = file_name
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
-        cosmo_calc(args.COSMO_folder, file_name + ".sdf", COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure)
-        done_jobs_record.COSMO.append(mol_id)
-        done_jobs_record.save(project_dir, args)
+        cosmo_calc(args.COSMO_folder, file_name + ".sdf", COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, mol_id, project_dir, args.task_id)
         logger.info(f'COSMO calculation for {mol_id} completed')
     except:
         logger.error(f'Turbomole and COSMO calculation for {opt_sdf} failed.')
@@ -279,7 +277,7 @@ for opt_sdf in opt_sdfs:
         mult = mol_id_to_mult_dict[mol_id]
         dlpno_sp_calc(args.DLPNO_sp_folder, file_name + ".sdf", ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram)
         done_jobs_record.WFT_sp.append(mol_id)
-        done_jobs_record.save(project_dir, args)
+        done_jobs_record.save(project_dir, args.task_id)
         logger.info(f'DLPNO single point calculation for {mol_id} completed')
     except:
         logger.error(f'DLPNO single point calculation for {opt_sdf} failed.')

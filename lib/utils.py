@@ -48,16 +48,16 @@ class DoneJobsRecord(object):
         self.FF_conf = []
         self.XTB_opt_freq = []
         self.DFT_opt_freq = []
-        self.COSMO = []
+        self.COSMO = {}
         self.WFT_sp = []
         self.QM_desp = []
     
-    def save(self, project_dir, args):
-        with open(os.path.join(project_dir, f"done_jobs_record_{args.task_id}.json"), "w+") as fh:
+    def save(self, project_dir, task_id):
+        with open(os.path.join(project_dir, f"done_jobs_record_{task_id}.json"), "w+") as fh:
             json.dump(vars(self), fh)
 
-    def load(self, project_dir, args):
-        with open(os.path.join(project_dir,f"done_jobs_record_{args.task_id}.json"), "r") as fh:
+    def load(self, project_dir, task_id):
+        with open(os.path.join(project_dir,f"done_jobs_record_{task_id}.json"), "r") as fh:
             content = json.load(fh)
         for job, molids in content.items():
             setattr(self, job, molids)
