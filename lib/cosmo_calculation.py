@@ -133,7 +133,6 @@ def save_cosmo_results(folder, done_jobs_record, task_id):
         # writing the header
         csvwriter.writerow(header)
 
-    with open(result_file_path, 'a') as csvfile:
         for mol_id, solvents in done_jobs_record.COSMO.items():
             for solvent in solvents:
                 tab_file_path = os.path.join(folder, mol_id, f"{mol_id}_{solvent}.tab")
