@@ -110,8 +110,7 @@ notempty wtln ehfile
         script += " VPfile\n"
 
     #solute
-    script += f"""f = "{name}.cosmo" fdir="." VPfile
-"""
+    script += "f = \"" + name + ".cosmo\" fdir=\".\" VPfile\n"
     for T in T_list:
-        script += "henry  xh={ 1 0 } tk=" + str(T) + "GSOLV  \n"
+        script += "henry  xh={ 1 0 } tk=" + str(T) + " GSOLV  \n"
     return script
