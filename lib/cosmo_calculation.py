@@ -2,6 +2,7 @@ from fileinput import filename
 import os
 import shutil
 import subprocess
+import csv
 
 from rdkit import Chem
 from .file_parser import mol2xyz
@@ -120,3 +121,69 @@ notempty wtln ehfile
     for T in T_list:
         script += "henry  xh={ 1 0 } tk=" + str(T) + " GSOLV  \n"
     return script
+
+def save_cosmo_results(folder, done_jobs_record, task_id):
+
+    result_file_path = os.path.join(folder, f"cosmo_result_{task_id}")
+    header = ['solvent_name', 'solute_name', 'temp (K)',
+              'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+    with open(result_file_path , 'w') as csvfile:
+        # creating a csv writer object
+        csvwriter = csv.writer(csvfile)
+        # writing the header
+        csvwriter.writerow(header)
+
+    with open(result_file_path, 'a') as csvfile:
+        for mol_id, solvents in done_jobs_record.COSMO.items():
+            for solvent in solvents:
+                tab_file_path = os.path.join(folder, mol_id, f"{mol_id}_{solvent}.tab")
+                each_data_list = read_cosmo_tab_result(tab_file_path)
+                each_data_list = get_dHsolv_value(each_data_list)
+                csvwriter.writerows(each_data_list)
+            
+def read_cosmo_tab_result(tab_file_path):
+    """
+    Modified from Yunsie's code
+    """
+    each_data_list = []
+    # initialize everything
+    solvent_name, solute_name, temp = None, None, None
+    result_values = None
+    with open(tab_file_path, 'r') as f:
+        line = f.readline()
+        while line:
+            # get the temperature and mole fraction
+            if "Settings  job" in line:
+                temp = line.split('T=')[1].split('K')[0].strip()  # temp in K
+
+            # get the result values
+            if "Nr Compound" in line:
+                line = f.readline()
+                solvent_name = line.split()[1]
+                line = f.readline()
+                solute_name = line.split()[1]
+                result_values = line.split()[2:6]  # H (in bar), ln(gamma), pv (vapor pressure in bar), Gsolv (kcal/mol)
+                # save the result as one list
+                each_data_list.append(
+                    [solvent_name, solute_name, temp] + result_values + [None])
+                # initialize everything
+                solvent_name, solute_name, temp = None, None, None
+                result_values = None
+            line = f.readline()
+    return each_data_list
+
+def get_dHsolv_value(each_data_list):
+    # compute solvation enthalpy
+    dGsolv_temp_dict = {}
+    ind_298 = None
+    for z in range(len(each_data_list)):
+        temp = each_data_list[z][5]
+        dGsolv = each_data_list[z][9]
+        dGsolv_temp_dict[temp] = dGsolv
+        if temp == '298.15':
+            ind_298 = z
+    dGsolv_298 = float(dGsolv_temp_dict['298.15'])
+    dSsolv_298 = - (float(dGsolv_temp_dict['299.15']) - float(dGsolv_temp_dict['297.15'])) / (299.15 - 297.15)
+    dHsolv_298 = dGsolv_298 + 298.15 * dSsolv_298
+    each_data_list[ind_298][10] = '%.8f' % dHsolv_298
+    return each_data_list

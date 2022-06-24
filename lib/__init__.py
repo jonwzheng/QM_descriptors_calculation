@@ -5,5 +5,5 @@ from .genConf import csearch
 from .grab_QM_descriptors import read_log
 from .utils import create_logger, done_jobs_record
 from .xtb_optimization import xtb_optimization
-from .cosmo_calculation import cosmo_calc
+from .cosmo_calculation import cosmo_calc, save_cosmo_results
 from .dlpno_calculation import dlpno_sp_calc

@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import time
+from numpy import extract
 import yaml
 
 import pandas as pd
@@ -14,7 +15,7 @@ from lib import create_logger, done_jobs_record
 from lib import csearch
 from lib.xtb_optimization import xtb_optimization, xtb_status
 from lib import dft_scf_qm_descriptor, dft_scf_opt
-from lib import cosmo_calc
+from lib import cosmo_calc, save_cosmo_results
 from lib import dlpno_sp_calc
 
 parser = ArgumentParser()
@@ -262,6 +263,10 @@ for opt_sdf in opt_sdfs:
         logger.error(f'Turbomole and COSMO calculation for {opt_sdf} failed.')
         logger.error(traceback.format_exc())
         os.chdir(project_dir)
+
+logger.info('Extracting COSMO results...')
+save_cosmo_results(args.COSMO_folder, done_jobs_record, args.task_id)
+
 logger.info('COSMO calculation finished.')
 logger.info('='*80)
 
