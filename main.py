@@ -13,7 +13,7 @@ import rdkit.Chem as Chem
 
 from lib import create_logger, done_jobs_record
 from lib import csearch
-from lib.xtb_optimization import xtb_optimization, xtb_status
+from lib import xtb_optimization, xtb_status
 from lib import dft_scf_qm_descriptor, dft_scf_opt
 from lib import cosmo_calc, save_cosmo_results
 from lib import dlpno_sp_calc
