@@ -204,7 +204,7 @@ def csearch(supp, total, args, logger, done_jobs_record, project_dir):
                                         '{} conformers found, save the lowest {}'.format(mol_id, conformers_found, len(ids_to_save)))
                             write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}_confs.sdf'.format(mol_id)), ids_to_save)
                             done_jobs_record.FF_conf.append(mol_id)
-                            done_jobs_record.save(project_dir, args)
+                            done_jobs_record.save(project_dir, args.task_id)
                         else:
                             logger.info('conformer searching for {} failed.'.format(mol_id))
                             pass
