@@ -1,4 +1,4 @@
-from .g16_log import G16Log
+from .log_parser import G16Log
 import numpy as np
 
 

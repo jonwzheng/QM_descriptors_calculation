@@ -29,25 +29,6 @@ def create_logger(name: str, task_id: int) -> logging.Logger:
 
     return logger
 
-def write_mol_to_sdf(mol, path, confIds=[0], confEns=None):
-    if isinstance(confIds, int):
-        confIds = [confIds]
-    if isinstance(confEns, int):
-        confEns = [confEns]
-    writer = Chem.SDWriter(path)
-    if confEns:
-        for confId, confEn in zip(confIds, confEns):
-            mol.SetProp('ConfId', str(confId))
-            mol.SetProp('ConfEnergies', str(confEn) + ' kcal/mol')
-            writer.write(mol, confId=confId)
-    else:
-        for confId in confIds:
-            writer.write(mol, confId=confId)
-    writer.close()
-
-def load_sdf(path, removeHs=False, sanitize=False):
-    return Chem.SDMolSupplier(path, removeHs=removeHs, sanitize=sanitize)
-
 class DoneJobsRecord(object):
     """
     class to record completed jobs

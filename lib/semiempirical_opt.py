@@ -6,10 +6,8 @@ import traceback
 
 import numpy as np
 
-from .utils import write_mol_to_sdf
-
-from .g16_log import XtbLog, G16Log
-from .file_parser import mol2xyz, xyz2com
+from .log_parser import XtbLog, G16Log
+from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
 
 
 def xtb_optimization(folder, sdf, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult):

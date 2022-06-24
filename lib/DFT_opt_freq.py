@@ -2,10 +2,9 @@ from rdkit import Chem
 import copy
 import os
 import subprocess
-from .file_parser import mol2xyz, xyz2com
+from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
 from .grab_QM_descriptors import read_log
-from .g16_log import G16Log
-from .utils import write_mol_to_sdf
+from .log_parser import G16Log
 
 
 def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge):

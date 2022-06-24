@@ -8,8 +8,8 @@ from multiprocessing import Process, Manager
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from concurrent import futures
-from .g16_log import XtbLog
-from .utils import write_mol_to_sdf, load_sdf
+from .log_parser import XtbLog
+from .file_parser import write_mol_to_sdf, load_sdf
 import os
 import traceback
 

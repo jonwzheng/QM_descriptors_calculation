@@ -184,11 +184,11 @@ except Exception as e:
     raise
 supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
 done_jobs_record = csearch(supp, len(df), args, logger, done_jobs_record, project_dir)
-conf_sdfs = [f"{mol_id}.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.XTB_opt_freq]
+conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.XTB_opt_freq]
 logger.info('='*80)
 
 # xtb optimization
-logger.info('starting GFN2-XTB structure optimization and frequency calculation for the lowest FF conformer...')
+logger.info('starting GFN2-XTB structure optimization and frequency calculation for the lowest energy FF-optimized conformers...')
 os.makedirs(args.xtb_opt_freq_folder, exist_ok=True)
 
 if RDMC_PATH:
@@ -218,7 +218,7 @@ xtb_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.XTB_opt_freq 
 logger.info('GFN2-XTB optimization and frequency calculation finished.')
 logger.info('='*80)
 
-logger.info('starting DFT optimization and frequency calculation for the XTB-optimized conformer...')
+logger.info('starting DFT optimization and frequency calculation for the lowest energy XTB-optimized conformer...')
 os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
 for xtb_opt_sdf in xtb_opt_sdfs:
     try:
