@@ -1,6 +1,5 @@
 #!/usr/bin/python
 from __future__ import print_function, absolute_import
-from genericpath import exists
 import shutil
 import subprocess
 
@@ -13,7 +12,6 @@ from .g16_log import XtbLog
 from .utils import write_mol_to_sdf, load_sdf
 import os
 import traceback
-import yaml
 
 # algorithm to generate nc conformations
 def _genConf(s, nc, max_try, rms, E_cutoff_fraction, rmspost, return_dict, name, conf_search_FF, FF_conf_folder, XTB_path):
