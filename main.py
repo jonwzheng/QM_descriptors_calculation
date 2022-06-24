@@ -197,11 +197,10 @@ if args.semiempirical_method == "GFN2-XTB":
 
 for conf_sdf in conf_sdfs:
     try:
-        file_name = os.path.splitext(conf_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.semiempirical_opt_folder, file_name), exist_ok=True)
-        shutil.copyfile(os.path.join(args.FF_conf_folder, file_name, conf_sdf),
-                        os.path.join(args.semiempirical_opt_folder, file_name, conf_sdf))
-        mol_id = file_name
+        mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
+        os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
+        shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
+                        os.path.join(args.semiempirical_opt_folder, mol_id, conf_sdf))
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
         semiempirical_opt(args.semiempirical_opt_folder, mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,

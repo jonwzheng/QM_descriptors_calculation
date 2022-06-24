@@ -11,7 +11,7 @@ from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 
 
 def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, method, logger):
-    sdf = mol_id + "sdf"
+    sdf = mol_id + ".sdf"
 
     parent_dir = os.getcwd()
     child_dir = os.path.abspath(os.path.join(folder, mol_id))
