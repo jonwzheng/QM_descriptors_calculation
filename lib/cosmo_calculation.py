@@ -91,7 +91,7 @@ notempty wtln ehfile
 """
 
     #solvent
-    first_letter = name[0]
+    first_letter = row.cosmo_name[0]
     if not first_letter.isalpha() and not first_letter.isnumeric():
         first_letter = '0'
     solvent_dir = f"{cosmo_database_path}/COSMObase2021/BP-TZVPD-FINE/{first_letter}"
