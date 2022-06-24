@@ -1,6 +1,6 @@
 import logging
 import os
-import yaml
+import json
 from rdkit import Chem
 
 def create_logger(name: str, task_id: int) -> logging.Logger:
@@ -53,12 +53,12 @@ class DoneJobsRecord(object):
         self.QM_desp = []
     
     def save(self, project_dir, args):
-        with open(os.path.join(project_dir, f"done_jobs_record_{args.task_id}.yml"), "w+") as fh:
-            yaml.dump(vars(self), stream=fh)
+        with open(os.path.join(project_dir, f"done_jobs_record_{args.task_id}.json"), "w+") as fh:
+            json.dump(vars(self), fh)
 
     def load(self, project_dir, args):
-        with open(os.path.join(project_dir,f"done_jobs_record_{args.task_id}.yml"), "r") as fh:
-            content = yaml.load(stream=fh, Loader=yaml.Loader)
+        with open(os.path.join(project_dir,f"done_jobs_record_{args.task_id}.json"), "r") as fh:
+            content = json.load(fh)
         for job, molids in content.items():
             setattr(self, job, molids)
 
