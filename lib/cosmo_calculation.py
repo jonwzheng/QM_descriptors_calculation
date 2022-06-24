@@ -56,6 +56,8 @@ def cosmo_calc(folder, sdf, cosmotherm_path, cosmo_database_path, charge, mult, 
         else:
             #turbomole calculation failed
             raise
+        done_jobs_record[mol_id] = []
+        done_jobs_record.save(project_dir, task_id)
     
     # prepare for cosmo calculation
     for index, row in df_pure.iterrows():
@@ -74,7 +76,8 @@ def cosmo_calc(folder, sdf, cosmotherm_path, cosmo_database_path, charge, mult, 
 
             #move files back
             shutil.copy(tabfile, os.path.join(child_dir, tabfile))
-            done_jobs_record.COSMO[mol_id] = done_jobs_record.COSMO.get(mol_id, []).append(row.cosmo_name)
+            record = done_jobs_record.COSMO.get(mol_id, [])
+            done_jobs_record.COSMO[mol_id] = record.append(row.cosmo_name)
             done_jobs_record.save(project_dir, task_id)
 
     os.chdir(child_dir)
