@@ -266,7 +266,7 @@ logger.info('='*80)
 
 logger.info('starting DLPNO single point calculation for the DFT-optimized conformer...')
 os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
-opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.COSMO if mol_id not in done_jobs_record.WFT_sp]
+opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
 for opt_sdf in opt_sdfs:
     try:
         file_name = os.path.splitext(opt_sdf)[0].split("_")[0]
