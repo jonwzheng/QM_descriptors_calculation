@@ -146,8 +146,9 @@ except:
 
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
-df.sort_values(by='smiles', key=lambda x: (len(x), x))
+df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
 df = df[args.task_id:len(df.index):args.num_tasks]
+
 # create id to smile mapping
 mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
 mol_id_to_charge_dict = dict()
