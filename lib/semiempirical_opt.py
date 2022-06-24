@@ -10,19 +10,18 @@ from .log_parser import XtbLog, G16Log
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 
 
-def semiempirical_opt(folder, sdf, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, method, logger):
-    basename = os.path.basename(sdf)
-    file_name = os.path.splitext(basename)[0]
+def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, method, logger):
+    sdf = mol_id + "sdf"
 
     parent_dir = os.getcwd()
-    child_dir = os.path.abspath(os.path.join(folder, file_name))
+    child_dir = os.path.abspath(os.path.join(folder, mol_id))
     os.chdir(child_dir)
 
     mols = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)
     os.remove(sdf)
     conf_ids_ens = []
     for conf_ind, mol in enumerate(mols):
-        scratch_dir = f"{file_name}_{conf_ind}"
+        scratch_dir = f"{mol_id}_{conf_ind}"
         os.makedirs(scratch_dir, exist_ok=True)
         os.chdir(scratch_dir)
 
@@ -35,11 +34,11 @@ def semiempirical_opt(folder, sdf, xtb_path, rdmc_path, g16_path, level_of_theor
         else:
             head = '%nprocshared={}\n%mem={}mb\n{} {}\n'.format(n_procs, job_ram, level_of_theory, method)
 
-        comfile = f"{file_name}_{conf_ind}.gjf"
+        comfile = f"{mol_id}_{conf_ind}.gjf"
         xyz2com(xyz, head=head, comfile=comfile, charge=base_charge, mult=mult, footer='\n')
 
-        logfile = f"{file_name}_{conf_ind}.log"
-        outfile = f"{file_name}_{conf_ind}.out"
+        logfile = f"{mol_id}_{conf_ind}.log"
+        outfile = f"{mol_id}_{conf_ind}.out"
 
         with open(outfile, 'w') as out:
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
@@ -51,13 +50,13 @@ def semiempirical_opt(folder, sdf, xtb_path, rdmc_path, g16_path, level_of_theor
             for i in range(mol.GetNumAtoms()):
                 conf.SetAtomPosition(i, log.Coords[i,:])
         else:
-            logger.error(f'optimization of conformer {conf_ind} for {file_name} failed.')
+            logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
         os.chdir(child_dir)
         shutil.rmtree(scratch_dir)
 
-    write_mols_to_sdf(mols, f'{file_name}_confs.sdf')
+    write_mols_to_sdf(mols, f'{mol_id}_confs_opt.sdf')
     conf_ids_ens.sort(key=lambda x: x[1])
-    write_mol_to_sdf(mols[conf_ids_ens[0][0]], f'{file_name}_opt.sdf')
+    write_mol_to_sdf(mols[conf_ids_ens[0][0]], f'{mol_id}_opt.sdf')
     
     os.chdir(parent_dir)
 
