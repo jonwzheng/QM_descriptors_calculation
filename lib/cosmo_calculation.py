@@ -110,6 +110,5 @@ notempty wtln ehfile
     script += f"""f = "{name}.cosmo" fdir="." VPfile
 """
     for T in T_list:
-        script += f"""henry  xh={{ 1 0 }}  tk={T} GSOLV
-"""
+        script += "henry  xh={ 1 0 } tk=" + str(T) + "GSOLV  \n"
     return script
