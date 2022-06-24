@@ -49,11 +49,13 @@ def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_th
             conf = mol.GetConformer()
             for i in range(mol.GetNumAtoms()):
                 conf.SetAtomPosition(i, log.Coords[i,:])
+            logger.info(log.Coords[i,:])
             conf_ids_ens.append((conf_ind, log.E))
+            logger.info(f'optimization of conformer {conf_ind} for {mol_id} completed.')
         else:
             logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
         os.chdir(child_dir)
-        shutil.rmtree(scratch_dir)
+        # shutil.rmtree(scratch_dir)
 
     write_mols_to_sdf(mols, f'{mol_id}_confs_opt.sdf')
     conf_ids_ens.sort(key=lambda x: x[1])
