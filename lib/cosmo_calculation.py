@@ -32,7 +32,9 @@ def cosmo_calc(folder, sdf, cosmotherm_path, cosmo_database_path, charge, mult, 
     os.makedirs("scratch", exist_ok=True)
     os.chdir("scratch")
     shutil.copy(os.path.join(child_dir, txtfile), txtfile)
-    shutil.copytree(os.path.join(child_dir, "xyz"), "xyz")
+    if os.path.exists("xyz"):
+        shutil.rmtree("xyz")
+    shutil.copytree(os.path.join(child_dir, "xyz"), "xyz",)
 
     #run the job
     logfile = file_name + '.log'
