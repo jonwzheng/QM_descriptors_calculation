@@ -14,7 +14,7 @@ def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logge
     os.chdir(folder)
 
     try:
-        file_name = os.path.splitext(basename)[0]
+        mol_id = os.path.splitext(basename)[0]
 
         xyz = mol2xyz(Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0])
 
@@ -29,25 +29,25 @@ def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logge
                 charge = base_charge
                 mult = 1
                 head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n# b3lyp/def2svp nmr=GIAO scf=(maxcycle=512, xqc) ' \
-                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(file_name, n_procs, job_ram)
+                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(mol_id, n_procs, job_ram)
             elif jobtype == 'plus1':
                 charge = base_charge + 1
                 mult = 2
                 head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n# b3lyp/def2svp scf=(maxcycle=512, xqc) ' \
-                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(file_name, n_procs, job_ram)
+                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(mol_id, n_procs, job_ram)
             elif jobtype == 'minus1':
                 charge = base_charge - 1
                 mult = 2
                 head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n# b3lyp/def2svp scf=(maxcycle=512, xqc) ' \
-                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(file_name, n_procs, job_ram)
+                       'pop=(full,mbs,hirshfeld,nbo6read)\n'.format(mol_id, n_procs, job_ram)
 
 
             os.chdir(jobtype)
-            comfile = file_name + '.gjf'
+            comfile = mol_id + '.gjf'
             xyz2com(xyz, head=head, comfile=comfile, charge=charge, mult=mult, footer='$NBO BNDIDX $END\n')
 
-            logfile = file_name + '.log'
-            outfile = file_name + '.out'
+            logfile = mol_id + '.log'
+            outfile = mol_id + '.out'
             if not os.path.exists(outfile):
                 with open(outfile, 'w') as out:
                     subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
@@ -92,10 +92,9 @@ def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logge
 
     return QM_descriptors_return
 
-def dft_scf_opt(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
-    basename = os.path.basename(sdf)
-    file_name = os.path.splitext(basename)[0]
-    scratch_dir = os.path.join(folder, file_name)
+def dft_scf_opt(folder, mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
+    sdf = mol_id + ".sdf"
+    scratch_dir = os.path.join(folder, mol_id)
 
     parent_dir = os.getcwd()
 
@@ -105,13 +104,13 @@ def dft_scf_opt(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram
     xyz = mol2xyz(mol)
 
     g16_command = os.path.join(g16_path, 'g16')
-    head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(file_name, n_procs, job_ram, level_of_theory)
+    head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
 
-    comfile = file_name + '.gjf'
+    comfile = mol_id + '.gjf'
     xyz2com(xyz, head=head, comfile=comfile, charge=base_charge, mult=mult, footer='\n')
 
-    logfile = file_name + '.log'
-    outfile = file_name + '.out'
+    logfile = mol_id + '.log'
+    outfile = mol_id + '.out'
     with open(outfile, 'w') as out:
         subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
@@ -119,9 +118,9 @@ def dft_scf_opt(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram
     conf = mol.GetConformer()
     for i in range(mol.GetNumAtoms()):
         conf.SetAtomPosition(i, log.Coords[i,:])
-    write_mol_to_sdf(mol, f'{file_name}_opt.sdf')
+    write_mol_to_sdf(mol, f'{mol_id}_opt.sdf')
 
     os.remove(sdf)
     os.chdir(parent_dir)
 
-    return f'{file_name}_opt.sdf'
+    return f'{mol_id}_opt.sdf'

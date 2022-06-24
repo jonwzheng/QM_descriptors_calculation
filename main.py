@@ -220,15 +220,14 @@ logger.info('starting DFT optimization and frequency calculation for the lowest 
 os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
 for xtb_opt_sdf in xtb_opt_sdfs:
     try:
-        file_name = os.path.splitext(xtb_opt_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.DFT_opt_freq_folder, file_name), exist_ok=True)
-        shutil.copyfile(os.path.join(args.semiempirical_opt_folder, file_name, xtb_opt_sdf),
-                        os.path.join(args.DFT_opt_freq_folder, file_name, file_name + ".sdf"))
+        mol_id = os.path.splitext(xtb_opt_sdf)[0].split("_")[0]
+        os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id), exist_ok=True)
+        shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, xtb_opt_sdf),
+                        os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
 
-        mol_id = file_name
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
-        opt_sdf = dft_scf_opt(args.DFT_opt_freq_folder, file_name + ".sdf", G16_PATH, args.DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
+        opt_sdf = dft_scf_opt(args.DFT_opt_freq_folder, mol_id, G16_PATH, args.DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
                                 logger, args.DFT_opt_job_ram, charge, mult)
         logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
         done_jobs_record.DFT_opt_freq.append(mol_id)
