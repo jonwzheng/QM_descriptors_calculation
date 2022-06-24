@@ -191,16 +191,15 @@ def csearch(supp, total, args, logger, done_jobs_record, project_dir):
                         if mol:
                             lowest_en, lowest_id = ids[0]
                             mol.SetProp('_Name', mol_id)
-                            mol.SetProp('ConfId', str(lowest_id))
-                            mol.SetProp('ConfEnergies', str(lowest_en) + ' kcal/mol')
                             os.makedirs(os.path.join(args.FF_conf_folder, mol_id), exist_ok=True)
-                            write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}.sdf'.format(mol_id)), lowest_id)
+                            write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}.sdf'.format(mol_id)), lowest_id, lowest_en)
 
                             conformers_found = len(ids)
                             ids_to_save = [id for (en, id) in ids[:args.n_lowest_E_confs_to_save]]
+                            ens_to_save = [en for (en, id) in ids[:args.n_lowest_E_confs_to_save]]
                             logger.info('conformer searching for {} completed: '
                                         '{} conformers found, save the lowest {}'.format(mol_id, conformers_found, len(ids_to_save)))
-                            write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}_confs.sdf'.format(mol_id)), ids_to_save)
+                            write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}_confs.sdf'.format(mol_id)), ids_to_save, ens_to_save)
                             done_jobs_record.FF_conf.append(mol_id)
                             done_jobs_record.save(project_dir, args.task_id)
                         else:
