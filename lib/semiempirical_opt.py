@@ -19,7 +19,7 @@ def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_th
 
     mols = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)
     os.remove(sdf)
-    conf_ids_ens = []
+    conf_mols_ids_ens = []
     for conf_ind, mol in enumerate(mols):
         scratch_dir = f"{mol_id}_{conf_ind}"
         os.makedirs(scratch_dir, exist_ok=True)
@@ -45,21 +45,21 @@ def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_th
 
         log = G16Log(logfile)
         if log.termination and np.min(log.har_frequencies) > 0:
+            mol.SetProp('ConfId', str(conf_ind)) #convert to kcal/mol
             mol.SetProp('ConfEnergies', str(log.E*627.5) + ' kcal/mol') #convert to kcal/mol
             conf = mol.GetConformer()
             for i in range(mol.GetNumAtoms()):
                 conf.SetAtomPosition(i, log.Coords[i,:])
-            logger.info(log.Coords[i,:])
-            conf_ids_ens.append((conf_ind, log.E))
+            conf_mols_ids_ens.append((mol, conf_ind, log.E))
             logger.info(f'optimization of conformer {conf_ind} for {mol_id} completed.')
         else:
             logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
         os.chdir(child_dir)
         # shutil.rmtree(scratch_dir)
-
-    write_mols_to_sdf(mols, f'{mol_id}_confs_opt.sdf')
-    conf_ids_ens.sort(key=lambda x: x[1])
-    write_mol_to_sdf(mols[conf_ids_ens[0][0]], f'{mol_id}_opt.sdf')
+    conf_mols_ids_ens.sort(key=lambda x: x[2])
+    opt_mols = [mol for mol, conf_ind, en in conf_mols_ids_ens]
+    write_mols_to_sdf(opt_mols, f'{mol_id}_confs_opt.sdf')
+    write_mol_to_sdf(opt_mols[conf_mols_ids_ens[0][0]], f'{mol_id}_opt.sdf')
     
     os.chdir(parent_dir)
 
