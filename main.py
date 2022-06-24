@@ -129,6 +129,7 @@ ORCA_PATH = args.ORCA_path
 
 name = os.path.splitext(args.input_smiles)[0]
 logger = create_logger(name=name, task_id=args.task_id)
+submit_dir = os.path.abspath(os.getcwd())
 project_dir = os.path.abspath(os.path.join(args.output_folder, f"{args.output_folder}_{args.task_id}"))
 
 try:
@@ -241,7 +242,7 @@ logger.info('='*80)
 logger.info('starting Turbomole and COSMO calculation for the DFT-optimized conformer...')
 os.makedirs(args.COSMO_folder, exist_ok=True)
 logger.info('load solvent file...')
-df_pure = pd.read_csv(args.COSMO_input_pure_solvents)
+df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
 df_pure = df_pure.reset_index()
 
 for opt_sdf in opt_sdfs:
