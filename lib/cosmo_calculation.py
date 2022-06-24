@@ -56,7 +56,7 @@ def cosmo_calc(folder, sdf, cosmotherm_path, cosmo_database_path, charge, mult, 
         else:
             #turbomole calculation failed
             raise
-        done_jobs_record[mol_id] = []
+        done_jobs_record.COSMO[mol_id] = []
         done_jobs_record.save(project_dir, task_id)
     
     # prepare for cosmo calculation
