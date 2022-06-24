@@ -35,7 +35,7 @@ class DoneJobsRecord(object):
     """
     def __init__(self):
         self.FF_conf = []
-        self.XTB_opt_freq = []
+        self.semiempirical_opt = []
         self.DFT_opt_freq = []
         self.COSMO = {}
         self.WFT_sp = []
