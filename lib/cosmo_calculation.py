@@ -96,7 +96,10 @@ notempty wtln ehfile
     first_letter = row.cosmo_name[0]
     if not first_letter.isalpha() and not first_letter.isnumeric():
         first_letter = '0'
-    solvent_dir = f"{cosmo_database_path}/COSMObase2021/BP-TZVPD-FINE/{first_letter}"
+    if row.source == "COSMOtherm":
+        solvent_dir = f"{cosmotherm_path}/COSMObase2021/COSMOtherm/DATABASE-COSMO/BP-TZVPD-FINE/{first_letter}"
+    elif row.source == "COSMObase":
+        solvent_dir = f"{cosmo_database_path}/COSMObase2021/BP-TZVPD-FINE/{first_letter}"
     script += "f = \"" + row.cosmo_name + "_c0.cosmo\" fdir=\"" + solvent_dir + "\""
     if int(row.cosmo_conf) > 1:
         script += " Comp = \"" + row.cosmo_name + "\" [ VPfile"
