@@ -33,7 +33,7 @@ def write_mol_to_sdf(mol, path, confIds, confEns=None):
     if isinstance(confIds, int):
         confIds = [confIds]
     if isinstance(confEns, int):
-        confEs = [confEns]
+        confEns = [confEns]
     writer = Chem.SDWriter(path)
     if confEns:
         for confId, confEn in zip(confIds, confEns):
