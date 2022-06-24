@@ -124,7 +124,7 @@ notempty wtln ehfile
 
 def save_cosmo_results(folder, done_jobs_record, task_id):
 
-    result_file_path = os.path.join(folder, f"cosmo_result_{task_id}")
+    result_file_path = os.path.join(folder, f"cosmo_result_{task_id}.csv")
     header = ['solvent_name', 'solute_name', 'temp (K)',
               'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
     with open(result_file_path , 'w') as csvfile:
