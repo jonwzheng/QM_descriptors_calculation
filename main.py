@@ -9,7 +9,7 @@ import rdkit.Chem as Chem
 
 from lib import create_logger, done_jobs_record
 from lib import csearch
-from lib import semiempirical_optimization
+from lib import semiempirical_opt
 from lib import dft_scf_qm_descriptor, dft_scf_opt
 from lib import cosmo_calc, save_cosmo_results
 from lib import dlpno_sp_calc
@@ -108,8 +108,8 @@ parser.add_argument('--XTB_path', type=str, required=True,
                     help='path to installed XTB')
 parser.add_argument('--G16_path', type=str, required=True,
                     help='path to installed Gaussian 16')
-parser.add_argument('--RDMC_path', type=str, default=None,
-                    help='path to RDMC to use xtb-gaussian script for xtb optimization calculation. If not provided, XTB will be used.')
+parser.add_argument('--RDMC_path', type=str, required=True,
+                    help='path to RDMC to use xtb-gaussian script for xtb optimization calculation.')
 parser.add_argument('--COSMOtherm_path', type=str, required=True,
                     help='path to COSMOthermo')
 parser.add_argument('--COSMO_database_path', type=str, required=True,
@@ -204,8 +204,8 @@ for conf_sdf in conf_sdfs:
         mol_id = file_name
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
-        semiempirical_optimization(args.semiempirical_opt_folder, conf_sdf, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
-                                args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method)
+        semiempirical_opt(args.semiempirical_opt_folder, conf_sdf, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
+                                args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
         logger.info(f'semiempirical optimization for {mol_id} completed')
         done_jobs_record.semiempirical_opt.append(mol_id)
         done_jobs_record.save(project_dir, args.task_id)
