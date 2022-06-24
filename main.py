@@ -74,12 +74,10 @@ parser.add_argument('--DFT_opt_job_ram', type=int, default=3000,
 # Turbomole and COSMO calculation
 parser.add_argument('--COSMO_folder', type=str, default='COSMO_calc',
                     help='folder for COSMO calculation',)
-parser.add_argument('--COSMO_temperature', type=float, required=True,
-                    help='temperature used for COSMO calculation')
-parser.add_argument('--COSMO_solvents', type=str, nargs="+", required=True,
-                    help='solvents used for COSMO calculation')
-parser.add_argument('--COSMO_solvent_solute_ratios', type=str, nargs="+", required=True,
-                    help='solvent and solute ratios used for COSMO calculation')
+parser.add_argument('--COSMO_temperatures', type=str, nargs="+", required=False, default=['297.15', '298.15', '299.15'],
+                    help='temperatures used for COSMO calculation')
+parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, default='common_solvent_list_final.csv',
+                    help='input file containing pure solvents used for COSMO calculation.')
 
 # DLPNO single point calculation
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
@@ -172,8 +170,6 @@ logger.info("switching to project folder...")
 os.chdir(project_dir)
 
 # conformer searching
-
-# if not args.only_DFT:
 logger.info('starting FF conformer searching...')
 supported_FFs = ["MMFF94s", "GFNFF"]
 try:
@@ -185,9 +181,8 @@ supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.F
 done_jobs_record = csearch(supp, len(df), args, logger, done_jobs_record, project_dir)
 conf_sdfs = [f"{mol_id}.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.XTB_opt_freq]
 logger.info('='*80)
-# xtb optimization
 
-# if not args.only_DFT:
+# xtb optimization
 logger.info('starting GFN2-XTB structure optimization and frequency calculation for the lowest FF conformer...')
 os.makedirs(args.xtb_opt_freq_folder, exist_ok=True)
 
@@ -216,32 +211,7 @@ for conf_sdf in conf_sdfs:
         os.chdir(project_dir)
 xtb_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.XTB_opt_freq if mol_id not in done_jobs_record.DFT_opt_freq]
 logger.info('GFN2-XTB optimization and frequency calculation finished.')
-
 logger.info('='*80)
-# else:
-#     opt_sdfs = []
-#     for mol_id, v in mol_id_to_smi_dict.items():
-#         logger.info(f'checking xtb convergence for {mol_id}')
-#         try:
-#             opt_sdf = xtb_status(args.xtb_opt_freq_folder, mol_id)
-#             opt_sdfs.append(opt_sdf)
-#         except Exception as e:
-#             logger.error('XTB optimization for {} failed: {}'.format(mol_id, e))
-
-os.makedirs('yamls', exist_ok=True)
-
-# G16 DFT calculation
-# if not args.only_DFT:
-#     os.makedirs(args.DFT_folder, exist_ok=True)
-# else:
-    # logger.info("Searching for optimized XTB files.")
-    # opt_sdfs = []
-    # for a_file in os.listdir(args.DFT_folder):
-    #     if a_file.endswith(".sdf"):
-    #         logger.info(f'Found file {a_file}')
-    #         mol_id = a_file.split('_')[0]
-    #         if mol_id in mol_id_to_smi_dict.keys():
-    #             opt_sdfs.append(a_file)
 
 logger.info('starting DFT optimization and frequency calculation for the XTB-optimized conformer...')
 os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
@@ -270,6 +240,10 @@ logger.info('='*80)
 
 logger.info('starting Turbomole and COSMO calculation for the DFT-optimized conformer...')
 os.makedirs(args.COSMO_folder, exist_ok=True)
+logger.info('load solvent file...')
+df_pure = pd.read_csv(args.COSMO_input_pure_solvents)
+df_pure = df_pure.reset_index()
+
 for opt_sdf in opt_sdfs:
     try:
         file_name = os.path.splitext(opt_sdf)[0].split("_")[0]
@@ -279,8 +253,7 @@ for opt_sdf in opt_sdfs:
         mol_id = file_name
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
-        cosmo_calc(args.COSMO_folder, file_name + ".sdf", COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_solvents,
-                   args.COSMO_solvent_solute_ratios, args.COSMO_temperature)
+        cosmo_calc(args.COSMO_folder, file_name + ".sdf", COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure)
         done_jobs_record.COSMO.append(mol_id)
         done_jobs_record.save(project_dir, args)
         logger.info(f'COSMO calculation for {mol_id} completed')
