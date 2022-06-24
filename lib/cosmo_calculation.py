@@ -177,13 +177,13 @@ def get_dHsolv_value(each_data_list):
     dGsolv_temp_dict = {}
     ind_298 = None
     for z in range(len(each_data_list)):
-        temp = each_data_list[z][5]
-        dGsolv = each_data_list[z][9]
+        temp = each_data_list[z][2]
+        dGsolv = each_data_list[z][6]
         dGsolv_temp_dict[temp] = dGsolv
         if temp == '298.15':
             ind_298 = z
     dGsolv_298 = float(dGsolv_temp_dict['298.15'])
     dSsolv_298 = - (float(dGsolv_temp_dict['299.15']) - float(dGsolv_temp_dict['297.15'])) / (299.15 - 297.15)
     dHsolv_298 = dGsolv_298 + 298.15 * dSsolv_298
-    each_data_list[ind_298][10] = '%.8f' % dHsolv_298
+    each_data_list[ind_298][7] = '%.8f' % dHsolv_298
     return each_data_list
