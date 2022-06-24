@@ -144,6 +144,7 @@ except:
     os.makedirs(project_dir, exist_ok=True)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
+assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 df = df[args.task_id:len(df.index):args.num_tasks]
 # create id to smile mapping
 mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
