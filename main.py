@@ -200,7 +200,7 @@ for conf_sdf in conf_sdfs:
         mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
         os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
         shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
-                        os.path.join(args.semiempirical_opt_folder, mol_id, conf_sdf))
+                        os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
         semiempirical_opt(args.semiempirical_opt_folder, mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
@@ -209,7 +209,7 @@ for conf_sdf in conf_sdfs:
         done_jobs_record.semiempirical_opt.append(mol_id)
         done_jobs_record.save(project_dir, args.task_id)
     except Exception as e:
-        logger.error('semiempirical optimization for {} failed'.format(os.path.splitext(conf_sdf)[0]))
+        logger.error('semiempirical optimization for {} failed'.format(mol_id))
         logger.error(traceback.format_exc())
         os.chdir(project_dir)
 xtb_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
