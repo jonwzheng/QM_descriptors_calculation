@@ -29,16 +29,20 @@ def create_logger(name: str, task_id: int) -> logging.Logger:
 
     return logger
 
-def write_mol_to_sdf(mol, path, confIds, confEns):
+def write_mol_to_sdf(mol, path, confIds, confEns=None):
     if isinstance(confIds, int):
         confIds = [confIds]
     if isinstance(confEns, int):
         confEs = [confEns]
     writer = Chem.SDWriter(path)
-    for confId, confEn in zip(confIds, confEns):
-        mol.SetProp('ConfId', str(confId))
-        mol.SetProp('ConfEnergies', str(confEn) + ' kcal/mol')
-        writer.write(mol, confId=confId)
+    if confEns:
+        for confId, confEn in zip(confIds, confEns):
+            mol.SetProp('ConfId', str(confId))
+            mol.SetProp('ConfEnergies', str(confEn) + ' kcal/mol')
+            writer.write(mol, confId=confId)
+    else:
+        for confId in confIds:
+            writer.write(mol, confId=confId)
     writer.close()
 
 def load_sdf(path, removeHs=False, sanitize=False):
