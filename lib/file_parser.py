@@ -100,6 +100,12 @@ def write_mol_to_sdf(mol, path, confIds=[0], confEns=None):
             writer.write(mol, confId=confId)
     writer.close()
 
+def write_mols_to_sdf(mols, path):
+    writer = Chem.SDWriter(path)
+    for mol in mols:
+        writer.write(mol, confId=0)
+    writer.close()
+
 def load_sdf(path, removeHs=False, sanitize=False):
     return Chem.SDMolSupplier(path, removeHs=removeHs, sanitize=sanitize)
 

@@ -40,6 +40,7 @@ class G16Log:
             except:
                 pass
             self.GetCPU()
+            self.GetE()
             self.GetFreq()
             self.GetG()
             self.GetSCF()
@@ -127,6 +128,15 @@ class G16Log:
                 if m:
                     self.G = float(m.group(0))
                     break
+
+    def GetE(self):
+        with open(self.file) as fh:
+            txt = fh.readlines()
+
+        txt = [x.strip() for x in txt]
+        for i, line in enumerate(txt):
+            if line.find('Energy=') > -1:
+                self.E = float(line.split()[1])
 
     def GetFreq(self):
         with open(self.file) as fh:

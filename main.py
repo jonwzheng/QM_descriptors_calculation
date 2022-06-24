@@ -1,10 +1,6 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 import os
-import re
 import shutil
-import time
-from numpy import extract
-import yaml
 
 import pandas as pd
 import traceback
@@ -13,7 +9,7 @@ import rdkit.Chem as Chem
 
 from lib import create_logger, done_jobs_record
 from lib import csearch
-from lib import xtb_optimization, xtb_status
+from lib import semiempirical_optimization
 from lib import dft_scf_qm_descriptor, dft_scf_opt
 from lib import cosmo_calc, save_cosmo_results
 from lib import dlpno_sp_calc
@@ -52,15 +48,17 @@ parser.add_argument('--timeout', required=False, default=600,
 parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
-# xtb optimization and frequency calculation
-parser.add_argument('--xtb_opt_freq_folder', type=str, default='XTB_opt_freq',
-                    help='folder for XTB optimization')
-parser.add_argument('--gaussian_xtb_opt_freq_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro)',
-                    help='level of theory for the Gaussian-XTB calculation')
-parser.add_argument('--gaussian_xtb_opt_n_procs', type=int, default=4,
-                    help='number of process for Gaussian-XTB calculations')
-parser.add_argument('--gaussian_xtb_opt_job_ram', type=int, default=3000,
-                    help='amount of ram (MB) allocated for each Gaussian-XTB calculation')
+# semiempirical optimization and frequency calculation
+parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
+                    help='folder for semiempirical optimization')
+parser.add_argument('--semiempirical_method', type=str, default='GFN2-XTB',
+                    help='method used for semiempirical optimization. Options are GFN2-XTB, am1, and pm7.')
+parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro)',
+                    help='level of theory for the Gaussian semiempirical calculation')
+parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=4,
+                    help='number of process for Gaussian semiempirical calculations')
+parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=3000,
+                    help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
 
 # DFT optimization and frequency calculation
 parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
@@ -184,47 +182,48 @@ except Exception as e:
     raise
 supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
 done_jobs_record = csearch(supp, len(df), args, logger, done_jobs_record, project_dir)
-conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.XTB_opt_freq]
+conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
 logger.info('='*80)
 
-# xtb optimization
-logger.info('starting GFN2-XTB structure optimization and frequency calculation for the lowest energy FF-optimized conformers...')
-os.makedirs(args.xtb_opt_freq_folder, exist_ok=True)
+# semiempirical optimization
+logger.info('starting semiempirical geometry optimization for the lowest energy FF-optimized conformers...')
+os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
-if RDMC_PATH:
-    logger.info("RDMC path provided. Using Gaussian-XTB to perform GFN2-XTB calculations.")
-else:
-    logger.info("RDMC path not provided. Using XTB to perform GFN2-XTB calculations.")
+if args.semiempirical_method == "GFN2-XTB":
+    if RDMC_PATH:
+        logger.info("RDMC path provided. Using Gaussian to perform GFN2-XTB calculations.")
+    else:
+        logger.info("RDMC path not provided. Using XTB to perform GFN2-XTB calculations.")
 
 for conf_sdf in conf_sdfs:
     try:
-        file_name = os.path.splitext(conf_sdf)[0]
-        os.makedirs(os.path.join(args.xtb_opt_freq_folder, file_name), exist_ok=True)
+        file_name = os.path.splitext(conf_sdf)[0].split("_")[0]
+        os.makedirs(os.path.join(args.semiempirical_opt_folder, file_name), exist_ok=True)
         shutil.copyfile(os.path.join(args.FF_conf_folder, file_name, conf_sdf),
-                        os.path.join(args.xtb_opt_freq_folder, file_name, conf_sdf))
+                        os.path.join(args.semiempirical_opt_folder, file_name, file_name + ".sdf"))
         mol_id = file_name
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
-        xtb_optimization(args.xtb_opt_freq_folder, conf_sdf, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_xtb_opt_freq_theory, args.gaussian_xtb_opt_n_procs,
-                                args.gaussian_xtb_opt_job_ram, charge, mult)
-        logger.info(f'GFN2-XTB optimization and frequency calculation for {mol_id} completed')
-        done_jobs_record.XTB_opt_freq.append(mol_id)
+        semiempirical_optimization(args.semiempirical_opt_folder, conf_sdf, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
+                                args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method)
+        logger.info(f'semiempirical optimization for {mol_id} completed')
+        done_jobs_record.semiempirical_opt.append(mol_id)
         done_jobs_record.save(project_dir, args.task_id)
     except Exception as e:
-        logger.error('XTB optimization for {} failed'.format(os.path.splitext(conf_sdf)[0]))
+        logger.error('semiempirical optimization for {} failed'.format(os.path.splitext(conf_sdf)[0]))
         logger.error(traceback.format_exc())
         os.chdir(project_dir)
-xtb_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.XTB_opt_freq if mol_id not in done_jobs_record.DFT_opt_freq]
-logger.info('GFN2-XTB optimization and frequency calculation finished.')
+xtb_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
+logger.info('semiempirical optimization finished.')
 logger.info('='*80)
 
-logger.info('starting DFT optimization and frequency calculation for the lowest energy XTB-optimized conformer...')
+logger.info('starting DFT optimization and frequency calculation for the lowest energy semiempirical-optimized conformer...')
 os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
 for xtb_opt_sdf in xtb_opt_sdfs:
     try:
         file_name = os.path.splitext(xtb_opt_sdf)[0].split("_")[0]
         os.makedirs(os.path.join(args.DFT_opt_freq_folder, file_name), exist_ok=True)
-        shutil.copyfile(os.path.join(args.xtb_opt_freq_folder, file_name, xtb_opt_sdf),
+        shutil.copyfile(os.path.join(args.semiempirical_opt_folder, file_name, xtb_opt_sdf),
                         os.path.join(args.DFT_opt_freq_folder, file_name, file_name + ".sdf"))
 
         mol_id = file_name
@@ -305,7 +304,7 @@ logger.info('DLPNO single point calculation finished.')
 
 #     # if not args.only_DFT:
 #     try:
-#         shutil.copyfile(os.path.join(args.xtb_opt_freq_folder, opt_sdf),
+#         shutil.copyfile(os.path.join(args.semiempirical_opt_folder, opt_sdf),
 #                         os.path.join(args.DFT_QM_descriptor_folder, opt_sdf))
 #         time.sleep(1)
 #     except Exception as e:
