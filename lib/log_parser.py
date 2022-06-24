@@ -136,8 +136,10 @@ class G16Log:
         txt = [x.strip() for x in txt]
         for i, line in enumerate(txt):
             if line.find('Sum of electronic and thermal Energies') > -1:
-                self.E = float(line.split()[1])
-                break
+                m = re.search('-?\d+\.\d+', line)
+                if m:
+                    self.E = float(m.group(0))
+                    break
 
     def GetFreq(self):
         with open(self.file) as fh:
