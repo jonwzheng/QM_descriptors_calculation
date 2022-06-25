@@ -55,7 +55,7 @@ def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_th
         else:
             logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
         os.chdir(child_dir)
-        # shutil.rmtree(scratch_dir)
+        shutil.rmtree(scratch_dir)
     conf_mols_ids_ens.sort(key=lambda x: x[2])
     opt_mols = [mol for mol, conf_ind, en in conf_mols_ids_ens]
     write_mols_to_sdf(opt_mols, f'{mol_id}_confs_opt.sdf')
