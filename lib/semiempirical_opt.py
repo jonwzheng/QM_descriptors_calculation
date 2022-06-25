@@ -59,7 +59,7 @@ def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_th
     conf_mols_ids_ens.sort(key=lambda x: x[2])
     opt_mols = [mol for mol, conf_ind, en in conf_mols_ids_ens]
     write_mols_to_sdf(opt_mols, f'{mol_id}_confs_opt.sdf')
-    write_mol_to_sdf(opt_mols[conf_mols_ids_ens[0][0]], f'{mol_id}_opt.sdf')
+    write_mol_to_sdf(opt_mols[conf_mols_ids_ens[0][1]], f'{mol_id}_opt.sdf')
     
     os.chdir(parent_dir)
 

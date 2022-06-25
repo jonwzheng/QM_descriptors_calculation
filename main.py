@@ -189,12 +189,6 @@ logger.info('='*80)
 logger.info('starting semiempirical geometry optimization for the lowest energy FF-optimized conformers...')
 os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
-if args.semiempirical_method == "GFN2-XTB":
-    if RDMC_PATH:
-        logger.info("RDMC path provided. Using Gaussian to perform GFN2-XTB calculations.")
-    else:
-        logger.info("RDMC path not provided. Using XTB to perform GFN2-XTB calculations.")
-
 for conf_sdf in conf_sdfs:
     try:
         mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
