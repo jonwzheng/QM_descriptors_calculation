@@ -236,7 +236,7 @@ if args.is_test:
         mult = mol_id_to_mult_dict[mol_id]
 
         for semiempirical_method in semiempirical_methods:
-            if semiempirical_method not in done_jobs_record.test_dft_sp.get(mol_id, []):
+            if semiempirical_method not in done_jobs_record.test_DFT_sp.get(mol_id, []):
                 os.makedirs(os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method))
                 shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, semi_opt_sdf),
                                 os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
@@ -244,9 +244,9 @@ if args.is_test:
                 os.chdir(os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method))
                 try:
                     dft_scf_sp(mol_id, G16_PATH, args.DFT_sp_theory, args.DFT_sp_n_procs, logger, args.DFT_sp_job_ram, charge, mult)
-                    done_jobs = done_jobs_record.test_dft_sp.get(mol_id, [])
+                    done_jobs = done_jobs_record.test_DFT_sp.get(mol_id, [])
                     done_jobs.append(semiempirical_method)
-                    done_jobs_record.test_dft_sp[mol_id] = done_jobs
+                    done_jobs_record.test_DFT_sp[mol_id] = done_jobs
                     done_jobs_record.save(project_dir, args.task_id)
                     logger.info(f'DFT single point calculation for {semiempirical_method} optimized {mol_id} completed')
                 except:
