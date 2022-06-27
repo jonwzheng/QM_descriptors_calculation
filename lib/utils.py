@@ -40,6 +40,8 @@ class DoneJobsRecord(object):
         self.COSMO = {}
         self.WFT_sp = []
         self.QM_desp = []
+        self.test_semiempirical_opt = {}
+        self.test_DFT_sp = {}
     
     def save(self, project_dir, task_id):
         with open(os.path.join(project_dir, f"done_jobs_record_{task_id}.json"), "w+") as fh:
@@ -50,5 +52,3 @@ class DoneJobsRecord(object):
             content = json.load(fh)
         for job, molids in content.items():
             setattr(self, job, molids)
-
-done_jobs_record = DoneJobsRecord()

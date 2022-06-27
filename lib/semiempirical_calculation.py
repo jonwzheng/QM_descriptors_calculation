@@ -10,17 +10,16 @@ from .log_parser import XtbLog, G16Log
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 
 
-def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, method, logger):
+def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, method, logger):
     sdf = mol_id + ".sdf"
 
-    parent_dir = os.getcwd()
-    child_dir = os.path.abspath(os.path.join(folder, mol_id))
-    os.chdir(child_dir)
+    work_dir = os.getcwd()
 
     mols = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)
     os.remove(sdf)
     conf_mols_ids_ens = []
     for conf_ind, mol in enumerate(mols):
+
         scratch_dir = f"{mol_id}_{conf_ind}"
         os.makedirs(scratch_dir, exist_ok=True)
         os.chdir(scratch_dir)
@@ -54,14 +53,12 @@ def semiempirical_opt(folder, mol_id, xtb_path, rdmc_path, g16_path, level_of_th
             logger.info(f'optimization of conformer {conf_ind} for {mol_id} completed.')
         else:
             logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
-        os.chdir(child_dir)
+        os.chdir(work_dir)
         shutil.rmtree(scratch_dir)
     conf_mols_ids_ens.sort(key=lambda x: x[2])
     opt_mols = [mol for mol, conf_ind, en in conf_mols_ids_ens]
     write_mols_to_sdf(opt_mols, f'{mol_id}_confs_opt.sdf')
     write_mol_to_sdf(opt_mols[conf_mols_ids_ens[0][1]], f'{mol_id}_opt.sdf')
-    
-    os.chdir(parent_dir)
 
 def xtb_status(folder, molid):
 
