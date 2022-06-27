@@ -8,7 +8,7 @@ from rdkit import Chem
 from .file_parser import mol2xyz
 
 
-def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, done_jobs_record, mol_id, project_dir, task_id):
+def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, done_jobs_record, project_dir, task_id):
     sdf = mol_id + '.sdf'
     mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
     xyz = mol2xyz(mol)
