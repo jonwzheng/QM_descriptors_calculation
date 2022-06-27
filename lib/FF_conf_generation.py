@@ -14,7 +14,7 @@ import os
 import traceback
 
 # algorithm to generate nc conformations
-def _genConf(s, nc, max_try, rms, E_cutoff_fraction, rmspost, return_dict, name, conf_search_FF, FF_conf_folder, XTB_path):
+def _genConf(s, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, return_dict, name, conf_search_FF, FF_conf_folder, XTB_path):
     m = Chem.MolFromSmiles(s)
     if not m:
         return
@@ -26,8 +26,8 @@ def _genConf(s, nc, max_try, rms, E_cutoff_fraction, rmspost, return_dict, name,
 
     nr = int(AllChem.CalcNumRotatableBonds(m))
 
-    if not nc:
-        nc = 3**nr
+    tnr = 3**nr
+    nc = tnr if tnr < max_n_conf else max_n_conf
 
     if not rms:
         rms = -1
@@ -97,7 +97,7 @@ class genConf:
         chembl_id, SMILES = m
         self.s = SMILES
         self.name = chembl_id
-        self.nc = args.nconf
+        self.max_n_conf = args.max_n_conf
         self.max_nc_try = args.max_conf_try
         self.rms = args.rmspre
         self.E_cutoff_fraction = args.E_cutoff_fraction
@@ -109,7 +109,7 @@ class genConf:
         
     def __call__(self):
         self.return_dict = Manager().dict()
-        self.process = Process(target=_genConf, args=(self.s, self.nc, self.max_nc_try, self.rms, self.E_cutoff_fraction,
+        self.process = Process(target=_genConf, args=(self.s, self.max_n_conf, self.max_nc_try, self.rms, self.E_cutoff_fraction,
                                                       self.rmspost, self.return_dict, self.name, self.conf_search_FF, self.FF_conf_folder, self.XTB_path))
 
         self.process.start()

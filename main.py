@@ -30,8 +30,8 @@ parser.add_argument('--conf_search_FF', type=str, default='GFNFF',
                     help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF.')
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
                     help='Folder name for FF searched conformers')
-parser.add_argument('--nconf', type=int, default=800,
-                    help='number of FF conformers')
+parser.add_argument('--max_n_conf', type=int, default=800,
+                    help='maximum number of FF conformers. nc = 3**n_rotatable_bonds, n_conf = nc if nc < max_n_conf else max_n_conf')
 parser.add_argument('-max_conf_try', type=int, default=2000,
                     help='maximum attempt for conformer generating, '
                          'this is useful for molecules with many chiral centers.')
