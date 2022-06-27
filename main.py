@@ -258,6 +258,7 @@ if args.is_test:
     logger.info('All calculations completed.')
     logger.info('Extracting DFT single point calculation results for comparison...')
     save_dft_sp_results(args.DFT_sp_folder, done_jobs_record, args.task_id, mol_id_to_smi_dict, semiempirical_methods)
+    logger.info('Extrcating DFT single point calculation results completed.')
 
 else:
     conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
