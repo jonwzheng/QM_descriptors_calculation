@@ -195,21 +195,21 @@ if args.is_test:
     semiempirical_methods = ["GFN2-XTB", "am1", "pm7"]
     conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if len(done_jobs_record.test_semiempirical_opt.get(mol_id, []))!= len(semiempirical_methods)]
     logger.info(f'starting geometry optimization for {args.n_lowest_E_confs_to_save} lowest energy FF-optimized conformers using different semiempirical methods...')
-    os.makedirs(args.semiempirical_opt, exist_ok=True)
+    os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
     for conf_sdf in conf_sdfs:
         mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.semiempirical_opt, mol_id), exist_ok=True)
+        os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
 
         for semiempirical_method in semiempirical_methods:
             if semiempirical_method not in done_jobs_record.test_semiempirical_opt.get(mol_id, []):
-                os.makedirs(os.path.join(args.semiempirical_opt, mol_id, semiempirical_method))
+                os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method))
                 shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
-                                os.path.join(args.semiempirical_opt, mol_id, semiempirical_method, mol_id + ".sdf"))
+                                os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
 
-                os.chdir(os.path.join(args.semiempirical_opt, mol_id, semiempirical_method))
+                os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method))
                 try:
                     semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
                                                 args.gaussian_semiempirical_opt_job_ram, charge, mult, semiempirical_method, logger)
