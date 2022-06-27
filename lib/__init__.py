@@ -2,7 +2,7 @@ from .dft_calculation import dft_scf_qm_descriptor, dft_scf_opt, dft_scf_sp, sav
 from .file_parser import mol2xyz, xyz2com
 from .log_parser import G16Log, XtbLog
 from .ff_conf_generation import csearch
-from .grab_qm_descriptors import read_log
+from .grab_QM_descriptors import read_log
 from .utils import create_logger, DoneJobsRecord
 from .semiempirical_calculation import semiempirical_opt, xtb_status
 from .cosmo_calculation import cosmo_calc, save_cosmo_results

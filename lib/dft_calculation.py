@@ -4,7 +4,7 @@ import csv
 import os
 import subprocess
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
-from .grab_qm_descriptors import read_log
+from .grab_QM_descriptors import read_log
 from .log_parser import G16Log
 
 
