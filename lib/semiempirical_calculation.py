@@ -13,7 +13,7 @@ from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, method, logger):
     sdf = mol_id + ".sdf"
 
-    work_dir = os.getcwd()
+    mol_dir = os.getcwd()
 
     mols = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)
     os.remove(sdf)
@@ -53,7 +53,7 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
             logger.info(f'optimization of conformer {conf_ind} for {mol_id} completed.')
         else:
             logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
-        os.chdir(work_dir)
+        os.chdir(mol_dir)
         shutil.rmtree(scratch_dir)
     conf_mols_ids_ens.sort(key=lambda x: x[2])
     opt_mols = [mol for mol, conf_ind, en in conf_mols_ids_ens]
