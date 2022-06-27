@@ -338,10 +338,15 @@ else:
             logger.error(traceback.format_exc())
         os.chdir(project_dir)
 
-    logger.info('Extracting COSMO results...')
-    save_cosmo_results(args.COSMO_folder, done_jobs_record, args.task_id)
-
     logger.info('COSMO calculation finished.')
+    logger.info('Extracting COSMO results...')
+    try:
+        save_cosmo_results(args.COSMO_folder, done_jobs_record, args.task_id)
+        logger.error('Extractomg COSMO results completed.')
+    except:
+        logger.error('Extractomg COSMO results failed.')
+        logger.error(traceback.format_exc())
+
     logger.info('='*80)
 
     logger.info('starting DLPNO single point calculation for the DFT-optimized conformer...')

@@ -130,6 +130,7 @@ def save_cosmo_results(folder, done_jobs_record, task_id):
         for mol_id, solvents in done_jobs_record.COSMO.items():
             for solvent in solvents:
                 tab_file_path = os.path.join(folder, mol_id, f"{mol_id}_{solvent}.tab")
+                print(tab_file_path)
                 each_data_list = read_cosmo_tab_result(tab_file_path)
                 each_data_list = get_dHsolv_value(each_data_list)
                 csvwriter.writerows(each_data_list)
