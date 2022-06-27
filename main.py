@@ -194,7 +194,7 @@ logger.info('='*80)
 if args.is_test:
     semiempirical_methods = ["GFN2-XTB", "am1", "pm7"]
     conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if len(done_jobs_record.test_semiempirical_opt.get(mol_id, []))!= len(semiempirical_methods)]
-    logger.info(f'starting geometry optimization calculations for the lowest energy FF-optimized conformers with different semiempirical methods...')
+    logger.info(f'starting geometry optimization for {args.n_lowest_E_confs_to_save} lowest energy FF-optimized conformers using different semiempirical methods...')
     os.makedirs(args.semiempirical_opt, exist_ok=True)
 
     for conf_sdf in conf_sdfs:
@@ -263,7 +263,7 @@ else:
     conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
 
     # semiempirical optimization
-    logger.info('starting semiempirical geometry optimization for the lowest energy FF-optimized conformers...')
+    logger.info(f'starting semiempirical geometry optimization for {args.n_lowest_E_confs_to_save} lowest energy FF-optimized conformers...')
     os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
     for conf_sdf in conf_sdfs:
@@ -328,7 +328,7 @@ else:
         mult = mol_id_to_mult_dict[mol_id]
         os.chdir(os.path.join(args.COSMO_folder, mol_id))
         try:
-            cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, mol_id, project_dir, args.task_id)
+            cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id)
             done_jobs = done_jobs_record.COSMO.get(mol_id, [])
             done_jobs.append(mol_id)
             done_jobs_record.COSMO = done_jobs
