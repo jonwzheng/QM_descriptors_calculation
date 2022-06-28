@@ -154,5 +154,4 @@ def save_dft_sp_results(folder, done_jobs_record, task_id, mol_id_to_smi_dict, s
                 g16log = G16Log(log_file_path)
                 en = g16log.E
                 each_data_list.append(str(en))
-            print(each_data_list)
             csvwriter.writerow(each_data_list)

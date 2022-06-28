@@ -194,7 +194,7 @@ logger.info('='*80)
 if args.is_test:
     semiempirical_methods = ["GFN2-XTB", "am1", "pm7"]
     conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if len(done_jobs_record.test_semiempirical_opt.get(mol_id, []))!= len(semiempirical_methods)]
-    logger.info(f'starting geometry optimization for {args.n_lowest_E_confs_to_save} lowest energy FF-optimized conformers using different semiempirical methods...')
+    logger.info(f'starting geometry optimization for lowest energy FF-optimized conformers using different semiempirical methods...')
     os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
     for conf_sdf in conf_sdfs:
@@ -210,6 +210,7 @@ if args.is_test:
                                 os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
 
                 os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method))
+                logger.info(f'starting {semiempirical_method} semiempirical geometry optimization calculation for {mol_id}...') 
                 try:
                     semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
                                                 args.gaussian_semiempirical_opt_job_ram, charge, mult, semiempirical_method, logger)
@@ -217,7 +218,7 @@ if args.is_test:
                     done_jobs.append(semiempirical_method)
                     done_jobs_record.test_semiempirical_opt[mol_id] = done_jobs
                     done_jobs_record.save(project_dir, args.task_id)
-                    logger.info(f'{semiempirical_method} semiempirical geometry optimization calculation for {mol_id} completed')
+                    logger.info(f'all {semiempirical_method} semiempirical geometry optimization calculations for {mol_id} completed')
                 except:
                     logger.error(f'{semiempirical_method} semiempirical geometry optimization calculation for {mol_id} failed')
                     logger.error(traceback.format_exc())
@@ -264,7 +265,7 @@ else:
     conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
 
     # semiempirical optimization
-    logger.info(f'starting semiempirical geometry optimization for {args.n_lowest_E_confs_to_save} lowest energy FF-optimized conformers...')
+    logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
     os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
     for conf_sdf in conf_sdfs:
