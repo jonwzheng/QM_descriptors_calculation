@@ -224,7 +224,7 @@ if args.is_test:
                     logger.error(traceback.format_exc())
                 os.chdir(project_dir)
 
-    semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.test_semiempirical_opt if mol_id not in done_jobs_record.test_DFT_sp]
+    semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.test_semiempirical_opt if len(done_jobs_record.test_DFT_sp.get(mol_id, []))!= len(semiempirical_methods)]
     logger.info(f'semiempirical geometry optimization calculations finished.')
     logger.info('='*80)
 
