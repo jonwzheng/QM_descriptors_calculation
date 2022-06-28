@@ -205,7 +205,7 @@ if args.is_test:
 
         for semiempirical_method in semiempirical_methods:
             if semiempirical_method not in done_jobs_record.test_semiempirical_opt.get(mol_id, []):
-                os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method))
+                os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method), exist_ok=True)
                 shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
                                 os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
 
@@ -238,7 +238,7 @@ if args.is_test:
 
         for semiempirical_method in semiempirical_methods:
             if semiempirical_method not in done_jobs_record.test_DFT_sp.get(mol_id, []):
-                os.makedirs(os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method))
+                os.makedirs(os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method), exist_ok=True)
                 shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, semi_opt_sdf),
                                 os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
 
