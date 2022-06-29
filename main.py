@@ -237,7 +237,7 @@ if args.is_test:
         mult = mol_id_to_mult_dict[mol_id]
 
         for semiempirical_method in semiempirical_methods:
-            if semiempirical_method not in done_jobs_record.test_DFT_sp.get(mol_id, []):
+            if semiempirical_method in done_jobs_record.test_semiempirical_opt.get(mol_id, []) and semiempirical_method not in done_jobs_record.test_DFT_sp.get(mol_id, []):
                 os.makedirs(os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method), exist_ok=True)
                 shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, semi_opt_sdf),
                                 os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
