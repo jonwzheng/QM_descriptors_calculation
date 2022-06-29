@@ -49,7 +49,7 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
             conf = mol.GetConformer()
             for i in range(mol.GetNumAtoms()):
                 conf.SetAtomPosition(i, log.Coords[i,:])
-            conf_mols_ids_ens.append((mol, conf_ind, log.E))
+            conf_mols_ids_ens.append((mol, log.E))
             shutil.copy(logfile, os.path.join(work_dir, logfile))
             logger.info(f'optimization of conformer {conf_ind} for {mol_id} completed.')
         else:
@@ -57,7 +57,7 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
         os.chdir(work_dir)
         shutil.rmtree(scratch_dir)
     if conf_mols_ids_ens:
-        conf_mols_ids_ens.sort(key=lambda x: x[2])
+        conf_mols_ids_ens.sort(key=lambda x: x[1])
         opt_mols = [mol for mol, conf_ind, en in conf_mols_ids_ens]
         write_mols_to_sdf(opt_mols, f'{mol_id}_confs_opt.sdf')
         write_mol_to_sdf(opt_mols[0], f'{mol_id}_opt.sdf')
