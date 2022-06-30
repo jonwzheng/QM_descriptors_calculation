@@ -71,7 +71,7 @@ def _genConf(s, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, return_dic
                     pt = opt_conf.GetAtomPosition(i)
                     conf.SetAtomPosition(i, (pt.x, pt.y, pt.z))
                 os.chdir(pwd)
-                #shutil.rmtree(scratch_dir)
+                shutil.rmtree(scratch_dir)
             econf = (en, id)
             diz.append(econf)
     except Exception as e:
