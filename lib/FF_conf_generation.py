@@ -49,7 +49,9 @@ def _genConf(s, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, return_dic
                 en = float(ff.CalcEnergy())
             elif conf_search_FF == "GFNFF":
                 scratch_dir = os.path.join(FF_conf_folder, f'{name}_{id}')
-                os.makedirs(scratch_dir, exist_ok=True)
+                if os.path.exists(scratch_dir):
+                    shutil.rmtree(scratch_dir)
+                os.makedirs(scratch_dir)
                 os.chdir(scratch_dir)
 
                 input_file_name = f'{name}_{id}.sdf'
