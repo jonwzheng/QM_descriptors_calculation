@@ -217,6 +217,7 @@ def csearch(supp, total, args, logger, done_jobs_record, project_dir):
                         else:
                             running_pool[task.name] = executor.submit(task)
     except StopIteration:
+        logger.info(traceback.format_exc())
         # supp is empty
         pass
     logger.info('FF conformer searching finished')
