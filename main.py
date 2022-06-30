@@ -188,7 +188,8 @@ except Exception as e:
     logger.error(f"{args.conf_search_FF} not in supported FFs.")
     raise
 supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
-done_jobs_record = csearch(supp, len(df), args, logger, done_jobs_record, project_dir)
+logger.info(f'FF conformer searching for: {','.join([x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf])}')
+done_jobs_record = csearch(supp, len(df.index), args, logger, done_jobs_record, project_dir)
 logger.info('='*80)
 
 if args.is_test:
