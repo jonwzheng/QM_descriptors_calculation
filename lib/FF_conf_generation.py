@@ -174,51 +174,46 @@ def postrmsd(n, diz2, rmspost):
 # conformational search / handles parallel threads if more than one structure is defined
 def csearch(supp, total, args, logger, done_jobs_record, project_dir):
     os.makedirs(args.FF_conf_folder, exist_ok=True)
-    try:
-        with futures.ProcessPoolExecutor(max_workers=args.FF_threads) as executor:
-            n_tasks = args.FF_threads if args.FF_threads < total else total
-            tasks = [genConf(next(supp), args) for m in range(n_tasks)]
-            running_pool = {task.name: executor.submit(task) for task in tasks}
+    with futures.ProcessPoolExecutor(max_workers=args.FF_threads) as executor:
+        n_tasks = args.FF_threads if args.FF_threads < total else total
+        tasks = [genConf(next(supp), args) for m in range(n_tasks)]
+        running_pool = {task.name: executor.submit(task) for task in tasks}
 
-            while True:
-                if len(running_pool) == 0:
-                    break
+        while True:
+            if len(running_pool) == 0:
+                break
 
-                for mol_id in list(running_pool):
-                    future = running_pool[mol_id]
-                    if future.done():
-                        mol, ids, nr = future.result(timeout=0)
-                        if mol:
-                            lowest_en, lowest_id = ids[0]
-                            mol.SetProp('_Name', mol_id)
-                            os.makedirs(os.path.join(args.FF_conf_folder, mol_id), exist_ok=True)
-                            write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}.sdf'.format(mol_id)), lowest_id, lowest_en)
+            for mol_id in list(running_pool):
+                future = running_pool[mol_id]
+                if future.done():
+                    mol, ids, nr = future.result(timeout=0)
+                    if mol:
+                        lowest_en, lowest_id = ids[0]
+                        mol.SetProp('_Name', mol_id)
+                        os.makedirs(os.path.join(args.FF_conf_folder, mol_id), exist_ok=True)
+                        write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}.sdf'.format(mol_id)), lowest_id, lowest_en)
 
-                            conformers_found = len(ids)
-                            ids_to_save = [id for (en, id) in ids[:args.n_lowest_E_confs_to_save]]
-                            ens_to_save = [en for (en, id) in ids[:args.n_lowest_E_confs_to_save]]
-                            logger.info('conformer searching for {} completed: '
-                                        '{} conformers found, save the lowest {}'.format(mol_id, conformers_found, len(ids_to_save)))
-                            write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}_confs.sdf'.format(mol_id)), ids_to_save, ens_to_save)
-                            done_jobs_record.FF_conf.append(mol_id)
-                            done_jobs_record.save(project_dir, args.task_id)
-                        else:
-                            logger.info('conformer searching for {} failed.'.format(mol_id))
-                            pass
+                        conformers_found = len(ids)
+                        ids_to_save = [id for (en, id) in ids[:args.n_lowest_E_confs_to_save]]
+                        ens_to_save = [en for (en, id) in ids[:args.n_lowest_E_confs_to_save]]
+                        logger.info('conformer searching for {} completed: '
+                                    '{} conformers found, save the lowest {}'.format(mol_id, conformers_found, len(ids_to_save)))
+                        write_mol_to_sdf(mol, os.path.join(args.FF_conf_folder, mol_id, '{}_confs.sdf'.format(mol_id)), ids_to_save, ens_to_save)
+                        done_jobs_record.FF_conf.append(mol_id)
+                        done_jobs_record.save(project_dir, args.task_id)
+                    else:
+                        logger.info('conformer searching for {} failed.'.format(mol_id))
+                        pass
 
-                        # add new task
-                        del(running_pool[mol_id])
-                        
-                        try:
-                            task = genConf(next(supp), args)
-                        except StopIteration:
-                            # reach end of the supp
-                            pass
-                        else:
-                            running_pool[task.name] = executor.submit(task)
-    except StopIteration:
-        logger.info(traceback.format_exc())
-        # supp is empty
-        pass
+                    # add new task
+                    del(running_pool[mol_id])
+                    
+                    try:
+                        task = genConf(next(supp), args)
+                    except StopIteration:
+                        # reach end of the supp
+                        pass
+                    else:
+                        running_pool[task.name] = executor.submit(task)
     logger.info('FF conformer searching finished')
     return done_jobs_record
