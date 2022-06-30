@@ -217,5 +217,5 @@ def csearch(supp, total, args, logger, done_jobs_record, project_dir):
                         pass
                     else:
                         running_pool[task.name] = executor.submit(task)
-    logger.info('FF conformer searching finished')
+    logger.info('FF conformer searching completed')
     return done_jobs_record

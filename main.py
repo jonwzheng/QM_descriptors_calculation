@@ -194,7 +194,6 @@ if conf_ids:
     logger.info(f'FF conformer searching for: {conf_ids_str}')
     done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
 
-logger.info('FF conformer searching completed.')
 logger.info('='*80)
 
 if args.is_test:
