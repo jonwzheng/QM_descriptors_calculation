@@ -26,8 +26,8 @@ parser.add_argument('--num_tasks', type=int, default=1,
 # parser.add_argument('--output', type=str, default='QM_descriptors.pickle',
 #                     help='output as a .pickle file')
 # conformer searching
-parser.add_argument('--conf_search_FF', type=str, default='GFNFF',
-                    help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF.')
+parser.add_argument('--conf_search_FF', type=str, default='all',
+                    help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF. If choose all, GFNFF will be used first and MMFF94s will be used if GFNFF does not work.')
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
                     help='Folder name for FF searched conformers')
 parser.add_argument('--max_n_conf', type=int, default=800,
@@ -63,7 +63,7 @@ parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=30
 # DFT optimization and frequency calculation
 parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
                     help='folder for DFT optimization and frequency calculation',)
-parser.add_argument('--DFT_opt_freq_theory', type=str, default='#p opt=(calcall,noeigentest,maxcycles=120) freq guess=mix wb97xd/def2svp scf=xqc iop(2/9=2000)',
+parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian) scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
                     help='level of theory for the DFT calculation')
 parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=4,
                     help='number of process for DFT calculations')
@@ -181,18 +181,31 @@ os.chdir(project_dir)
 
 # conformer searching
 logger.info('starting FF conformer searching...')
-supported_FFs = ["MMFF94s", "GFNFF"]
+supported_FFs = ["MMFF94s", "GFNFF", "all"]
 try:
     assert args.conf_search_FF in supported_FFs
 except Exception as e:
     logger.error(f"{args.conf_search_FF} not in supported FFs.")
     raise
+conf_search_FF = args.conf_search_FF
+if conf_search_FF == "all":
+    args.conf_search_FF = "GFNFF" #first try GFNFF
+
 supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
 conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
 if conf_ids:
     conf_ids_str = ','.join(conf_ids)
-    logger.info(f'FF conformer searching for: {conf_ids_str}')
+    logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
     done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
+
+if conf_search_FF == "all": #then try MMFF94s
+    args.conf_search_FF = "MMFF94s"
+    supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
+    conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
+    if conf_ids:
+        conf_ids_str = ','.join(conf_ids)
+        logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
+        done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
 
 logger.info('='*80)
 
