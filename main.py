@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import os
 import shutil
+import pickle as pkl
 
 import pandas as pd
 import traceback
@@ -71,8 +72,8 @@ parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
 # Turbomole and COSMO calculation
 parser.add_argument('--perform_COSMO', type=bool, default=True,
                     help='whether to perform COSMO calculation',)
-parser.add_argument('--xyz_COSMO', type=bool, default=True,
-                    help='pickle file containing a dictionary to map between the spc_id and the xyz to perform COSMO calculation',)
+parser.add_argument('--xyz_COSMO', type=str, default=None,
+                    help='pickle file containing a dictionary to map between the mol_id and the xyz to perform COSMO calculation',)
 parser.add_argument('--COSMO_folder', type=str, default='COSMO_calc',
                     help='folder for COSMO calculation',)
 parser.add_argument('--COSMO_temperatures', type=str, nargs="+", required=False, default=['297.15', '298.15', '299.15'],
@@ -348,19 +349,23 @@ else:
         df_pure = df_pure.reset_index()
         opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
+        if args.xyz_COSMO:
+            with open(args.xyz_COSMO, "rb") as f:
+                xyz_COSMO = pkl.load(f)
+        else:
+            xyz_COSMO = None
+
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
             os.makedirs(os.path.join(args.COSMO_folder, mol_id), exist_ok=True)
-            if args.xyz_pkl_COSMO:
-                pass
-            else:
+            if not args.xyz_COSMO:
                 shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
                                 os.path.join(args.COSMO_folder, mol_id, mol_id + ".sdf"))
             charge = mol_id_to_charge_dict[mol_id]
             mult = mol_id_to_mult_dict[mol_id]
             os.chdir(os.path.join(args.COSMO_folder, mol_id))
             try:
-                cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id)
+                cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id, xyz_COSMO)
                 done_jobs = done_jobs_record.COSMO.get(mol_id, [])
                 done_jobs.append(mol_id)
                 done_jobs_record.COSMO[mol_id] = done_jobs
