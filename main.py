@@ -43,8 +43,6 @@ parser.add_argument('--E_cutoff_fraction', type=float, required=False, default=0
                     help='energy window for FF minimization.')
 parser.add_argument('--FF_threads', type=int, required=False, default=4,
                     help='number of process for the FF conformer searching')
-parser.add_argument('--timeout', required=False, default=1200,
-                    help='time window for each FF conformer searching sub process')
 parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
@@ -53,7 +51,7 @@ parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempiric
                     help='folder for semiempirical optimization')
 parser.add_argument('--semiempirical_method', type=str, default='GFN2-XTB',
                     help='method used for semiempirical optimization. Options are GFN2-XTB, am1, and pm7.')
-parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro)',
+parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian)',
                     help='level of theory for the Gaussian semiempirical calculation')
 parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=4,
                     help='number of process for Gaussian semiempirical calculations')
@@ -67,10 +65,14 @@ parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,m
                     help='level of theory for the DFT calculation')
 parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=4,
                     help='number of process for DFT calculations')
-parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=3000,
+parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
                     help='amount of ram (MB) allocated for each DFT calculation')
 
 # Turbomole and COSMO calculation
+parser.add_argument('--perform_COSMO', type=bool, default=True,
+                    help='whether to perform COSMO calculation',)
+parser.add_argument('--xyz_COSMO', type=bool, default=True,
+                    help='pickle file containing a dictionary to map between the spc_id and the xyz to perform COSMO calculation',)
 parser.add_argument('--COSMO_folder', type=str, default='COSMO_calc',
                     help='folder for COSMO calculation',)
 parser.add_argument('--COSMO_temperatures', type=str, nargs="+", required=False, default=['297.15', '298.15', '299.15'],
@@ -79,6 +81,8 @@ parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, def
                     help='input file containing pure solvents used for COSMO calculation.')
 
 # DLPNO single point calculation
+parser.add_argument('--perform_DLPNO', type=bool, default=True,
+                    help='whether to perform DLPNO calculation',)
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
                     help='number of process for DLPNO calculations')
@@ -136,23 +140,27 @@ logger = create_logger(name=name, task_id=args.task_id)
 submit_dir = os.path.abspath(os.getcwd())
 project_dir = os.path.abspath(os.path.join(args.output_folder, f"{args.output_folder}_{args.task_id}"))
 
+df = pd.read_csv(args.input_smiles, index_col=0)
+assert len(df['id']) == len(set(df['id'])), "ids must be unique"
+#df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
+df = df[args.task_id:len(df.index):args.num_tasks]
+
 done_jobs_record = DoneJobsRecord()
 
 try:
     done_jobs_record.load(project_dir, args.task_id)
     logger.info("this is a restart job...")
     logger.info("loading completed job ids...")
+    assert done_jobs_record.task_id == args.task_id, "Job partition must be the same as previously"
+    assert done_jobs_record.num_tasks == args.num_tasks, "Job partition must be the same as previously"
+    assert set(done_jobs_record.all_spc_ids) == set(df["id"]), "Job partition must be the same as previously"
 except:
     logger.info("this is a new job...")
     logger.info("make output folder...")
     os.makedirs(args.output_folder, exist_ok=True)
     logger.info("making project folder...")
     os.makedirs(project_dir, exist_ok=True)
-
-df = pd.read_csv(args.input_smiles, index_col=0)
-assert len(df['id']) == len(set(df['id'])), "ids must be unique"
-df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
-df = df[args.task_id:len(df.index):args.num_tasks]
+    done_jobs_record.initialize(df["id"], args.task_id, args.num_tasks)
 
 # create id to smile mapping
 mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
@@ -332,64 +340,69 @@ else:
     logger.info('DFT optimization and frequency calculation finished.')
     logger.info('='*80)
 
-    logger.info('starting Turbomole and COSMO calculation for the DFT-optimized conformer...')
-    os.makedirs(args.COSMO_folder, exist_ok=True)
-    logger.info('load solvent file...')
-    df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
-    df_pure = df_pure.reset_index()
-    opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
+    if args.perform_COSMO:
+        logger.info('starting Turbomole and COSMO calculation for the DFT-optimized conformer...')
+        os.makedirs(args.COSMO_folder, exist_ok=True)
+        logger.info('load solvent file...')
+        df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
+        df_pure = df_pure.reset_index()
+        opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
-    for opt_sdf in opt_sdfs:
-        mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.COSMO_folder, mol_id), exist_ok=True)
-        shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
-                        os.path.join(args.COSMO_folder, mol_id, mol_id + ".sdf"))
-        charge = mol_id_to_charge_dict[mol_id]
-        mult = mol_id_to_mult_dict[mol_id]
-        os.chdir(os.path.join(args.COSMO_folder, mol_id))
+        for opt_sdf in opt_sdfs:
+            mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
+            os.makedirs(os.path.join(args.COSMO_folder, mol_id), exist_ok=True)
+            if args.xyz_pkl_COSMO:
+                pass
+            else:
+                shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
+                                os.path.join(args.COSMO_folder, mol_id, mol_id + ".sdf"))
+            charge = mol_id_to_charge_dict[mol_id]
+            mult = mol_id_to_mult_dict[mol_id]
+            os.chdir(os.path.join(args.COSMO_folder, mol_id))
+            try:
+                cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id)
+                done_jobs = done_jobs_record.COSMO.get(mol_id, [])
+                done_jobs.append(mol_id)
+                done_jobs_record.COSMO[mol_id] = done_jobs
+                logger.info(f'COSMO calculation for {mol_id} completed')
+            except:
+                logger.error(f'Turbomole and COSMO calculation for {opt_sdf} failed.')
+                logger.error(traceback.format_exc())
+            os.chdir(project_dir)
+
+        logger.info('COSMO calculation finished.')
+        logger.info('Extracting COSMO results...')
         try:
-            cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id)
-            done_jobs = done_jobs_record.COSMO.get(mol_id, [])
-            done_jobs.append(mol_id)
-            done_jobs_record.COSMO[mol_id] = done_jobs
-            logger.info(f'COSMO calculation for {mol_id} completed')
+            save_cosmo_results(args.COSMO_folder, done_jobs_record, args.task_id)
+            logger.error('Extractomg COSMO results completed.')
         except:
-            logger.error(f'Turbomole and COSMO calculation for {opt_sdf} failed.')
+            logger.error('Extractomg COSMO results failed.')
             logger.error(traceback.format_exc())
-        os.chdir(project_dir)
 
-    logger.info('COSMO calculation finished.')
-    logger.info('Extracting COSMO results...')
-    try:
-        save_cosmo_results(args.COSMO_folder, done_jobs_record, args.task_id)
-        logger.error('Extractomg COSMO results completed.')
-    except:
-        logger.error('Extractomg COSMO results failed.')
-        logger.error(traceback.format_exc())
+        logger.info('='*80)
 
-    logger.info('='*80)
-
-    logger.info('starting DLPNO single point calculation for the DFT-optimized conformer...')
-    os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
-    opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
-    for opt_sdf in opt_sdfs:
-        mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.DLPNO_sp_folder, mol_id), exist_ok=True)
-        shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
-                        os.path.join(args.DLPNO_sp_folder, mol_id, mol_id + ".sdf"))
-        charge = mol_id_to_charge_dict[mol_id]
-        mult = mol_id_to_mult_dict[mol_id]
-        os.chdir(os.path.join(args.DLPNO_sp_folder, mol_id))
-        try:
-            dlpno_sp_calc(mol_id, ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram)
-            done_jobs_record.WFT_sp.append(mol_id)
-            done_jobs_record.save(project_dir, args.task_id)
-            logger.info(f'DLPNO single point calculation for {mol_id} completed')
-        except:
-            logger.error(f'DLPNO single point calculation for {mol_id} failed.')
-            logger.error(traceback.format_exc())
-        os.chdir(project_dir)
-    logger.info('DLPNO single point calculation finished.')
+    if args.perform_DLPNO:
+        logger.info('starting DLPNO single point calculation for the DFT-optimized conformer...')
+        os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
+        opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
+        for opt_sdf in opt_sdfs:
+            mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
+            os.makedirs(os.path.join(args.DLPNO_sp_folder, mol_id), exist_ok=True)
+            shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
+                            os.path.join(args.DLPNO_sp_folder, mol_id, mol_id + ".sdf"))
+            charge = mol_id_to_charge_dict[mol_id]
+            mult = mol_id_to_mult_dict[mol_id]
+            os.chdir(os.path.join(args.DLPNO_sp_folder, mol_id))
+            try:
+                dlpno_sp_calc(mol_id, ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram)
+                done_jobs_record.WFT_sp.append(mol_id)
+                done_jobs_record.save(project_dir, args.task_id)
+                logger.info(f'DLPNO single point calculation for {mol_id} completed')
+            except:
+                logger.error(f'DLPNO single point calculation for {mol_id} failed.')
+                logger.error(traceback.format_exc())
+            os.chdir(project_dir)
+        logger.info('DLPNO single point calculation finished.')
 
 
     # # DFT QM descriptor calculation

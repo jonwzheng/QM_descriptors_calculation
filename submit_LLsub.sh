@@ -27,6 +27,7 @@ TURBODIR=/home/gridsan/groups/RMG/Software/TmoleX19/TURBOMOLE
 source $TURBODIR/Config_turbo_env
 COSMOTHERMO_PATH=/home/gridsan/groups/RMG/Software/COSMOtherm2020
 COSMO_DATABASE_PATH=/home/gridsan/groups/RMG/COSMO_database
+COSMO_input_pure_solvents=~/Software/QM_descriptors_calculation/common_solvent_list_final.csv
 
 #openmpi
 PATH=~/RMG_shared/Software/ompi/bin:$PATH
@@ -42,7 +43,5 @@ echo "Number of Tasks: " $LLSUB_SIZE
 
 #QMD
 QMD_PATH=~/Software/QM_descriptors_calculation
-python $QMD_PATH/main.py --input_smiles test.csv --task_id $LLSUB_RANK --num_tasks $LLSUB_SIZE\
---XTB_path $XTB_PATH --G16_path $g16root/g16 --ORCA_path $orcadir --RDMC_path $RDMC_PATH --COSMOtherm_path $COSMOTHERMO_PATH --COSMO_database_path $COSMO_DATABASE_PATH \ 
---conf_search_FF GFNFF --nconf 5 --COSMO_solvents h2o methanol --COSMO_solvent_solute_ratios 30 70 0 --COSMO_temperature 25 
+python $QMD_PATH/main.py --input_smiles descend_300K_data_down_30K_tree-20220520_closed_shell_mols.csv --task_id $LLSUB_RANK --num_tasks $LLSUB_SIZE --XTB_path $XTB_PATH --G16_path $g16root/g16 --ORCA_path $orcadir --RDMC_path $RDMC_PATH --COSMOtherm_path $COSMOTHERMO_PATH --COSMO_database_path $COSMO_DATABASE_PATH --conf_search_FF GFNFF --COSMO_input_pure_solvents COSMO_input_pure_solvents
 

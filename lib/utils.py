@@ -34,6 +34,9 @@ class DoneJobsRecord(object):
     class to record completed jobs
     """
     def __init__(self):
+        self.all_spc_ids = []
+        self.task_id = None
+        self.num_tasks = None
         self.FF_conf = []
         self.semiempirical_opt = []
         self.DFT_opt_freq = []
@@ -52,3 +55,8 @@ class DoneJobsRecord(object):
             content = json.load(fh)
         for job, molids in content.items():
             setattr(self, job, molids)
+
+    def initialize(self, all_spc_ids, task_id, num_tasks):
+        self.all_spc_ids = all_spc_ids
+        self.task_id = task_id
+        self.num_tasks = num_tasks
