@@ -205,7 +205,7 @@ if args.perform_conf_search_FF:
         logger.error(f"{args.conf_search_FF} not in supported FFs.")
         raise e
 
-    if args.conf_search_FF == "GFNFF" or args.conf_search == "all":
+    if args.conf_search_FF == "GFNFF" or args.conf_search_FF == "all":
         try:
             assert XTB_PATH is not None
         except AssertionError as e:
