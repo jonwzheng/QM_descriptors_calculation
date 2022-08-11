@@ -395,7 +395,7 @@ else:
         df_pure = df_pure.reset_index()
 
         if args.xyz_COSMO:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in xyz_COSMO.keys()]
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in xyz_COSMO.keys()if mol_id in df['id']]
         else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
