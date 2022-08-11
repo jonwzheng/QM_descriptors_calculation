@@ -27,7 +27,7 @@ parser.add_argument('--num_tasks', type=int, default=1,
 # parser.add_argument('--output', type=str, default='QM_descriptors.pickle',
 #                     help='output as a .pickle file')
 # conformer searching
-parser.add_argument('--skip_conf_search_FF', action="store_false",
+parser.add_argument('--skip_conf_search_FF', action="store_true",
                     help='whether to skip conformer search',)
 parser.add_argument('--conf_search_FF', type=str, default='all',
                     help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF. If choose all, GFNFF will be used first and MMFF94s will be used if GFNFF does not work.')
@@ -50,7 +50,7 @@ parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
 # semiempirical optimization and frequency calculation
-parser.add_argument('--skip_semiempirical_opt', action="store_false",
+parser.add_argument('--skip_semiempirical_opt', action="store_true",
                     help='whether to skip semiempirical optimization',)
 parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
                     help='folder for semiempirical optimization')
@@ -64,7 +64,7 @@ parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=30
                     help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
 
 # DFT optimization and frequency calculation
-parser.add_argument('--skip_DFT_opt_freq', action="store_false",
+parser.add_argument('--skip_DFT_opt_freq', action="store_true",
                     help='whether to skip DFT optimization and frequency calculation',)
 parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
                     help='folder for DFT optimization and frequency calculation',)
@@ -76,7 +76,7 @@ parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
                     help='amount of ram (MB) allocated for each DFT calculation')
 
 # Turbomole and COSMO calculation
-parser.add_argument('--skip_COSMO', action="store_false",
+parser.add_argument('--skip_COSMO', action="store_true",
                     help='whether to skip COSMO calculation',)
 parser.add_argument('--xyz_COSMO', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and the xyz to perform COSMO calculation',)
@@ -88,7 +88,7 @@ parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, def
                     help='input file containing pure solvents used for COSMO calculation.')
 
 # DLPNO single point calculation
-parser.add_argument('--skip_DLPNO', action="store_false",
+parser.add_argument('--skip_DLPNO', action="store_true",
                     help='whether to skip DLPNO calculation',)
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
