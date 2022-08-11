@@ -450,13 +450,14 @@ else:
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
             os.makedirs(os.path.join(args.DLPNO_sp_folder, mol_id), exist_ok=True)
-            shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
-                            os.path.join(args.DLPNO_sp_folder, mol_id, mol_id + ".sdf"))
+            if not args.xyz_DFT_opt:
+                shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
+                                os.path.join(args.DLPNO_sp_folder, mol_id, mol_id + ".sdf"))
             charge = mol_id_to_charge_dict[mol_id]
             mult = mol_id_to_mult_dict[mol_id]
             os.chdir(os.path.join(args.DLPNO_sp_folder, mol_id))
             try:
-                dlpno_sp_calc(mol_id, ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram)
+                dlpno_sp_calc(mol_id, ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram, xyz_DFT_opt)
                 done_jobs_record.WFT_sp.append(mol_id)
                 done_jobs_record.save(project_dir, args.task_id)
                 logger.info(f'DLPNO single point calculation for {mol_id} completed')

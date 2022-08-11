@@ -16,7 +16,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
     else:
         xyz = xyz_COSMO[mol_id]
         num_atoms = len(xyz.splitlines())
-        xyz = num_atoms + "\n\n" +xyz
+        xyz = str(num_atoms) + "\n\n" +xyz
 
     #create and move to working directory
     mol_dir = os.getcwd()

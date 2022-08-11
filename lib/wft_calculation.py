@@ -7,13 +7,16 @@ from rdkit import Chem
 from .file_parser import mol2xyz
 
 
-def dlpno_sp_calc(mol_id, orca_path, charge, mult, n_procs, job_ram):
+def dlpno_sp_calc(mol_id, orca_path, charge, mult, n_procs, job_ram, xyz_DFT_opt):
     sdf = mol_id + '.sdf'
     mol_dir = os.getcwd()
 
-    mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
-    xyz = mol2xyz(mol)
-    coords = "\n".join(xyz.splitlines()[2:])
+    if xyz_DFT_opt:
+        coords = xyz_DFT_opt[mol_id]
+    else:
+        mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
+        xyz = mol2xyz(mol)
+        coords = "\n".join(xyz.splitlines()[2:])
     
     script = generate_dlpno_sp_input(coords, charge, mult, job_ram, n_procs)
 
