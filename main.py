@@ -173,7 +173,7 @@ except:
     os.makedirs(args.output_folder, exist_ok=True)
     logger.info("making project folder...")
     os.makedirs(project_dir, exist_ok=True)
-    done_jobs_record.initialize(df["id"], args.task_id, args.num_tasks)
+    done_jobs_record.initialize(list(df["id"]), args.task_id, args.num_tasks)
 
 # create id to smile mapping
 mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
@@ -414,6 +414,7 @@ else:
                 done_jobs = done_jobs_record.COSMO.get(mol_id, [])
                 done_jobs.append(mol_id)
                 done_jobs_record.COSMO[mol_id] = done_jobs
+                done_jobs_record.save(project_dir, args.task_id)
                 logger.info(f'COSMO calculation for {mol_id} completed')
             except:
                 logger.error(f'Turbomole and COSMO calculation for {opt_sdf} failed.')
@@ -443,7 +444,7 @@ else:
         os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
 
         if args.xyz_DFT_opt:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'] if mol_id in xyz_DFT_opt]
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
             print(opt_sdfs)
         else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
