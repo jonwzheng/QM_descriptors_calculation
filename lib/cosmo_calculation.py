@@ -70,6 +70,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             cosmo_command = os.path.join(cosmotherm_path, "COSMOtherm", "BIN-LINUX", "cosmotherm")
             outfile = f'{mol_id}_{row.cosmo_name}.out'
             tabfile = f'{mol_id}_{row.cosmo_name}.tab'
+            xmlfile = f'{mol_id}_{row.cosmo_name}_status.xml'
             with open(outfile, 'w') as out:
                 subprocess.run(f'{cosmo_command} {inpfile}', shell=True, stdout=out, stderr=out)
 
@@ -79,6 +80,10 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             record.append(row.cosmo_name)
             done_jobs_record.COSMO[mol_id] = record
             done_jobs_record.save(project_dir, task_id)
+            os.remove(tabfile)
+            os.remove(outfile)
+            os.remove(inpfile)
+            os.remove(xmlfile)
 
     os.chdir(mol_dir)
 
