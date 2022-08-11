@@ -49,7 +49,7 @@ parser.add_argument('--FF_threads', type=int, required=False, default=4,
 parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
-# semiempirical optimization and frequency calculation
+# semiempirical optimization calculation
 parser.add_argument('--skip_semiempirical_opt', action="store_true",
                     help='whether to skip semiempirical optimization',)
 parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
@@ -93,18 +93,8 @@ parser.add_argument('--skip_DLPNO', action="store_true",
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
                     help='number of process for DLPNO calculations')
-parser.add_argument('--DLPNO_sp_job_ram', type=int, default=3000,
+parser.add_argument('--DLPNO_sp_job_ram', type=int, default=16000,
                     help='amount of ram (MB) allocated for each DLPNO calculation')
-
-# DFT QM descriptor calculation
-parser.add_argument('--DFT_QM_descriptor_folder', type=str, default='DFT_QM_desc',
-                    help='folder for DFT calculation')
-parser.add_argument('--DFT_QM_descriptor_theory', type=str, default='b3lyp/def2svp',
-                    help='level of theory for the DFT calculation')
-parser.add_argument('--DFT_QM_descriptor_n_procs', type=int, default=4,
-                    help='number of process for DFT calculations')
-parser.add_argument('--DFT_QM_descriptor_job_ram', type=int, default=3000,
-                    help='amount of ram (MB) allocated for each DFT calculation')
 
 # test
 parser.add_argument('--is_test', type=bool, default=False,
