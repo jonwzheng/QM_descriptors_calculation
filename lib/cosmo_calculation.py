@@ -103,7 +103,7 @@ notempty wtln ehfile
     if row.source == "COSMOtherm":
         solvent_dir = f"{cosmotherm_path}/COSMOtherm/DATABASE-COSMO/BP-TZVPD-FINE/{first_letter}"
     elif row.source == "COSMObase":
-        solvent_dir = f"{cosmo_database_path}/COSMObase2021/BP-TZVPD-FINE/{first_letter}"
+        solvent_dir = f"{cosmo_database_path}/BP-TZVPD-FINE/{first_letter}"
     script += "f = \"" + row.cosmo_name + "_c0.cosmo\" fdir=\"" + solvent_dir + "\""
     if int(row.cosmo_conf) > 1:
         script += " Comp = \"" + row.cosmo_name + "\" [ VPfile"

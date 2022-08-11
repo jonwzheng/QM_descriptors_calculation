@@ -377,7 +377,7 @@ else:
     if args.perform_COSMO:
 
         try:
-            assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None:
+            assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None
         except AssertionError as e:
             logger.error(f"COSMO_DATABASE_PATH and COSMOTHERM_PATH must be provided for Turbomole and COSMO calculations")
             raise e
@@ -429,7 +429,7 @@ else:
     if args.perform_DLPNO:
 
         try:
-            assert ORCA_PATH is not None:
+            assert ORCA_PATH is not None
         except AssertionError as e:
             logger.error(f"ORCA_PATH must be provided for DLPNO single point calculations")
             raise e
