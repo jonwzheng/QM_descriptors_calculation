@@ -90,6 +90,8 @@ parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, def
 # DLPNO single point calculation
 parser.add_argument('--skip_DLPNO', action="store_true",
                     help='whether to skip DLPNO calculation',)
+parser.add_argument('--xyz_DLPNO', type=str, default=None,
+                    help='pickle file containing a dictionary to map between the mol_id and the xyz to perform DLPNO single point calculation',)
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
                     help='number of process for DLPNO calculations')
@@ -152,11 +154,17 @@ assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 #df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
 df = df[args.task_id:len(df.index):args.num_tasks]
 
-if args.xyz_COSMO:
+if args.xyz_COSMO is not None:
     with open(args.xyz_COSMO, "rb") as f:
         xyz_COSMO = pkl.load(f)
 else:
     xyz_COSMO = None
+
+if args.xyz_DLPNO is not None:
+    with open(args.xyz_DLPNO, "rb") as f:
+        xyz_DLPNO = pkl.load(f)
+else:
+    xyz_DLPNO = None
 
 done_jobs_record = DoneJobsRecord()
 
@@ -395,6 +403,8 @@ else:
         df_pure = df_pure.reset_index()
 
         if args.xyz_COSMO:
+            print(df['id'])
+            print(xyz_COSMO.keys())
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in xyz_COSMO.keys()if mol_id in df['id']]
         else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
