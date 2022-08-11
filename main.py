@@ -152,6 +152,12 @@ assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 #df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
 df = df[args.task_id:len(df.index):args.num_tasks]
 
+if args.xyz_COSMO:
+    with open(args.xyz_COSMO, "rb") as f:
+        xyz_COSMO = pkl.load(f)
+else:
+    xyz_COSMO = None
+
 done_jobs_record = DoneJobsRecord()
 
 try:
@@ -389,11 +395,8 @@ else:
         df_pure = df_pure.reset_index()
 
         if args.xyz_COSMO:
-            with open(args.xyz_COSMO, "rb") as f:
-                xyz_COSMO = pkl.load(f)
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in xyz_COSMO.keys()]
         else:
-            xyz_COSMO = None
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
         for opt_sdf in opt_sdfs:
