@@ -27,8 +27,8 @@ parser.add_argument('--num_tasks', type=int, default=1,
 # parser.add_argument('--output', type=str, default='QM_descriptors.pickle',
 #                     help='output as a .pickle file')
 # conformer searching
-parser.add_argument('--perform_conf_search_FF', type=bool, default=True,
-                    help='whether to perform conformer search',)
+parser.add_argument('--skip_conf_search_FF', action="store_false",
+                    help='whether to skip conformer search',)
 parser.add_argument('--conf_search_FF', type=str, default='all',
                     help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF. If choose all, GFNFF will be used first and MMFF94s will be used if GFNFF does not work.')
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
@@ -50,8 +50,8 @@ parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
 # semiempirical optimization and frequency calculation
-parser.add_argument('--perform_semiempirical_opt', type=bool, default=True,
-                    help='whether to perform semiempirical optimization',)
+parser.add_argument('--skip_semiempirical_opt', action="store_false",
+                    help='whether to skip semiempirical optimization',)
 parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
                     help='folder for semiempirical optimization')
 parser.add_argument('--semiempirical_method', type=str, default='GFN2-XTB',
@@ -64,8 +64,8 @@ parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=30
                     help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
 
 # DFT optimization and frequency calculation
-parser.add_argument('--perform_DFT_opt_freq', type=bool, default=True,
-                    help='whether to perform DFT optimization and frequency calculation',)
+parser.add_argument('--skip_DFT_opt_freq', action="store_false",
+                    help='whether to skip DFT optimization and frequency calculation',)
 parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
                     help='folder for DFT optimization and frequency calculation',)
 parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian) scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
@@ -76,8 +76,8 @@ parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
                     help='amount of ram (MB) allocated for each DFT calculation')
 
 # Turbomole and COSMO calculation
-parser.add_argument('--perform_COSMO', type=bool, default=True,
-                    help='whether to perform COSMO calculation',)
+parser.add_argument('--skip_COSMO', action="store_false",
+                    help='whether to skip COSMO calculation',)
 parser.add_argument('--xyz_COSMO', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and the xyz to perform COSMO calculation',)
 parser.add_argument('--COSMO_folder', type=str, default='COSMO_calc',
@@ -88,8 +88,8 @@ parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, def
                     help='input file containing pure solvents used for COSMO calculation.')
 
 # DLPNO single point calculation
-parser.add_argument('--perform_DLPNO', type=bool, default=True,
-                    help='whether to perform DLPNO calculation',)
+parser.add_argument('--skip_DLPNO', action="store_false",
+                    help='whether to skip DLPNO calculation',)
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
                     help='number of process for DLPNO calculations')
@@ -195,7 +195,7 @@ logger.info("switching to project folder...")
 os.chdir(project_dir)
 
 # conformer searching
-if args.perform_conf_search_FF:
+if not args.skip_conf_search_FF:
     logger.info('starting FF conformer searching...')
     supported_FFs = ["MMFF94s", "GFNFF", "all"]
 
@@ -306,7 +306,7 @@ if args.is_test:
 
 else:
 
-    if args.perform_semiempirical_opt:
+    if not args.skip_semiempirical_opt:
 
         try:
             assert XTB_PATH is not None and G16_PATH is not None
@@ -342,7 +342,7 @@ else:
         logger.info('semiempirical optimization finished.')
         logger.info('='*80)
 
-    if args.perform_DFT_opt_freq:
+    if not args.skip_DFT_opt_freq:
 
         try:
             assert G16_PATH is not None
@@ -374,7 +374,7 @@ else:
         logger.info('DFT optimization and frequency calculation finished.')
         logger.info('='*80)
 
-    if args.perform_COSMO:
+    if not args.skip_COSMO:
 
         try:
             assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None
@@ -387,13 +387,14 @@ else:
         logger.info('load solvent file...')
         df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
         df_pure = df_pure.reset_index()
-        opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
         if args.xyz_COSMO:
             with open(args.xyz_COSMO, "rb") as f:
                 xyz_COSMO = pkl.load(f)
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in xyz_COSMO.keys()]
         else:
             xyz_COSMO = None
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
@@ -426,7 +427,7 @@ else:
 
         logger.info('='*80)
 
-    if args.perform_DLPNO:
+    if not args.skip_DLPNO:
 
         try:
             assert ORCA_PATH is not None
