@@ -15,6 +15,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         xyz = mol2xyz(mol)
     else:
         xyz = xyz_COSMO[mol_id]
+        num_atoms = len(xyz.splitlines())
+        xyz = num_atoms + "\n\n" +xyz
 
     #create and move to working directory
     mol_dir = os.getcwd()
@@ -45,16 +47,14 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 shutil.copy(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), os.path.join(mol_dir, file))
                 break
         else:
-            #turbomole calculation failed
-            raise
+            raise RuntimeError("turbomole calculation failed")
         for file in os.listdir("EnergyfilesBP-TZVPD-FINE-COSMO-SP"):
             if file.endswith("energy"):
                 shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), file)
                 shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), os.path.join(mol_dir, file))
                 break
         else:
-            #turbomole calculation failed
-            raise
+            raise RuntimeError("turbomole calculation failed")
         done_jobs_record.COSMO[mol_id] = []
         done_jobs_record.save(project_dir, task_id)
     
