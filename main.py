@@ -27,6 +27,8 @@ parser.add_argument('--num_tasks', type=int, default=1,
 # parser.add_argument('--output', type=str, default='QM_descriptors.pickle',
 #                     help='output as a .pickle file')
 # conformer searching
+parser.add_argument('--perform_conf_search_FF', type=bool, default=True,
+                    help='whether to perform conformer search',)
 parser.add_argument('--conf_search_FF', type=str, default='all',
                     help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF. If choose all, GFNFF will be used first and MMFF94s will be used if GFNFF does not work.')
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
@@ -48,6 +50,8 @@ parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
 # semiempirical optimization and frequency calculation
+parser.add_argument('--perform_semiempirical_opt', type=bool, default=True,
+                    help='whether to perform semiempirical optimization',)
 parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
                     help='folder for semiempirical optimization')
 parser.add_argument('--semiempirical_method', type=str, default='GFN2-XTB',
@@ -60,6 +64,8 @@ parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=30
                     help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
 
 # DFT optimization and frequency calculation
+parser.add_argument('--perform_DFT_opt_freq', type=bool, default=True,
+                    help='whether to perform DFT optimization and frequency calculation',)
 parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
                     help='folder for DFT optimization and frequency calculation',)
 parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian) scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
@@ -114,17 +120,17 @@ parser.add_argument('--DFT_sp_job_ram', type=int, default=3000,
                     help='amount of ram (MB) allocated for each DFT calculation')
 
 # specify paths
-parser.add_argument('--XTB_path', type=str, required=True,
+parser.add_argument('--XTB_path', type=str, required=False, default=None,
                     help='path to installed XTB')
-parser.add_argument('--G16_path', type=str, required=True,
+parser.add_argument('--G16_path', type=str, required=False, default=None,
                     help='path to installed Gaussian 16')
-parser.add_argument('--RDMC_path', type=str, required=True,
+parser.add_argument('--RDMC_path', type=str, required=False, default=None,
                     help='path to RDMC to use xtb-gaussian script for xtb optimization calculation.')
-parser.add_argument('--COSMOtherm_path', type=str, required=True,
+parser.add_argument('--COSMOtherm_path', type=str, required=False, default=None,
                     help='path to COSMOthermo')
-parser.add_argument('--COSMO_database_path', type=str, required=True,
+parser.add_argument('--COSMO_database_path', type=str, required=False, default=None,
                     help='path to COSMO_database')
-parser.add_argument('--ORCA_path', type=str, required=True,
+parser.add_argument('--ORCA_path', type=str, required=False, default=None,
                     help='path to ORCA')
 
 args = parser.parse_args()
@@ -189,26 +195,27 @@ logger.info("switching to project folder...")
 os.chdir(project_dir)
 
 # conformer searching
-logger.info('starting FF conformer searching...')
-supported_FFs = ["MMFF94s", "GFNFF", "all"]
-try:
-    assert args.conf_search_FF in supported_FFs
-except Exception as e:
-    logger.error(f"{args.conf_search_FF} not in supported FFs.")
-    raise
-conf_search_FF = args.conf_search_FF
-if conf_search_FF == "all":
-    args.conf_search_FF = "GFNFF" #first try GFNFF
+if args.perform_conf_search_FF:
+    logger.info('starting FF conformer searching...')
+    supported_FFs = ["MMFF94s", "GFNFF", "all"]
 
-supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
-conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
-if conf_ids:
-    conf_ids_str = ','.join(conf_ids)
-    logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
-    done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
+    try:
+        assert args.conf_search_FF in supported_FFs
+    except AssertionError as e:
+        logger.error(f"{args.conf_search_FF} not in supported FFs.")
+        raise e
 
-if conf_search_FF == "all": #then try MMFF94s
-    args.conf_search_FF = "MMFF94s"
+    if args.conf_search_FF == "GFNFF" or args.conf_search == "all":
+        try:
+            assert XTB_PATH is not None
+        except AssertionError as e:
+            logger.error(f"XTB_PATH must be provided to use GFNFF")
+            raise e
+
+    conf_search_FF = args.conf_search_FF
+    if conf_search_FF == "all":
+        args.conf_search_FF = "GFNFF" #first try GFNFF
+
     supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
     conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
     if conf_ids:
@@ -216,7 +223,16 @@ if conf_search_FF == "all": #then try MMFF94s
         logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
         done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
 
-logger.info('='*80)
+    if conf_search_FF == "all": #then try MMFF94s
+        args.conf_search_FF = "MMFF94s"
+        supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
+        conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
+        if conf_ids:
+            conf_ids_str = ','.join(conf_ids)
+            logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
+            done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
+
+    logger.info('='*80)
 
 if args.is_test:
     semiempirical_methods = ["GFN2-XTB", "am1", "pm7"]
@@ -289,60 +305,84 @@ if args.is_test:
     logger.info('Extrcating DFT single point calculation results completed.')
 
 else:
-    conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
 
-    # semiempirical optimization
-    logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
-    os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
+    if args.perform_semiempirical_opt:
 
-    for conf_sdf in conf_sdfs:
-        mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
-        shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
-                        os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
-        charge = mol_id_to_charge_dict[mol_id]
-        mult = mol_id_to_mult_dict[mol_id]
-        os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
         try:
-            semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
-                              args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
-            done_jobs_record.semiempirical_opt.append(mol_id)
-            done_jobs_record.save(project_dir, args.task_id)
-            logger.info(f'semiempirical optimization for {mol_id} completed')
-        except Exception as e:
-            logger.error(f'semiempirical optimization for {mol_id} failed')
-            logger.error(traceback.format_exc())
-        os.chdir(project_dir)
-    semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
-    logger.info('semiempirical optimization finished.')
-    logger.info('='*80)
+            assert XTB_PATH is not None and G16_PATH is not None
+        except AssertionError as e:
+            logger.error(f"XTB_PATH and G16_PATH must be provided for GFN2-XTB semiempirical optimization calculations")
+            raise e
 
-    logger.info('starting DFT optimization and frequency calculation for the lowest energy semiempirical-optimized conformer...')
-    os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
-    for semi_opt_sdf in semi_opt_sdfs:
-        mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id), exist_ok=True)
-        shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
-                        os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
+        conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
 
-        charge = mol_id_to_charge_dict[mol_id]
-        mult = mol_id_to_mult_dict[mol_id]
-        os.chdir(os.path.join(args.DFT_opt_freq_folder, mol_id))
+        # semiempirical optimization
+        logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
+        os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
+
+        for conf_sdf in conf_sdfs:
+            mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
+            os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
+            shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
+                            os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
+            charge = mol_id_to_charge_dict[mol_id]
+            mult = mol_id_to_mult_dict[mol_id]
+            os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
+            try:
+                semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
+                                args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
+                done_jobs_record.semiempirical_opt.append(mol_id)
+                done_jobs_record.save(project_dir, args.task_id)
+                logger.info(f'semiempirical optimization for {mol_id} completed')
+            except Exception as e:
+                logger.error(f'semiempirical optimization for {mol_id} failed')
+                logger.error(traceback.format_exc())
+            os.chdir(project_dir)
+        semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
+        logger.info('semiempirical optimization finished.')
+        logger.info('='*80)
+
+    if args.perform_DFT_opt_freq:
+
         try:
-            dft_scf_opt(mol_id, G16_PATH, args.DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
-                        logger, args.DFT_opt_freq_job_ram, charge, mult)
-            done_jobs_record.DFT_opt_freq.append(mol_id)
-            done_jobs_record.save(project_dir, args.task_id)
-            logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
-        except Exception as e:
-            logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
-            logger.error(traceback.format_exc())
-        os.chdir(project_dir)
-    logger.info('DFT optimization and frequency calculation finished.')
-    logger.info('='*80)
+            assert G16_PATH is not None
+        except AssertionError as e:
+            logger.error(f"G16_PATH must be provided for DFT optimization and frequency calculations")
+            raise e
+
+        logger.info('starting DFT optimization and frequency calculation for the lowest energy semiempirical-optimized conformer...')
+        os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
+        for semi_opt_sdf in semi_opt_sdfs:
+            mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
+            os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id), exist_ok=True)
+            shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
+                            os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
+
+            charge = mol_id_to_charge_dict[mol_id]
+            mult = mol_id_to_mult_dict[mol_id]
+            os.chdir(os.path.join(args.DFT_opt_freq_folder, mol_id))
+            try:
+                dft_scf_opt(mol_id, G16_PATH, args.DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
+                            logger, args.DFT_opt_freq_job_ram, charge, mult)
+                done_jobs_record.DFT_opt_freq.append(mol_id)
+                done_jobs_record.save(project_dir, args.task_id)
+                logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
+            except Exception as e:
+                logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
+                logger.error(traceback.format_exc())
+            os.chdir(project_dir)
+        logger.info('DFT optimization and frequency calculation finished.')
+        logger.info('='*80)
 
     if args.perform_COSMO:
-        logger.info('starting Turbomole and COSMO calculation for the DFT-optimized conformer...')
+
+        try:
+            assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None:
+        except AssertionError as e:
+            logger.error(f"COSMO_DATABASE_PATH and COSMOTHERM_PATH must be provided for Turbomole and COSMO calculations")
+            raise e
+
+        logger.info('starting Turbomole and COSMO calculations for DFT-optimized conformers...')
         os.makedirs(args.COSMO_folder, exist_ok=True)
         logger.info('load solvent file...')
         df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
@@ -387,6 +427,13 @@ else:
         logger.info('='*80)
 
     if args.perform_DLPNO:
+
+        try:
+            assert ORCA_PATH is not None:
+        except AssertionError as e:
+            logger.error(f"ORCA_PATH must be provided for DLPNO single point calculations")
+            raise e
+
         logger.info('starting DLPNO single point calculation for the DFT-optimized conformer...')
         os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
         opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
