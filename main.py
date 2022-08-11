@@ -74,12 +74,12 @@ parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=4,
                     help='number of process for DFT calculations')
 parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
                     help='amount of ram (MB) allocated for each DFT calculation')
+parser.add_argument('--xyz_DFT_opt', type=str, default=None,
+                    help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
 
 # Turbomole and COSMO calculation
 parser.add_argument('--skip_COSMO', action="store_true",
                     help='whether to skip COSMO calculation',)
-parser.add_argument('--xyz_COSMO', type=str, default=None,
-                    help='pickle file containing a dictionary to map between the mol_id and the xyz to perform COSMO calculation',)
 parser.add_argument('--COSMO_folder', type=str, default='COSMO_calc',
                     help='folder for COSMO calculation',)
 parser.add_argument('--COSMO_temperatures', type=str, nargs="+", required=False, default=['297.15', '298.15', '299.15'],
@@ -90,8 +90,6 @@ parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, def
 # DLPNO single point calculation
 parser.add_argument('--skip_DLPNO', action="store_true",
                     help='whether to skip DLPNO calculation',)
-parser.add_argument('--xyz_DLPNO', type=str, default=None,
-                    help='pickle file containing a dictionary to map between the mol_id and the xyz to perform DLPNO single point calculation',)
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
                     help='number of process for DLPNO calculations')
@@ -154,17 +152,11 @@ assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 #df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
 df = df[args.task_id:len(df.index):args.num_tasks]
 
-if args.xyz_COSMO is not None:
-    with open(args.xyz_COSMO, "rb") as f:
-        xyz_COSMO = pkl.load(f)
+if args.xyz_DFT_opt is not None:
+    with open(args.xyz_DFT_opt, "rb") as f:
+        xyz_DFT_opt = pkl.load(f)
 else:
-    xyz_COSMO = None
-
-if args.xyz_DLPNO is not None:
-    with open(args.xyz_DLPNO, "rb") as f:
-        xyz_DLPNO = pkl.load(f)
-else:
-    xyz_DLPNO = None
+    xyz_DFT_opt = None
 
 done_jobs_record = DoneJobsRecord()
 
@@ -402,24 +394,23 @@ else:
         df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
         df_pure = df_pure.reset_index()
 
-        if args.xyz_COSMO:
-            print(df['id'])
-            print(xyz_COSMO.keys())
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in xyz_COSMO.keys()if mol_id in df['id']]
+        if args.xyz_DFT_opt:
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'] if mol_id in xyz_DFT_opt]
+            print(opt_sdfs)
         else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
             os.makedirs(os.path.join(args.COSMO_folder, mol_id), exist_ok=True)
-            if not args.xyz_COSMO:
+            if not args.xyz_DFT_opt:
                 shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
                                 os.path.join(args.COSMO_folder, mol_id, mol_id + ".sdf"))
             charge = mol_id_to_charge_dict[mol_id]
             mult = mol_id_to_mult_dict[mol_id]
             os.chdir(os.path.join(args.COSMO_folder, mol_id))
             try:
-                cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id, xyz_COSMO)
+                cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id, xyz_DFT_opt)
                 done_jobs = done_jobs_record.COSMO.get(mol_id, [])
                 done_jobs.append(mol_id)
                 done_jobs_record.COSMO[mol_id] = done_jobs
@@ -450,7 +441,12 @@ else:
 
         logger.info('starting DLPNO single point calculation for the DFT-optimized conformer...')
         os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
-        opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
+
+        if args.xyz_DFT_opt:
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'] if mol_id in xyz_DFT_opt]
+            print(opt_sdfs)
+        else:
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
             os.makedirs(os.path.join(args.DLPNO_sp_folder, mol_id), exist_ok=True)
