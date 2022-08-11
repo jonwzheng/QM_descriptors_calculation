@@ -328,6 +328,7 @@ else:
 
         for conf_sdf in conf_sdfs:
             mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
+            logger.info(f'starting semiempirical optimization calculation for {mol_id}...')
             os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
             shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
                             os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
@@ -360,6 +361,7 @@ else:
         os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
         for semi_opt_sdf in semi_opt_sdfs:
             mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
+            logger.info(f'starting DFT optimization and frequency calculation for {mol_id}...')
             os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id), exist_ok=True)
             shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
                             os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
@@ -395,13 +397,13 @@ else:
         df_pure = df_pure.reset_index()
 
         if args.xyz_DFT_opt:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'] if mol_id in xyz_DFT_opt]
-            print(opt_sdfs)
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
         else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
 
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
+            logger.info(f'starting Turbomole and COSMO calculation for {mol_id}...')
             os.makedirs(os.path.join(args.COSMO_folder, mol_id), exist_ok=True)
             if not args.xyz_DFT_opt:
                 shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
@@ -415,7 +417,7 @@ else:
                 done_jobs.append(mol_id)
                 done_jobs_record.COSMO[mol_id] = done_jobs
                 done_jobs_record.save(project_dir, args.task_id)
-                logger.info(f'COSMO calculation for {mol_id} completed')
+                logger.info(f'Turbomole and COSMO calculation for {mol_id} completed')
             except:
                 logger.error(f'Turbomole and COSMO calculation for {opt_sdf} failed.')
                 logger.error(traceback.format_exc())
@@ -445,7 +447,6 @@ else:
 
         if args.xyz_DFT_opt:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
-            print(opt_sdfs)
         else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
         for opt_sdf in opt_sdfs:
