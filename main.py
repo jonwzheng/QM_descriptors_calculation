@@ -31,7 +31,7 @@ parser.add_argument('--num_tasks', type=int, default=1,
 parser.add_argument('--skip_conf_search_FF', action="store_true",
                     help='whether to skip conformer search',)
 parser.add_argument('--conf_search_FF', type=str, default='all',
-                    help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF. If choose all, GFNFF will be used first and MMFF94s will be used if GFNFF does not work.')
+                    help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF. If all is chosen, GFNFF will be used first and MMFF94s will be used if GFNFF does not work.')
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
                     help='Folder name for FF searched conformers')
 parser.add_argument('--max_n_conf', type=int, default=800,
@@ -57,8 +57,8 @@ parser.add_argument('--skip_semiempirical_opt', action="store_true",
                     help='whether to skip semiempirical optimization',)
 parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
                     help='folder for semiempirical optimization')
-parser.add_argument('--semiempirical_method', type=str, default='GFN2-XTB',
-                    help='method used for semiempirical optimization. Options are GFN2-XTB, am1, and pm7.')
+parser.add_argument('--semiempirical_method', type=str, default='all',
+                    help='method used for semiempirical optimization. Options are GFN2-XTB, pm7, am1, and all. If all is chosen, GFN2-XTB will be used first, pm7 second, and am1 third if the previous method does not work.')
 parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro,cartesian)',
                     help='level of theory for the Gaussian semiempirical calculation')
 parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=4,
@@ -310,39 +310,69 @@ else:
 
     if not args.skip_semiempirical_opt:
 
-        try:
-            assert XTB_PATH is not None and G16_PATH is not None
-        except AssertionError as e:
-            logger.error(f"XTB_PATH and G16_PATH must be provided for GFN2-XTB semiempirical optimization calculations")
-            raise e
-
-        conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
-
         # semiempirical optimization
         logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
+
+        supported_semiempirical_methods = ["GFN2-XTB", "pm7", "am1"]
+        try:
+            assert args.semiempirical_method in supported_semiempirical_methods
+        except AssertionError as e:
+            logger.error(f"{args.semiempirical_method} not in supported semiempirical methods.")
+            raise e
+
+        if args.semiempirical_method == "GFN2-XTB" or args.semiempirical_method == "all":
+            try:
+                assert XTB_PATH is not None and G16_PATH is not None
+            except AssertionError as e:
+                logger.error(f"XTB_PATH and G16_PATH must be provided to use {args.semiempirical_method}")
+                raise e
+        else:
+            try:
+                assert G16_PATH is not None
+            except AssertionError as e:
+                logger.error(f"G16_PATH must be provided to use {args.semiempirical_method}")
+                raise e
+
         os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
-        for conf_sdf in conf_sdfs:
-            mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
-            logger.info(f'starting semiempirical optimization calculation for {mol_id}...')
-            start = time.time()
-            os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
-            shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
-                            os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
-            charge = mol_id_to_charge_dict[mol_id]
-            mult = mol_id_to_mult_dict[mol_id]
-            os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
-            try:
-                semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
-                                args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
-                done_jobs_record.semiempirical_opt.append(mol_id)
-                done_jobs_record.save(project_dir, args.task_id)
-                logger.info(f'semiempirical optimization for {mol_id} completed')
-            except Exception as e:
-                logger.error(f'semiempirical optimization for {mol_id} failed')
-                logger.error(traceback.format_exc())
-            logger.info(f'Walltime: {time.time()-start}')
-            os.chdir(project_dir)
+        def run_semiempirical():
+            conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
+
+            for conf_sdf in conf_sdfs:
+                mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
+                logger.info(f'starting semiempirical optimization calculation for {mol_id} using {args.semiempirical_method}...')
+                start = time.time()
+                os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
+                shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
+                                os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
+                charge = mol_id_to_charge_dict[mol_id]
+                mult = mol_id_to_mult_dict[mol_id]
+                os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
+                try:
+                    semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
+                                    args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
+                    done_jobs_record.semiempirical_opt.append(mol_id)
+                    done_jobs_record.save(project_dir, args.task_id)
+                    logger.info(f'semiempirical optimization for {mol_id} completed')
+                except Exception as e:
+                    logger.error(f'semiempirical optimization for {mol_id} failed')
+                    logger.error(traceback.format_exc())
+                logger.info(f'Walltime: {time.time()-start}')
+                os.chdir(project_dir)
+
+        semiempirical_method = args.args.semiempirical_method
+        if semiempirical_method == "all":
+            args.semiempirical_method = "GFN-XTB" #first try GFNFF
+
+        run_semiempirical()
+
+        if semiempirical_method == "all":
+            args.semiempirical_method = "pm7"
+            run_semiempirical()
+
+            args.semiempirical_method = "am1"
+            run_semiempirical()
+
         semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
         logger.info('semiempirical optimization finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
