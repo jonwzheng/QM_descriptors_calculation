@@ -3,6 +3,7 @@ import copy
 import csv
 import os
 import subprocess
+import numpy as np
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
 from .grab_QM_descriptors import read_log
 from .log_parser import G16Log
@@ -110,13 +111,15 @@ def dft_scf_opt(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, bas
     with open(outfile, 'w') as out:
         subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
-    log = G16Log(logfile)
-    conf = mol.GetConformer()
-    for i in range(mol.GetNumAtoms()):
-        conf.SetAtomPosition(i, log.Coords[i,:])
-    write_mol_to_sdf(mol, f'{mol_id}_opt.sdf')
-
     os.remove(sdf)
+    log = G16Log(logfile)
+    if log.termination and np.min(log.har_frequencies) > 0:
+        conf = mol.GetConformer()
+        for i in range(mol.GetNumAtoms()):
+            conf.SetAtomPosition(i, log.Coords[i,:])
+        write_mol_to_sdf(mol, f'{mol_id}_opt.sdf')
+    else:
+        raise RuntimeError(f'DFT optimization for {mol_id} failed.')
 
 def dft_scf_sp(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
     sdf = mol_id + ".sdf"
