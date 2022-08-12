@@ -135,6 +135,8 @@ COSMOTHERM_PATH = args.COSMOtherm_path
 COSMO_DATABASE_PATH = args.COSMO_database_path
 ORCA_PATH = args.ORCA_path
 
+start_time = time.time()
+
 name = os.path.splitext(args.input_smiles)[0]
 logger = create_logger(name=name, task_id=args.task_id)
 submit_dir = os.path.abspath(os.getcwd())
@@ -151,7 +153,7 @@ if args.xyz_DFT_opt is not None:
 else:
     xyz_DFT_opt = None
 
-done_jobs_record = DoneJobsRecord()
+done_jobs_record = DoneJobsRecord(start_time=start_time, logger=logger)
 
 try:
     done_jobs_record.load(project_dir, args.task_id)

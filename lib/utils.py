@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import time
 from rdkit import Chem
 
 def create_logger(name: str, task_id: int) -> logging.Logger:
@@ -33,7 +34,9 @@ class DoneJobsRecord(object):
     """
     class to record completed jobs
     """
-    def __init__(self):
+    def __init__(self, start_time, logger):
+        self.start_time = start_time
+        self.logger = logger
         self.all_spc_ids = []
         self.task_id = None
         self.num_tasks = None
@@ -49,6 +52,7 @@ class DoneJobsRecord(object):
     def save(self, project_dir, task_id):
         with open(os.path.join(project_dir, f"done_jobs_record_{task_id}.json"), "w+") as fh:
             json.dump(vars(self), fh)
+        self.logger.info(f'Elasped time: {time.time()-self.start_time}')
 
     def load(self, project_dir, task_id):
         with open(os.path.join(project_dir,f"done_jobs_record_{task_id}.json"), "r") as fh:
