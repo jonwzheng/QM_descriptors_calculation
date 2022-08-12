@@ -411,7 +411,7 @@ else:
                 done_jobs_record.save(project_dir, args.task_id)
                 logger.info(f'Turbomole and COSMO calculation for {mol_id} completed')
             except:
-                logger.error(f'Turbomole and COSMO calculation for {opt_sdf} failed.')
+                logger.error(f'Turbomole and COSMO calculation for {mol_id} failed.')
                 logger.error(traceback.format_exc())
             os.chdir(project_dir)
 

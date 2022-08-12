@@ -7,6 +7,7 @@ import csv
 from rdkit import Chem
 from .file_parser import mol2xyz
 
+REPLACE_LETTER = {"(": "_", ")": "_"}
 
 def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, done_jobs_record, project_dir, task_id, xyz_COSMO):
     if not xyz_COSMO:
@@ -63,14 +64,15 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         if row.cosmo_name not in done_jobs_record.COSMO.get(mol_id, []):
             script = generate_cosmo_input(mol_id, cosmotherm_path, cosmo_database_path, T_list, row)
 
-            inpfile = f'{mol_id}_{row.cosmo_name}.inp'
+            cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+            inpfile = f'{mol_id}_{cosmo_name}.inp'
             with open(inpfile, "w+") as f:
                 f.write(script)
 
             cosmo_command = os.path.join(cosmotherm_path, "COSMOtherm", "BIN-LINUX", "cosmotherm")
-            outfile = f'{mol_id}_{row.cosmo_name}.out'
-            tabfile = f'{mol_id}_{row.cosmo_name}.tab'
-            xmlfile = f'{mol_id}_{row.cosmo_name}_status.xml'
+            outfile = f'{mol_id}_{cosmo_name}.out'
+            tabfile = f'{mol_id}_{cosmo_name}.tab'
+            xmlfile = f'{mol_id}_{cosmo_name}_status.xml'
             with open(outfile, 'w') as out:
                 subprocess.run(f'{cosmo_command} {inpfile}', shell=True, stdout=out, stderr=out)
 
