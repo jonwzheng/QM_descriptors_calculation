@@ -59,7 +59,7 @@ parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempiric
                     help='folder for semiempirical optimization')
 parser.add_argument('--semiempirical_method', type=str, default='GFN2-XTB',
                     help='method used for semiempirical optimization. Options are GFN2-XTB, am1, and pm7.')
-parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian)',
+parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro,cartesian)',
                     help='level of theory for the Gaussian semiempirical calculation')
 parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=4,
                     help='number of process for Gaussian semiempirical calculations')
