@@ -46,6 +46,8 @@ parser.add_argument('--E_cutoff_fraction', type=float, required=False, default=0
                     help='energy window for FF minimization.')
 parser.add_argument('--FF_threads', type=int, required=False, default=4,
                     help='number of process for the FF conformer searching')
+parser.add_argument('--timeout', required=False, default=7200,
+                    help='time window for each FF conformer searching sub process')
 parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
