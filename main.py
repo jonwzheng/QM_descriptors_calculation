@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 import os
 import shutil
-import pickle as pkl
+import time
 
+import pickle as pkl
 import pandas as pd
 import traceback
 
@@ -396,6 +397,7 @@ else:
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
             logger.info(f'starting Turbomole and COSMO calculation for {mol_id}...')
+            start = time.time()
             os.makedirs(os.path.join(args.COSMO_folder, mol_id), exist_ok=True)
             if not args.xyz_DFT_opt:
                 shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
@@ -413,6 +415,8 @@ else:
             except:
                 logger.error(f'Turbomole and COSMO calculation for {mol_id} failed.')
                 logger.error(traceback.format_exc())
+            finish = time.time()
+            logger.info(f'Walltime: {finish-start} s')
             os.chdir(project_dir)
 
         logger.info('COSMO calculation finished.')
