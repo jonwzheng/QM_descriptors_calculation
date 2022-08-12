@@ -3,13 +3,14 @@ import os
 import shutil
 import subprocess
 import csv
+import time
 
 from rdkit import Chem
 from .file_parser import mol2xyz
 
 REPLACE_LETTER = {"(": "_", ")": "_"}
 
-def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, done_jobs_record, project_dir, task_id, xyz_COSMO):
+def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, done_jobs_record, project_dir, task_id, xyz_COSMO, logger):
     if not xyz_COSMO:
         sdf = mol_id + '.sdf'
         mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
@@ -26,6 +27,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
     if mol_id not in done_jobs_record.COSMO: # not yet done turbomole
         # prepare for turbomole calculation
+        logger.info(f'Starting Turbomole calculation for {mol_id}...')
+        start = time.time()
         os.makedirs("xyz", exist_ok=True)
         xyz_mol_id = f'{mol_id}.xyz'
         with open(os.path.join("xyz", xyz_mol_id), "w+") as f:
@@ -55,13 +58,17 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), os.path.join(mol_dir, file))
                 break
         else:
-            raise RuntimeError("turbomole calculation failed")
+            raise RuntimeError("Turbomole calculation failed")
         done_jobs_record.COSMO[mol_id] = []
         done_jobs_record.save(project_dir, task_id)
+        logger.info(f'Turbomole calculation for {mol_id} finished.')
+        logger.info(f'Walltime: {time.time()-start}')
     
     # prepare for cosmo calculation
     for index, row in df_pure.iterrows():
         if row.cosmo_name not in done_jobs_record.COSMO.get(mol_id, []):
+            logger.info(f'Starting COSMO calculation for {mol_id} in {row.cosmo_name}...')
+            start = time.time() 
             script = generate_cosmo_input(mol_id, cosmotherm_path, cosmo_database_path, T_list, row)
 
             cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
@@ -77,15 +84,21 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 subprocess.run(f'{cosmo_command} {inpfile}', shell=True, stdout=out, stderr=out)
 
             #move files back
-            shutil.copy(tabfile, os.path.join(mol_dir, tabfile))
-            record = done_jobs_record.COSMO.get(mol_id, [])
-            record.append(row.cosmo_name)
-            done_jobs_record.COSMO[mol_id] = record
-            done_jobs_record.save(project_dir, task_id)
-            os.remove(tabfile)
-            os.remove(outfile)
-            os.remove(inpfile)
-            os.remove(xmlfile)
+            try:
+                shutil.copy(tabfile, os.path.join(mol_dir, tabfile))
+            except:
+                logger.error(f"COSMO calculation for {mol_id} in {row.cosmo_name} failed.")
+            else:
+                record = done_jobs_record.COSMO.get(mol_id, [])
+                record.append(row.cosmo_name)
+                done_jobs_record.COSMO[mol_id] = record
+                done_jobs_record.save(project_dir, task_id)
+                os.remove(tabfile)
+                os.remove(outfile)
+                os.remove(inpfile)
+                os.remove(xmlfile)
+                logger.info(f'COSMO calculation for {mol_id} in {row.cosmo_name} finished.')
+                logger.info(f'Walltime: {time.time()-start}')
 
     os.chdir(mol_dir)
 
