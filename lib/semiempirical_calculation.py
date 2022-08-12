@@ -52,10 +52,12 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
             conf_mols_ids_ens.append((mol, log.E))
             shutil.copy(logfile, os.path.join(work_dir, logfile))
             logger.info(f'optimization of conformer {conf_ind} for {mol_id} completed.')
+            os.chdir(work_dir)
+            shutil.rmtree(scratch_dir)
         else:
             logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
-        os.chdir(work_dir)
-        shutil.rmtree(scratch_dir)
+            os.chdir(work_dir)
+
     if conf_mols_ids_ens:
         conf_mols_ids_ens.sort(key=lambda x: x[1])
         opt_mols = [mol for mol, en in conf_mols_ids_ens]
