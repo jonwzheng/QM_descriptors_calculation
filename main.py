@@ -153,7 +153,7 @@ if args.xyz_DFT_opt is not None:
 else:
     xyz_DFT_opt = None
 
-done_jobs_record = DoneJobsRecord(start_time=start_time, logger=logger)
+done_jobs_record = DoneJobsRecord()
 
 try:
     done_jobs_record.load(project_dir, args.task_id)
@@ -233,6 +233,7 @@ if not args.skip_conf_search_FF:
             logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
             done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
 
+    logger.info(f'Overall walltime: {time.time()-start_time}')
     logger.info('='*80)
 
 if args.is_test:
@@ -324,6 +325,7 @@ else:
         for conf_sdf in conf_sdfs:
             mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
             logger.info(f'starting semiempirical optimization calculation for {mol_id}...')
+            start = time.time()
             os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
             shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
                             os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
@@ -339,9 +341,11 @@ else:
             except Exception as e:
                 logger.error(f'semiempirical optimization for {mol_id} failed')
                 logger.error(traceback.format_exc())
+            logger.info(f'Walltime: {time.time()-start}')
             os.chdir(project_dir)
         semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
         logger.info('semiempirical optimization finished.')
+        logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('='*80)
 
     if not args.skip_DFT_opt_freq:
@@ -357,6 +361,7 @@ else:
         for semi_opt_sdf in semi_opt_sdfs:
             mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
             logger.info(f'starting DFT optimization and frequency calculation for {mol_id}...')
+            start = time.time()
             os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id), exist_ok=True)
             shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
                             os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
@@ -373,8 +378,10 @@ else:
             except Exception as e:
                 logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
                 logger.error(traceback.format_exc())
+            logger.info(f'Walltime: {time.time()-start}')
             os.chdir(project_dir)
         logger.info('DFT optimization and frequency calculation finished.')
+        logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('='*80)
 
     if not args.skip_COSMO:
@@ -422,6 +429,7 @@ else:
             os.chdir(project_dir)
 
         logger.info('COSMO calculation finished.')
+        logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('Extracting COSMO results...')
         try:
             save_cosmo_results(args.COSMO_folder, done_jobs_record, args.task_id)
@@ -464,8 +472,10 @@ else:
             except:
                 logger.error(f'DLPNO single point calculation for {mol_id} failed.')
                 logger.error(traceback.format_exc())
+            logger.info(f'Walltime: {time.time()-start}')
             os.chdir(project_dir)
         logger.info('DLPNO single point calculation finished.')
+        logger.info(f'Overall walltime: {time.time()-start_time}')
 
 
     # # DFT QM descriptor calculation
