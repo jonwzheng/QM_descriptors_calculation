@@ -360,7 +360,7 @@ else:
                 logger.info(f'Walltime: {time.time()-start}')
                 os.chdir(project_dir)
 
-        semiempirical_method = args.args.semiempirical_method
+        semiempirical_method = args.semiempirical_method
         if semiempirical_method == "all":
             args.semiempirical_method = "GFN-XTB" #first try GFNFF
 
