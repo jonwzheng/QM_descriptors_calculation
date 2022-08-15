@@ -88,6 +88,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 shutil.copy(tabfile, os.path.join(mol_dir, tabfile))
             except:
                 logger.error(f"COSMO calculation for {mol_id} in {row.cosmo_name} failed.")
+                logger.info(f"{cosmo_command} {inpfile}")
                 some_failed = True
             else:
                 record = done_jobs_record.COSMO.get(mol_id, [])
