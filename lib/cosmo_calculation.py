@@ -8,7 +8,7 @@ import time
 from rdkit import Chem
 from .file_parser import mol2xyz
 
-REPLACE_LETTER = {"(": "_", ")": "_"}
+REPLACE_LETTER = {"(": "_", ")": "_", "'": "_"}
 
 def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, done_jobs_record, project_dir, task_id, xyz_COSMO, logger):
     if not xyz_COSMO:
@@ -65,6 +65,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         logger.info(f'Walltime: {time.time()-start}')
     
     # prepare for cosmo calculation
+    some_failed = False
     for index, row in df_pure.iterrows():
         if row.cosmo_name not in done_jobs_record.COSMO.get(mol_id, []):
             logger.info(f'Starting COSMO calculation for {mol_id} in {row.cosmo_name}...')
@@ -80,20 +81,14 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             outfile = f'{mol_id}_{cosmo_name}.out'
             tabfile = f'{mol_id}_{cosmo_name}.tab'
             xmlfile = f'{mol_id}_{cosmo_name}_status.xml'
-            with open(outfile, 'w') as out:
-                subprocess.run(f'{cosmo_command} {inpfile}', shell=True, stdout=out, stderr=out)
+            subprocess.run(f'{cosmo_command} {inpfile}', shell=True)
 
             #move files back
             try:
                 shutil.copy(tabfile, os.path.join(mol_dir, tabfile))
             except:
                 logger.error(f"COSMO calculation for {mol_id} in {row.cosmo_name} failed.")
-                try:
-                    #copy files for later debug
-                    shutil.copy(inpfile, os.path.join(mol_dir, inpfile))
-                    shutil.copy(outfile, os.path.join(mol_dir, outfile))
-                except:
-                    pass
+                some_failed = True
             else:
                 record = done_jobs_record.COSMO.get(mol_id, [])
                 record.append(row.cosmo_name)
@@ -109,7 +104,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
     os.chdir(mol_dir)
 
     #remove working directory
-    shutil.rmtree("scratch")
+    if not some_failed:
+        shutil.rmtree("scratch")
     os.remove(sdf)
     
 def generate_cosmo_input(name, cosmotherm_path, cosmo_database_path, T_list, row):
