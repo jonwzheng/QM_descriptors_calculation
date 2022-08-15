@@ -63,6 +63,11 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         done_jobs_record.save(project_dir, task_id)
         logger.info(f'Turbomole calculation for {mol_id} finished.')
         logger.info(f'Walltime: {time.time()-start}')
+    else:
+        energyfile = f"{mol_id}.energy"
+        cosmofile = f"{mol_id}.cosmo"
+        shutil.copy(os.path.join(mol_dir, energyfile), energyfile)
+        shutil.copy(os.path.join(mol_dir, cosmofile), cosmofile)
     
     # prepare for cosmo calculation
     some_failed = False
