@@ -313,7 +313,7 @@ else:
         # semiempirical optimization
         logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
 
-        supported_semiempirical_methods = ["GFN2-XTB", "pm7", "am1"]
+        supported_semiempirical_methods = ["GFN2-XTB", "pm7", "am1", "all"]
         try:
             assert args.semiempirical_method in supported_semiempirical_methods
         except AssertionError as e:
