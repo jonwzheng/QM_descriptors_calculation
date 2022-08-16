@@ -71,8 +71,10 @@ parser.add_argument('--skip_DFT_opt_freq', action="store_true",
                     help='whether to skip DFT optimization and frequency calculation',)
 parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
                     help='folder for DFT optimization and frequency calculation',)
-parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=256,noeig,nomicro,cartesian) freq scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
+parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian) freq scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
                     help='level of theory for the DFT calculation')
+parser.add_argument('--DFT_opt_freq_theory_backup', type=str, default='#P opt=(calcall,maxcycle=64,noeig,nomicro,cartesian) freq scf=(tight, xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
+                    help='level of theory for the DFT calculation if DFT_opt_freq_theory failed')
 parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=4,
                     help='number of process for DFT calculations')
 parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
@@ -373,7 +375,6 @@ else:
             args.semiempirical_method = "am1"
             run_semiempirical()
 
-        semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
         logger.info('semiempirical optimization finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('='*80)
@@ -388,32 +389,41 @@ else:
 
         logger.info('starting DFT optimization and frequency calculation for the lowest energy semiempirical-optimized conformer...')
         os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
-        for semi_opt_sdf in semi_opt_sdfs:
-            mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
-            logger.info(f'starting DFT optimization and frequency calculation for {mol_id}...')
-            start = time.time()
-            try:
-                shutil.rmtree(os.path.join(args.DFT_opt_freq_folder, mol_id))
-            except:
-                pass
-            os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id))
-            shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
-                            os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
 
-            charge = mol_id_to_charge_dict[mol_id]
-            mult = mol_id_to_mult_dict[mol_id]
-            os.chdir(os.path.join(args.DFT_opt_freq_folder, mol_id))
-            try:
-                dft_scf_opt(mol_id, G16_PATH, args.DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
-                            logger, args.DFT_opt_freq_job_ram, charge, mult)
-                done_jobs_record.DFT_opt_freq.append(mol_id)
-                done_jobs_record.save(project_dir, args.task_id)
-                logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
-            except Exception as e:
-                logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
-                logger.error(traceback.format_exc())
-            logger.info(f'Walltime: {time.time()-start}')
-            os.chdir(project_dir)
+        def run_dft(DFT_opt_freq_theory):
+            logger.info(f"Using title card: {DFT_opt_freq_theory}")
+            semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
+            for semi_opt_sdf in semi_opt_sdfs:
+                mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
+                logger.info(f'starting DFT optimization and frequency calculation for {mol_id}...')
+                start = time.time()
+                try:
+                    shutil.rmtree(os.path.join(args.DFT_opt_freq_folder, mol_id))
+                except:
+                    pass
+                os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id))
+                shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
+                                os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
+
+                charge = mol_id_to_charge_dict[mol_id]
+                mult = mol_id_to_mult_dict[mol_id]
+                os.chdir(os.path.join(args.DFT_opt_freq_folder, mol_id))
+                try:
+                    dft_scf_opt(mol_id, G16_PATH, DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
+                                logger, args.DFT_opt_freq_job_ram, charge, mult)
+                    done_jobs_record.DFT_opt_freq.append(mol_id)
+                    done_jobs_record.save(project_dir, args.task_id)
+                    logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
+                except Exception as e:
+                    logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
+                    logger.error(traceback.format_exc())
+                logger.info(f'Walltime: {time.time()-start}')
+                os.chdir(project_dir)
+        
+        run_dft(args.DFT_opt_freq_theory)
+
+        run_dft(args.DFT_opt_freq_theory_backup)
+
         logger.info('DFT optimization and frequency calculation finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('='*80)
