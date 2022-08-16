@@ -1,3 +1,4 @@
+import shutil
 from rdkit import Chem
 import copy
 import csv
@@ -100,6 +101,14 @@ def dft_scf_opt(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, bas
     mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
     xyz = mol2xyz(mol)
 
+    mol_dir = os.getcwd()
+    try:
+        shutil.rmtree("scratch")
+    except:
+        pass
+    os.makedirs("scratch")
+    os.chdir("scratch")
+
     g16_command = os.path.join(g16_path, 'g16')
     head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
 
@@ -111,14 +120,19 @@ def dft_scf_opt(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, bas
     with open(outfile, 'w') as out:
         subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
-    os.remove(sdf)
     log = G16Log(logfile)
     if log.termination and np.min(log.har_frequencies) > 0:
+        shutil.copy(logfile, os.path.join(mol_dir, logfile))
+        os.chdir(mol_dir)
         conf = mol.GetConformer()
         for i in range(mol.GetNumAtoms()):
             conf.SetAtomPosition(i, log.Coords[i,:])
         write_mol_to_sdf(mol, f'{mol_id}_opt.sdf')
+        os.remove(sdf)
+        shutil.rmtree("scratch")
     else:
+        os.chdir(mol_dir)
+        os.remove(sdf)
         raise RuntimeError(f'DFT optimization for {mol_id} failed.')
 
 def dft_scf_sp(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):

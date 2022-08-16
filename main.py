@@ -71,7 +71,7 @@ parser.add_argument('--skip_DFT_opt_freq', action="store_true",
                     help='whether to skip DFT optimization and frequency calculation',)
 parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
                     help='folder for DFT optimization and frequency calculation',)
-parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian) freq scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
+parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=256,noeig,nomicro,cartesian) freq scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=read wb97xd/def2svp',
                     help='level of theory for the DFT calculation')
 parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=4,
                     help='number of process for DFT calculations')

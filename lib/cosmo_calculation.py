@@ -23,7 +23,11 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
     #create and move to working directory
     mol_dir = os.getcwd()
-    os.makedirs("scratch", exist_ok=True)
+    try:
+        shutil.rmtree("scratch")
+    except:
+        pass
+    os.makedirs("scratch")
     os.chdir("scratch")
 
     if mol_id not in done_jobs_record.COSMO: # not yet done turbomole

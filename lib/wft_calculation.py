@@ -17,17 +17,20 @@ def dlpno_sp_calc(mol_id, orca_path, charge, mult, n_procs, job_ram, xyz_DFT_opt
         mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
         xyz = mol2xyz(mol)
         coords = "\n".join(xyz.splitlines()[2:])
-    
+
+    #create working directory
+    try:
+        shutil.rmtree("scratch")
+    except:
+        pass
+    os.makedirs("scratch")
+    os.chdir("scratch")
+
     script = generate_dlpno_sp_input(coords, charge, mult, job_ram, n_procs)
 
     infile = f"{mol_id}.in"
     with open(infile, "w+") as f:
         f.write(script)
-
-    #create working directory
-    os.makedirs("scratch", exist_ok=True)
-    os.chdir("scratch")
-    shutil.copy(os.path.join(mol_dir, infile), infile)
 
     #run jobs
     orca_command = os.path.join(orca_path, "orca")
@@ -35,16 +38,19 @@ def dlpno_sp_calc(mol_id, orca_path, charge, mult, n_procs, job_ram, xyz_DFT_opt
     outfile = mol_id + '.out'
     with open(outfile, 'w') as out:
         subprocess.run('{} {} > {}'.format(orca_command, infile, logfile), shell=True, stdout=out, stderr=out)
-
-    os.chdir(mol_dir)
-    shutil.copy(os.path.join("scratch", logfile), logfile)
-    shutil.copy(os.path.join("scratch", outfile), outfile)
-    shutil.rmtree("scratch")
-
+    
     # check for normal termination
     with open(logfile, "r") as f:
         lines = f.readlines()
-        assert any(["ORCA TERMINATED NORMALLY" in line for line in lines])
+    try:
+        assert any(["ORCA TERMINATED NORMALLY" in line for line in reversed(lines)])
+        os.chdir(mol_dir)
+        shutil.copy(os.path.join("scratch", logfile), logfile)
+        shutil.copy(os.path.join("scratch", outfile), outfile)
+        shutil.rmtree("scratch")
+    except:
+        os.chdir(mol_dir)
+        raise RuntimeError(f"ORCA calculation failed for {mol_id}")
 
     os.remove(sdf)
 

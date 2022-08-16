@@ -21,7 +21,11 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
     for conf_ind, mol in enumerate(mols):
 
         scratch_dir = f"{mol_id}_{conf_ind}"
-        os.makedirs(scratch_dir, exist_ok=True)
+        try:
+            shutil.rmtree(scratch_dir)
+        except:
+            pass
+        os.makedirs(scratch_dir)
         os.chdir(scratch_dir)
 
         xyz = mol2xyz(mol)
