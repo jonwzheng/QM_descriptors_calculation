@@ -446,10 +446,6 @@ else:
             os.chdir(os.path.join(args.COSMO_folder, mol_id))
             try:
                 cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id, xyz_DFT_opt, logger)
-                done_jobs = done_jobs_record.COSMO.get(mol_id, [])
-                done_jobs.append(mol_id)
-                done_jobs_record.COSMO[mol_id] = done_jobs
-                done_jobs_record.save(project_dir, args.task_id)
                 logger.info(f'Turbomole and COSMO calculation for {mol_id} completed')
             except:
                 logger.error(f'Turbomole and COSMO calculation for {mol_id} failed.')
