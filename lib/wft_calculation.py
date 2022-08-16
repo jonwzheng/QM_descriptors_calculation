@@ -46,7 +46,6 @@ def dlpno_sp_calc(mol_id, orca_path, charge, mult, n_procs, job_ram, xyz_DFT_opt
         assert any(["ORCA TERMINATED NORMALLY" in line for line in reversed(lines)])
         os.chdir(mol_dir)
         shutil.copy(os.path.join("scratch", logfile), logfile)
-        shutil.copy(os.path.join("scratch", outfile), outfile)
         shutil.rmtree("scratch")
     except:
         os.chdir(mol_dir)
