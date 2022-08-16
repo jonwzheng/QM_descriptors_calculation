@@ -392,7 +392,11 @@ else:
             mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
             logger.info(f'starting DFT optimization and frequency calculation for {mol_id}...')
             start = time.time()
-            os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id), exist_ok=True)
+            try:
+                shutil.rmtree(os.path.join(args.DFT_opt_freq_folder, mol_id))
+            except:
+                pass
+            os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id))
             shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
                             os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
 
