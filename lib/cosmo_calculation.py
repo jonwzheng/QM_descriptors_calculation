@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import csv
 import time
+import traceback
 
 from rdkit import Chem
 from .file_parser import mol2xyz
@@ -161,10 +162,12 @@ def save_cosmo_results(folder, done_jobs_record, task_id):
         for mol_id, solvents in done_jobs_record.COSMO.items():
             for solvent in solvents:
                 tab_file_path = os.path.join(folder, mol_id, f"{mol_id}_{solvent}.tab")
-                print(tab_file_path)
-                each_data_list = read_cosmo_tab_result(tab_file_path)
-                each_data_list = get_dHsolv_value(each_data_list)
-                csvwriter.writerows(each_data_list)
+                try:
+                    each_data_list = read_cosmo_tab_result(tab_file_path)
+                    each_data_list = get_dHsolv_value(each_data_list)
+                    csvwriter.writerows(each_data_list)
+                except:
+                    print(traceback.format_exc())
             
 def read_cosmo_tab_result(tab_file_path):
     """
