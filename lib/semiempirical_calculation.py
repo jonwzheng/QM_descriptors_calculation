@@ -47,7 +47,7 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
         log = G16Log(logfile)
-        if log.termination > 0 and np.min(log.har_frequencies) > 0:
+        if log.termination and np.min(log.har_frequencies) > 0:
             mol.SetProp('ConfId', str(conf_ind)) #convert to kcal/mol
             mol.SetProp('ConfEnergies', str(log.E*627.5) + ' kcal/mol') #convert to kcal/mol
             conf = mol.GetConformer()
@@ -59,7 +59,10 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
             os.chdir(work_dir)
             shutil.rmtree(scratch_dir)
         else:
-            logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed.')
+            if not log.termination:
+                logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed due to error termination.')
+            elif not (np.min(log.har_frequencies) > 0.0):
+                logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed due to negative frequency.')
             os.chdir(work_dir)
 
     if conf_mols_ids_ens:

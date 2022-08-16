@@ -121,7 +121,7 @@ def dft_scf_opt(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, bas
         subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
     log = G16Log(logfile)
-    if log.termination and np.min(log.har_frequencies) > 0:
+    if log.termination and np.min(log.har_frequencies) > 0.0:
         shutil.copy(logfile, os.path.join(mol_dir, logfile))
         os.chdir(mol_dir)
         conf = mol.GetConformer()
@@ -133,7 +133,10 @@ def dft_scf_opt(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, bas
     else:
         os.chdir(mol_dir)
         os.remove(sdf)
-        raise RuntimeError(f'DFT optimization for {mol_id} failed.')
+        if not log.termination:
+            raise RuntimeError(f'DFT optimization for {mol_id} failed due to error termination.')
+        elif not (np.min(log.har_frequencies) > 0.0):
+            raise RuntimeError(f'DFT optimization for {mol_id} failed due to negative frequency.')
 
 def dft_scf_sp(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
     sdf = mol_id + ".sdf"
