@@ -20,7 +20,7 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
     conf_mols_ids_ens = []
     for conf_ind, mol in enumerate(mols):
 
-        scratch_dir = f"{mol_id}_{conf_ind}_{level_of_theory}"
+        scratch_dir = f"{mol_id}_{conf_ind}_{method}"
         try:
             shutil.rmtree(scratch_dir)
         except:
