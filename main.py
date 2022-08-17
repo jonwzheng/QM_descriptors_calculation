@@ -364,7 +364,7 @@ else:
 
         semiempirical_method = args.semiempirical_method
         if semiempirical_method == "all":
-            args.semiempirical_method = "GFN-XTB" #first try GFNFF
+            args.semiempirical_method = "GFN2-XTB" #first try GFNFF
 
         run_semiempirical()
 
