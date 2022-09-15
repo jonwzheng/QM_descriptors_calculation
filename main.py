@@ -13,7 +13,7 @@ from lib import create_logger, DoneJobsRecord
 from lib import csearch
 from lib import semiempirical_opt
 from lib import dft_scf_qm_descriptor, dft_scf_opt, dft_scf_sp, save_dft_sp_results
-from lib import cosmo_calc, save_cosmo_results
+from lib import cosmo_calc
 from lib import dlpno_sp_calc
 
 parser = ArgumentParser()

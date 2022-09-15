@@ -5,5 +5,5 @@ from .FF_conf_generation import csearch
 from .grab_QM_descriptors import read_log
 from .utils import create_logger, DoneJobsRecord
 from .semiempirical_calculation import semiempirical_opt, xtb_status
-from .cosmo_calculation import cosmo_calc, save_cosmo_results
+from .cosmo_calculation import cosmo_calc
 from .wft_calculation import dlpno_sp_calc
