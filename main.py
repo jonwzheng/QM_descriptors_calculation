@@ -470,14 +470,6 @@ else:
 
         logger.info('COSMO calculation finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
-        logger.info('Extracting COSMO results...')
-        try:
-            save_cosmo_results(args.COSMO_folder, done_jobs_record, args.task_id)
-            logger.error('Extractomg COSMO results completed.')
-        except:
-            logger.error('Extractomg COSMO results failed.')
-            logger.error(traceback.format_exc())
-
         logger.info('='*80)
 
     if not args.skip_DLPNO:
