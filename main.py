@@ -161,8 +161,8 @@ try:
     done_jobs_record.load(project_dir, args.task_id)
     logger.info("this is a restart job...")
     logger.info("loading completed job ids...")
-    assert done_jobs_record.task_id == args.task_id, "Job partition must be the same as previously"
-    assert done_jobs_record.num_tasks == args.num_tasks, "Job partition must be the same as previously"
+    assert done_jobs_record.task_id == args.task_id, f"Job partition must be the same as previously. Previous: {done_jobs_record.task_id} | Specified: {args.task_id}"
+    assert done_jobs_record.num_tasks == args.num_tasks, f"Job partition must be the same as previously. Previous: {done_jobs_record.num_tasks} | Specified: {args.num_tasks}"
     assert set(done_jobs_record.all_spc_ids) == set(df["id"]), "Job partition must be the same as previously"
 except:
     logger.info("this is a new job...")
@@ -202,35 +202,21 @@ if not args.skip_conf_search_FF:
     logger.info('starting FF conformer searching...')
     supported_FFs = ["MMFF94s", "GFNFF", "all"]
 
-    try:
-        assert args.conf_search_FF in supported_FFs
-    except AssertionError as e:
-        logger.error(f"{args.conf_search_FF} not in supported FFs.")
-        raise e
+    assert args.conf_search_FF in supported_FFs, f"{args.conf_search_FF} not in supported FFs."
 
     if args.conf_search_FF == "GFNFF" or args.conf_search_FF == "all":
-        try:
-            assert XTB_PATH is not None
-        except AssertionError as e:
-            logger.error(f"XTB_PATH must be provided to use GFNFF")
-            raise e
+        assert XTB_PATH is not None, f"XTB_PATH must be provided to use GFNFF"
 
-    conf_search_FF = args.conf_search_FF
-    if conf_search_FF == "all":
-        args.conf_search_FF = "GFNFF" #first try GFNFF
+    if args.conf_search_FF == "all":
+        conf_search_FFs = ["GFNFF", "MMFF94s"]
+    else:
+        conf_search_FFs = [args.conf_search_FF]
 
-    supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
-    conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
-    if conf_ids:
-        conf_ids_str = ','.join(conf_ids)
-        logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
-        done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
-
-    if conf_search_FF == "all": #then try MMFF94s
-        args.conf_search_FF = "MMFF94s"
+    for conf_search_FF in conf_search_FFs:
         supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
         conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
         if conf_ids:
+            args.conf_search_FF = conf_search_FF
             conf_ids_str = ','.join(conf_ids)
             logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
             done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
@@ -315,25 +301,13 @@ else:
         # semiempirical optimization
         logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
 
-        supported_semiempirical_methods = ["GFN2-XTB", "pm7", "am1", "all"]
-        try:
-            assert args.semiempirical_method in supported_semiempirical_methods
-        except AssertionError as e:
-            logger.error(f"{args.semiempirical_method} not in supported semiempirical methods.")
-            raise e
+        supported_semiempirical_methods = ["GFN2-XTB", "pm7", "am1"]
+        assert args.semiempirical_method in supported_semiempirical_methods or args.semiempirical_method == "all", f"{args.semiempirical_method} not in supported semiempirical methods."
 
         if args.semiempirical_method == "GFN2-XTB" or args.semiempirical_method == "all":
-            try:
-                assert XTB_PATH is not None and G16_PATH is not None
-            except AssertionError as e:
-                logger.error(f"XTB_PATH and G16_PATH must be provided to use {args.semiempirical_method}")
-                raise e
+            assert XTB_PATH is not None and G16_PATH is not None, f"XTB_PATH and G16_PATH must be provided to use {args.semiempirical_method}"
         else:
-            try:
-                assert G16_PATH is not None
-            except AssertionError as e:
-                logger.error(f"G16_PATH must be provided to use {args.semiempirical_method}")
-                raise e
+            assert G16_PATH is not None, f"G16_PATH must be provided to use {args.semiempirical_method}"
 
         os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
 
@@ -354,25 +328,25 @@ else:
                     semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
                                     args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
                     done_jobs_record.semiempirical_opt.append(mol_id)
+                    if mol_id in done_jobs_record.semiempirical_opt_failed:
+                        done_jobs_record.semiempirical_opt_failed.remove(mol_id)
                     done_jobs_record.save(project_dir, args.task_id)
                     logger.info(f'semiempirical optimization for {mol_id} completed')
-                except Exception as e:
+                except Exception:
+                    done_jobs_record.semiempirical_opt_failed.append(mol_id)
+                    done_jobs_record.save(project_dir, args.task_id)
                     logger.error(f'semiempirical optimization for {mol_id} failed')
                     logger.error(traceback.format_exc())
                 logger.info(f'Walltime: {time.time()-start}')
                 os.chdir(project_dir)
 
-        semiempirical_method = args.semiempirical_method
-        if semiempirical_method == "all":
-            args.semiempirical_method = "GFN2-XTB" #first try GFNFF
-
-        run_semiempirical()
-
-        if semiempirical_method == "all":
-            args.semiempirical_method = "pm7"
-            run_semiempirical()
-
-            args.semiempirical_method = "am1"
+        if args.semiemrpicial_method == "all":
+            semiempirical_methods = supported_semiempirical_methods
+        else:
+            semiempirical_methods = [args.semiempirical_method] 
+        
+        for semiempirical_method in semiempirical_methods:
+            args.semiempirical_method = semiempirical_method
             run_semiempirical()
 
         logger.info('semiempirical optimization finished.')
@@ -412,9 +386,13 @@ else:
                     dft_scf_opt(mol_id, G16_PATH, DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
                                 logger, args.DFT_opt_freq_job_ram, charge, mult)
                     done_jobs_record.DFT_opt_freq.append(mol_id)
+                    if mol_id in done_jobs_record.DFT_opt_freq_failed:
+                        done_jobs_record.DFT_opt_freq_failed.remove(mol_id)
                     done_jobs_record.save(project_dir, args.task_id)
                     logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
-                except Exception as e:
+                except Exception:
+                    done_jobs_record.DFT_opt_freq_failed.append(mol_id)
+                    done_jobs_record.save(project_dir, args.task_id)
                     logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
                     logger.error(traceback.format_exc())
                 logger.info(f'Walltime: {time.time()-start}')
@@ -430,11 +408,7 @@ else:
 
     if not args.skip_COSMO:
 
-        try:
-            assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None
-        except AssertionError as e:
-            logger.error(f"COSMO_DATABASE_PATH and COSMOTHERM_PATH must be provided for Turbomole and COSMO calculations")
-            raise e
+        assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None, f"COSMO_DATABASE_PATH and COSMOTHERM_PATH must be provided for Turbomole and COSMO calculations"
 
         logger.info('starting Turbomole and COSMO calculations for DFT-optimized conformers...')
         os.makedirs(args.COSMO_folder, exist_ok=True)
@@ -499,9 +473,12 @@ else:
             try:
                 dlpno_sp_calc(mol_id, ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram, xyz_DFT_opt)
                 done_jobs_record.WFT_sp.append(mol_id)
+                if mol_id in done_jobs_record.WFT_sp_failed:
+                    done_jobs_record.WFT_sp_failed.remove(mol_id)
                 done_jobs_record.save(project_dir, args.task_id)
                 logger.info(f'DLPNO single point calculation for {mol_id} completed')
             except:
+                done_jobs_record.WFT_sp_failed.append(mol_id)
                 logger.error(f'DLPNO single point calculation for {mol_id} failed.')
                 logger.error(traceback.format_exc())
             logger.info(f'Walltime: {time.time()-start}')

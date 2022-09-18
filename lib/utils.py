@@ -39,11 +39,15 @@ class DoneJobsRecord(object):
         self.task_id = None
         self.num_tasks = None
         self.FF_conf = []
+        self.FF_conf_failed = []
         self.semiempirical_opt = []
+        self.semiempirical_opt_failed = []
         self.DFT_opt_freq = []
+        self.DFT_opt_freq_failed = []
         self.COSMO = {}
+        self.COSMO_failed = {}
         self.WFT_sp = []
-        self.QM_desp = []
+        self.WFT_sp_failed = []
         self.test_semiempirical_opt = {}
         self.test_DFT_sp = {}
     

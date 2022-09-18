@@ -66,6 +66,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         else:
             raise RuntimeError("Turbomole calculation failed")
         done_jobs_record.COSMO[mol_id] = []
+        done_jobs_record.COSMO_failed[mol_id] = []
         done_jobs_record.save(project_dir, task_id)
         logger.info(f'Turbomole calculation for {mol_id} finished.')
         logger.info(f'Walltime: {time.time()-start}')
@@ -98,13 +99,15 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             try:
                 shutil.copy(tabfile, os.path.join(mol_dir, tabfile))
             except:
+                done_jobs_record.COSMO_failed[mol_id].append(row.cosmo_name)
+                done_jobs_record.save(project_dir, task_id)
                 logger.error(f"COSMO calculation for {mol_id} in {row.cosmo_name} failed.")
                 logger.info(f"{cosmo_command} {inpfile}")
                 some_failed = True
             else:
-                record = done_jobs_record.COSMO.get(mol_id, [])
-                record.append(row.cosmo_name)
-                done_jobs_record.COSMO[mol_id] = record
+                done_jobs_record.COSMO[mol_id].append(row.cosmo_name)
+                if row.cosmo_name in done_jobs_record.COSMO_failed[mol_id]:
+                    done_jobs_record.COSMO_failed[mol_id].remove(row.cosmo_name)
                 done_jobs_record.save(project_dir, task_id)
                 os.remove(tabfile)
                 os.remove(outfile)
