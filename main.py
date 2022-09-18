@@ -340,7 +340,7 @@ else:
                 logger.info(f'Walltime: {time.time()-start}')
                 os.chdir(project_dir)
 
-        if args.semiemrpicial_method == "all":
+        if args.semiempirical_method == "all":
             semiempirical_methods = supported_semiempirical_methods
         else:
             semiempirical_methods = [args.semiempirical_method] 
