@@ -122,37 +122,38 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         #remove scratch directory
         shutil.rmtree("scratch")
 
-        #compile tab files and results in tabfiles of each solvent
-        logger.info(f"Compile COSMO calculation for {mol_id}...")
-        
-        compiled_tab_file_dict = {}
-        compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")
-        header = ['solvent_name', 'solute_name', 'temp (K)',
-                'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
-        with open(compiled_cosmo_result_path , 'w') as csvfile:
-            # creating a csv writer object
-            csvwriter = csv.writer(csvfile)
-            # writing the header
-            csvwriter.writerow(header)
+        if not os.path.exists(f"{mol_id}_compiled_tab_file_dict.pkl"):
+            #compile tab files and results in tabfiles of each solvent
+            logger.info(f"Compile COSMO calculation for {mol_id}...")
+            
+            compiled_tab_file_dict = {}
+            compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")
+            header = ['solvent_name', 'solute_name', 'temp (K)',
+                    'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+            with open(compiled_cosmo_result_path , 'w') as csvfile:
+                # creating a csv writer object
+                csvwriter = csv.writer(csvfile)
+                # writing the header
+                csvwriter.writerow(header)
+
+                for index, row in df_pure.iterrows():
+                    solvent = row.cosmo_name
+                    cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+                    tabfile = f'{mol_id}_{cosmo_name}.tab'
+                    each_data_list = read_cosmo_tab_result(tabfile)
+                    each_data_list = get_dHsolv_value(each_data_list)
+                    csvwriter.writerows(each_data_list)
+                    with open(tabfile, "r") as f:
+                        lines = f.readlines()
+                    compiled_tab_file_dict[solvent] = lines
+                
+            with open(f"{mol_id}_compiled_tab_file_dict.pkl", "wb") as f:
+                pkl.dump(compiled_tab_file_dict, f)
 
             for index, row in df_pure.iterrows():
-                solvent = row.cosmo_name
                 cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
                 tabfile = f'{mol_id}_{cosmo_name}.tab'
-                each_data_list = read_cosmo_tab_result(tabfile)
-                each_data_list = get_dHsolv_value(each_data_list)
-                csvwriter.writerows(each_data_list)
-                with open(tabfile, "r") as f:
-                    lines = f.readlines()
-                compiled_tab_file_dict[solvent] = lines
-            
-        with open(f"{mol_id}_compiled_tab_file_dict.pkl", "wb") as f:
-            pkl.dump(compiled_tab_file_dict, f)
-
-        for index, row in df_pure.iterrows():
-            cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
-            tabfile = f'{mol_id}_{cosmo_name}.tab'
-            os.remove(tabfile)
+                os.remove(tabfile)
     os.remove(sdf)
     
 def generate_cosmo_input(name, cosmotherm_path, cosmo_database_path, T_list, row):

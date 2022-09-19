@@ -401,6 +401,9 @@ else:
         run_dft(args.DFT_opt_freq_theory)
 
         run_dft(args.DFT_opt_freq_theory_backup)
+        for mol_id in done_jobs_record.DFT_opt_freq_failed:#redo these species from the beginning next time restarting the workflow
+            done_jobs_record.FF_conf.remove(mol_id)
+            done_jobs_record.semiempirical_opt.remove(mol_id)
 
         logger.info('DFT optimization and frequency calculation finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
@@ -419,7 +422,7 @@ else:
         if args.xyz_DFT_opt:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
         else:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) < len(df_pure.index)]
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq] #feed in all DFT done jobs to make sure we compile past jobs
 
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
