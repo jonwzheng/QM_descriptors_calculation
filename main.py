@@ -404,6 +404,7 @@ else:
         for mol_id in done_jobs_record.DFT_opt_freq_failed:#redo these species from the beginning next time restarting the workflow
             done_jobs_record.FF_conf.remove(mol_id)
             done_jobs_record.semiempirical_opt.remove(mol_id)
+        done_jobs_record.save(project_dir, args.task_id)
 
         logger.info('DFT optimization and frequency calculation finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
