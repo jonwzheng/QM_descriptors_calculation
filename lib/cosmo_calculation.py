@@ -57,7 +57,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 shutil.copy(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), os.path.join(mol_dir, file))
                 break
         else:
-            raise RuntimeError("turbomole calculation failed")
+            raise RuntimeError("Turbomole calculation failed")
         for file in os.listdir("EnergyfilesBP-TZVPD-FINE-COSMO-SP"):
             if file.endswith("energy"):
                 shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), file)
