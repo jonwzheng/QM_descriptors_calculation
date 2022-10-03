@@ -225,41 +225,56 @@ if not args.is_test and args.compile:
         if len(done_jobs_record.COSMO[mol_id]) == len(df_pure.index):
             os.chdir(os.path.join(args.COSMO_folder, mol_id))
 
-            compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")            
-            header = ['solvent_name', 'solute_name', 'temp (K)',
-                    'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
-
-            #tar the cosmo, energy and tab files
-            tar = tarfile.open(f"{mol_id}.tar", "w")
-            energyfile = f"{mol_id}.energy"
-            cosmofile = f"{mol_id}.cosmo"
-            tar.add(energyfile)
-            tar.add(cosmofile)
-
-            with open(compiled_cosmo_result_path , 'w') as csvfile:
-                # creating a csv writer object
-                csvwriter = csv.writer(csvfile)
-                # writing the header
-                csvwriter.writerow(header)
-
+            if os.path.exists(f"{mol_id}_compiled_tab_file_dict.pkl"):
+                with open(f"{mol_id}_compiled_tab_file_dict.pkl", "rb") as f:
+                    compiled_tab_file_dict = pkl.load(f)
                 for index, row in df_pure.iterrows():
                     solvent = row.cosmo_name
                     cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
                     tabfile = f'{mol_id}_{cosmo_name}.tab'
-                    each_data_list = read_cosmo_tab_result(tabfile)
-                    each_data_list = get_dHsolv_value(each_data_list)
-                    csvwriter.writerows(each_data_list)
-                    tar.add(tabfile)
-                
-            tar.close()
+                    with open(tabfile, "w") as f:
+                        lines = compiled_tab_file_dict[solvent]
+                        for line in lines:
+                            f.write(line)
+                os.remove(f"{mol_id}_compiled_tab_file_dict.pkl")
 
-            os.remove(cosmofile)
-            os.remove(energyfile)
-            for index, row in df_pure.iterrows():
-                cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
-                tabfile = f'{mol_id}_{cosmo_name}.tab'
-                os.remove(tabfile)
+            if not os.path.exists(f"{mol_id}.tar"):
+
+                compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")            
+                header = ['solvent_name', 'solute_name', 'temp (K)',
+                        'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+
+                #tar the cosmo, energy and tab files
+                tar = tarfile.open(f"{mol_id}.tar", "w")
+                energyfile = f"{mol_id}.energy"
+                cosmofile = f"{mol_id}.cosmo"
+                tar.add(energyfile)
+                tar.add(cosmofile)
+
+                with open(compiled_cosmo_result_path , 'w') as csvfile:
+                    # creating a csv writer object
+                    csvwriter = csv.writer(csvfile)
+                    # writing the header
+                    csvwriter.writerow(header)
+
+                    for index, row in df_pure.iterrows():
+                        solvent = row.cosmo_name
+                        cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+                        tabfile = f'{mol_id}_{cosmo_name}.tab'
+                        each_data_list = read_cosmo_tab_result(tabfile)
+                        each_data_list = get_dHsolv_value(each_data_list)
+                        csvwriter.writerows(each_data_list)
+                        tar.add(tabfile)
+                    
                 tar.close()
+
+                os.remove(cosmofile)
+                os.remove(energyfile)
+                for index, row in df_pure.iterrows():
+                    cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+                    tabfile = f'{mol_id}_{cosmo_name}.tab'
+                    os.remove(tabfile)
+                    tar.close()
             os.chdir(project_dir)
 
 # conformer searching
