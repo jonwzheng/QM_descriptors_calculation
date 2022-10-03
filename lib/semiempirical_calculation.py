@@ -1,8 +1,10 @@
+from genericpath import isfile
 from rdkit import Chem
 import os
 import shutil
 import subprocess
 import traceback
+import tarfile
 
 import numpy as np
 
@@ -48,8 +50,8 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
 
         log = G16Log(logfile)
         if log.termination and np.min(log.har_frequencies) > 0:
-            mol.SetProp('ConfId', str(conf_ind)) #convert to kcal/mol
-            mol.SetProp('ConfEnergies', str(log.E*627.5) + ' kcal/mol') #convert to kcal/mol
+            mol.SetProp('ConfId', str(conf_ind))
+            mol.SetProp('ConfEnergies', str(log.E))
             conf = mol.GetConformer()
             for i in range(mol.GetNumAtoms()):
                 conf.SetAtomPosition(i, log.Coords[i,:])
@@ -66,10 +68,21 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
             os.chdir(work_dir)
 
     if conf_mols_ids_ens:
+        #tar the logs
+        tar = tarfile.open(f"{mol_id}.tar", "w")
+        for conf_ind, mol in enumerate(mols):
+            logfile = f"{mol_id}_{conf_ind}.log"
+            if os.path.isfile(logfile):
+                tar.add(logfile)
+        tar.close()
         conf_mols_ids_ens.sort(key=lambda x: x[1])
         opt_mols = [mol for mol, en in conf_mols_ids_ens]
         write_mols_to_sdf(opt_mols, f'{mol_id}_confs_opt.sdf')
         write_mol_to_sdf(opt_mols[0], f'{mol_id}_opt.sdf')
+        for conf_ind, mol in enumerate(mols):
+            logfile = f"{mol_id}_{conf_ind}.log"
+            if os.path.isfile(logfile):
+                os.remove(logfile)
     else:
         raise RuntimeError(f'all optimization for {mol_id} failed')
 

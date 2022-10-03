@@ -6,11 +6,12 @@ import csv
 import time
 import traceback
 import pickle as pkl
+import tarfile
+
+from utils import REPLACE_LETTER
 
 from rdkit import Chem
 from .file_parser import mol2xyz
-
-REPLACE_LETTER = {"(": "_", ")": "_", "'": "_"}
 
 def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, done_jobs_record, project_dir, task_id, xyz_COSMO, logger):
     if not xyz_COSMO:
@@ -66,7 +67,6 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         else:
             raise RuntimeError("Turbomole calculation failed")
         done_jobs_record.COSMO[mol_id] = []
-        done_jobs_record.COSMO_failed[mol_id] = []
         done_jobs_record.save(project_dir, task_id)
         logger.info(f'Turbomole calculation for {mol_id} finished.')
         logger.info(f'Walltime: {time.time()-start}')
@@ -99,15 +99,11 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             try:
                 shutil.copy(tabfile, os.path.join(mol_dir, tabfile))
             except:
-                done_jobs_record.COSMO_failed[mol_id].append(row.cosmo_name)
-                done_jobs_record.save(project_dir, task_id)
                 logger.error(f"COSMO calculation for {mol_id} in {row.cosmo_name} failed.")
                 logger.info(f"{cosmo_command} {inpfile}")
                 some_failed = True
             else:
                 done_jobs_record.COSMO[mol_id].append(row.cosmo_name)
-                if row.cosmo_name in done_jobs_record.COSMO_failed[mol_id]:
-                    done_jobs_record.COSMO_failed[mol_id].remove(row.cosmo_name)
                 done_jobs_record.save(project_dir, task_id)
                 os.remove(tabfile)
                 os.remove(outfile)
@@ -122,14 +118,34 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         #remove scratch directory
         shutil.rmtree("scratch")
 
-        if not os.path.exists(f"{mol_id}_compiled_tab_file_dict.pkl"):
+        if os.path.exists(f"{mol_id}_compiled_tab_file_dict.pkl"):
+            with open(f"{mol_id}_compiled_tab_file_dict.pkl", "rb") as f:
+                compiled_tab_file_dict = pkl.load(f)
+            for index, row in df_pure.iterrows():
+                solvent = row.cosmo_name
+                cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+                tabfile = f'{mol_id}_{cosmo_name}.tab'
+                with open(tabfile, "w") as f:
+                    lines = compiled_tab_file_dict[solvent]
+                    for line in lines:
+                        f.write(line)
+            os.remove(f"{mol_id}_compiled_tab_file_dict.pkl")
+
+        if not os.path.exists(f"{mol_id}.tar"):
             #compile tab files and results in tabfiles of each solvent
             logger.info(f"Compile COSMO calculation for {mol_id}...")
             
-            compiled_tab_file_dict = {}
             compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")
             header = ['solvent_name', 'solute_name', 'temp (K)',
                     'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+
+            #tar the cosmo, energy and tab files
+            tar = tarfile.open(f"{mol_id}.tar", "w")
+            energyfile = f"{mol_id}.energy"
+            cosmofile = f"{mol_id}.cosmo"
+            tar.add(energyfile)
+            tar.add(cosmofile)
+
             with open(compiled_cosmo_result_path , 'w') as csvfile:
                 # creating a csv writer object
                 csvwriter = csv.writer(csvfile)
@@ -143,17 +159,24 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                     each_data_list = read_cosmo_tab_result(tabfile)
                     each_data_list = get_dHsolv_value(each_data_list)
                     csvwriter.writerows(each_data_list)
-                    with open(tabfile, "r") as f:
-                        lines = f.readlines()
-                    compiled_tab_file_dict[solvent] = lines
+                    tar.add(tabfile)
                 
-            with open(f"{mol_id}_compiled_tab_file_dict.pkl", "wb") as f:
-                pkl.dump(compiled_tab_file_dict, f)
+            tar.close()
 
+            os.remove(cosmofile)
+            os.remove(energyfile)
             for index, row in df_pure.iterrows():
                 cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
                 tabfile = f'{mol_id}_{cosmo_name}.tab'
                 os.remove(tabfile)
+    else:
+        for mol_id in done_jobs_record.DFT_opt_freq:
+            if len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index):
+                del done_jobs_record.COSMO[mol_id]
+                done_jobs_record.DFT_opt_freq.remove(mol_id)
+                done_jobs_record.semiempirical_opt.remove(mol_id)
+                done_jobs_record.FF_conf.remove(mol_id)
+        done_jobs_record.save(project_dir, task_id)
     os.remove(sdf)
     
 def generate_cosmo_input(name, cosmotherm_path, cosmo_database_path, T_list, row):

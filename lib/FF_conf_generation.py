@@ -64,7 +64,7 @@ def _genConf(s, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, return_dic
                                     stdout=out, stderr=out)
 
                 log = XtbLog(output_file_name)
-                en = float(log.E)*627.5 #convert to kcal/mol
+                en = float(log.E)
                 opt_conf = load_sdf("xtbopt.sdf")[0].GetConformer()
                 conf = m.GetConformer(id)
                 for i in range(m.GetNumAtoms()):

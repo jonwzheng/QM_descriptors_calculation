@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 import os
 import shutil
 import time
+import tarfile
+import csv
 
 import pickle as pkl
 import pandas as pd
@@ -9,12 +11,13 @@ import traceback
 
 import rdkit.Chem as Chem
 
-from lib import create_logger, DoneJobsRecord
+from lib import create_logger, DoneJobsRecord, REPLACE_LETTER
 from lib import csearch
 from lib import semiempirical_opt
 from lib import dft_scf_qm_descriptor, dft_scf_opt, dft_scf_sp, save_dft_sp_results
 from lib import cosmo_calc
 from lib import dlpno_sp_calc
+from lib.cosmo_calculation import read_cosmo_tab_result, get_dHsolv_value
 
 parser = ArgumentParser()
 parser.add_argument('--input_smiles', type=str, required=False,
@@ -25,6 +28,8 @@ parser.add_argument('--task_id', type=int, default=0,
                     help='task id for job arrays or LLsub')
 parser.add_argument('--num_tasks', type=int, default=1,
                     help='Number of tasks for job arrays or LLsub')
+parser.add_argument('--compile', type=bool, default=True,
+                    help='Whether to compile previous calculations')
 # parser.add_argument('--output', type=str, default='QM_descriptors.pickle',
 #                     help='output as a .pickle file')
 # conformer searching
@@ -104,6 +109,7 @@ parser.add_argument('--DLPNO_sp_job_ram', type=int, default=16000,
 # test
 parser.add_argument('--is_test', type=bool, default=False,
                     help='whether this is to test different semiempirical methods')
+
 # DFT single point calculation for test
 parser.add_argument('--DFT_sp_folder', type=str, default='DFT_sp',
                     help='folder for DFT optimization and frequency calculation',)
@@ -196,6 +202,65 @@ for k, v in mol_id_to_smi_dict.items():
 # switch to project folder
 logger.info("switching to project folder...")
 os.chdir(project_dir)
+
+# compile previous calculations
+if not args.is_test and args.compile:
+    for mol_id in done_jobs_record.semiempirical_opt:
+        os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
+        tar = tarfile.open(f"{mol_id}.tar", "w")
+        for conf_ind in range(args.n_lowest_E_confs_to_save):
+            logfile = f"{mol_id}_{conf_ind}.log"
+            if os.path.isfile(logfile):
+                tar.add(logfile)
+        tar.close()
+        for conf_ind in range(args.n_lowest_E_confs_to_save):
+            logfile = f"{mol_id}_{conf_ind}.log"
+            if os.path.isfile(logfile):
+                os.remove
+        os.chdir(project_dir)
+    
+    df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
+    df_pure = df_pure.reset_index()
+    for mol_id in done_jobs_record.COSMO:
+        if len(done_jobs_record.COSMO[mol_id]) == len(df_pure.index):
+            os.chdir(os.path.join(args.COSMO_folder, mol_id))
+
+            compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")            
+            header = ['solvent_name', 'solute_name', 'temp (K)',
+                    'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+
+            #tar the cosmo, energy and tab files
+            tar = tarfile.open(f"{mol_id}.tar", "w")
+            energyfile = f"{mol_id}.energy"
+            cosmofile = f"{mol_id}.cosmo"
+            tar.add(energyfile)
+            tar.add(cosmofile)
+
+            with open(compiled_cosmo_result_path , 'w') as csvfile:
+                # creating a csv writer object
+                csvwriter = csv.writer(csvfile)
+                # writing the header
+                csvwriter.writerow(header)
+
+                for index, row in df_pure.iterrows():
+                    solvent = row.cosmo_name
+                    cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+                    tabfile = f'{mol_id}_{cosmo_name}.tab'
+                    each_data_list = read_cosmo_tab_result(tabfile)
+                    each_data_list = get_dHsolv_value(each_data_list)
+                    csvwriter.writerows(each_data_list)
+                    tar.add(tabfile)
+                
+            tar.close()
+
+            os.remove(cosmofile)
+            os.remove(energyfile)
+            for index, row in df_pure.iterrows():
+                cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+                tabfile = f'{mol_id}_{cosmo_name}.tab'
+                os.remove(tabfile)
+                tar.close()
+            os.chdir(project_dir)
 
 # conformer searching
 if not args.skip_conf_search_FF:
@@ -328,13 +393,9 @@ else:
                     semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
                                     args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
                     done_jobs_record.semiempirical_opt.append(mol_id)
-                    if mol_id in done_jobs_record.semiempirical_opt_failed:
-                        done_jobs_record.semiempirical_opt_failed.remove(mol_id)
                     done_jobs_record.save(project_dir, args.task_id)
                     logger.info(f'semiempirical optimization for {mol_id} completed')
                 except Exception:
-                    done_jobs_record.semiempirical_opt_failed.append(mol_id)
-                    done_jobs_record.save(project_dir, args.task_id)
                     logger.error(f'semiempirical optimization for {mol_id} failed')
                     logger.error(traceback.format_exc())
                 logger.info(f'Walltime: {time.time()-start}')
@@ -348,6 +409,11 @@ else:
         for semiempirical_method in semiempirical_methods:
             args.semiempirical_method = semiempirical_method
             run_semiempirical()
+
+        for mol_id in done_jobs_record.FF_conf:
+            if mol_id not in done_jobs_record.semiempirical_opt:
+                done_jobs_record.FF_conf.remove(mol_id) #if the semiempirical opt failed for all methods, restart from FF_conf
+                done_jobs_record.save(project_dir, args.task_id)
 
         logger.info('semiempirical optimization finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
@@ -386,13 +452,9 @@ else:
                     dft_scf_opt(mol_id, G16_PATH, DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
                                 logger, args.DFT_opt_freq_job_ram, charge, mult)
                     done_jobs_record.DFT_opt_freq.append(mol_id)
-                    if mol_id in done_jobs_record.DFT_opt_freq_failed:
-                        done_jobs_record.DFT_opt_freq_failed.remove(mol_id)
                     done_jobs_record.save(project_dir, args.task_id)
                     logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
                 except Exception:
-                    done_jobs_record.DFT_opt_freq_failed.append(mol_id)
-                    done_jobs_record.save(project_dir, args.task_id)
                     logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
                     logger.error(traceback.format_exc())
                 logger.info(f'Walltime: {time.time()-start}')
@@ -401,9 +463,10 @@ else:
         run_dft(args.DFT_opt_freq_theory)
 
         run_dft(args.DFT_opt_freq_theory_backup)
-        for mol_id in done_jobs_record.DFT_opt_freq_failed:#redo these species from the beginning next time restarting the workflow
-            done_jobs_record.FF_conf.remove(mol_id)
-            done_jobs_record.semiempirical_opt.remove(mol_id)
+        for mol_id in done_jobs_record.semiempirical_opt:#redo these species from the beginning next time restarting the workflow
+            if mol_id not in done_jobs_record.DFT_opt_freq:
+                done_jobs_record.FF_conf.remove(mol_id)
+                done_jobs_record.semiempirical_opt.remove(mol_id)
         done_jobs_record.save(project_dir, args.task_id)
 
         logger.info('DFT optimization and frequency calculation finished.')
@@ -423,7 +486,7 @@ else:
         if args.xyz_DFT_opt:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
         else:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq] #feed in all DFT done jobs to make sure we compile past jobs
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq and len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index)] #feed in all DFT done jobs to make sure we compile past jobs
 
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
@@ -477,12 +540,9 @@ else:
             try:
                 dlpno_sp_calc(mol_id, ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram, xyz_DFT_opt)
                 done_jobs_record.WFT_sp.append(mol_id)
-                if mol_id in done_jobs_record.WFT_sp_failed:
-                    done_jobs_record.WFT_sp_failed.remove(mol_id)
                 done_jobs_record.save(project_dir, args.task_id)
                 logger.info(f'DLPNO single point calculation for {mol_id} completed')
             except:
-                done_jobs_record.WFT_sp_failed.append(mol_id)
                 logger.error(f'DLPNO single point calculation for {mol_id} failed.')
                 logger.error(traceback.format_exc())
             logger.info(f'Walltime: {time.time()-start}')
@@ -490,6 +550,11 @@ else:
         logger.info('DLPNO single point calculation finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
 
+    for mol_id in done_jobs_record.DFT_opt_freq:
+        if mol_id not in done_jobs_record.WFT_sp:
+            done_jobs_record.FF_conf.remove(mol_id)
+            done_jobs_record.semiempirical_opt.remove(mol_id)
+            done_jobs_record.DFT_opt_freq.remove(mol_id)
 
     # # DFT QM descriptor calculation
     # os.makedirs(args.DFT_QM_descriptor_folder, exist_ok=True)
