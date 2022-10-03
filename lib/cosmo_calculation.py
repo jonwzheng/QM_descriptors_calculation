@@ -8,7 +8,7 @@ import traceback
 import pickle as pkl
 import tarfile
 
-from utils import REPLACE_LETTER
+from .utils import REPLACE_LETTER
 
 from rdkit import Chem
 from .file_parser import mol2xyz
