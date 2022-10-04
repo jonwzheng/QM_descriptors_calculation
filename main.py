@@ -239,7 +239,9 @@ if not args.is_test and args.compile:
                             f.write(line)
                 os.remove(f"{mol_id}_compiled_tab_file_dict.pkl")
 
-            if not os.path.exists(f"{mol_id}.tar"):
+            energyfile = f"{mol_id}.energy"
+            cosmofile = f"{mol_id}.cosmo"
+            if os.path.exists(energyfile) and os.path.exists(cosmofile):
 
                 compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")            
                 header = ['solvent_name', 'solute_name', 'temp (K)',

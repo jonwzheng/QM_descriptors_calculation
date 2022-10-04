@@ -131,6 +131,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                         f.write(line)
             os.remove(f"{mol_id}_compiled_tab_file_dict.pkl")
 
+        energyfile = f"{mol_id}.energy"
+        cosmofile = f"{mol_id}.cosmo"
         if os.path.exists(cosmofile) and os.path.exists(energyfile):
             #compile tab files and results in tabfiles of each solvent
             logger.info(f"Compile COSMO calculation for {mol_id}...")
@@ -141,8 +143,6 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
             #tar the cosmo, energy and tab files
             tar = tarfile.open(f"{mol_id}.tar", "w")
-            energyfile = f"{mol_id}.energy"
-            cosmofile = f"{mol_id}.cosmo"
             tar.add(energyfile)
             tar.add(cosmofile)
 
