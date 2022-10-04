@@ -501,7 +501,7 @@ else:
         if args.xyz_DFT_opt:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
         else:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq and len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index)] #feed in all DFT done jobs to make sure we compile past jobs
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index)] #feed in all DFT done jobs to make sure we compile past jobs
 
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
