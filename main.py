@@ -207,16 +207,17 @@ os.chdir(project_dir)
 if not args.is_test and args.compile:
     for mol_id in done_jobs_record.semiempirical_opt:
         os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
-        tar = tarfile.open(f"{mol_id}.tar", "w")
+        if not os.path.exists(f"{mol_id}.tar"):
+            tar = tarfile.open(f"{mol_id}.tar", "w")
+            for conf_ind in range(args.n_lowest_E_confs_to_save):
+                logfile = f"{mol_id}_{conf_ind}.log"
+                if os.path.isfile(logfile):
+                    tar.add(logfile)
+            tar.close()
         for conf_ind in range(args.n_lowest_E_confs_to_save):
             logfile = f"{mol_id}_{conf_ind}.log"
             if os.path.isfile(logfile):
-                tar.add(logfile)
-        tar.close()
-        for conf_ind in range(args.n_lowest_E_confs_to_save):
-            logfile = f"{mol_id}_{conf_ind}.log"
-            if os.path.isfile(logfile):
-                os.remove
+                os.remove(logfile)
         os.chdir(project_dir)
     
     df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
@@ -501,7 +502,7 @@ else:
         if args.xyz_DFT_opt:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
         else:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index)] #feed in all DFT done jobs to make sure we compile past jobs
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index)]
 
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
