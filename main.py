@@ -563,6 +563,7 @@ else:
             os.chdir(project_dir)
         logger.info('DLPNO single point calculation finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
+        logger.info('='*80)
 
         for mol_id in done_jobs_record.DFT_opt_freq:
             if mol_id not in done_jobs_record.WFT_sp:
