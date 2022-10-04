@@ -568,11 +568,11 @@ else:
         logger.info('DLPNO single point calculation finished.')
         logger.info(f'Overall walltime: {time.time()-start_time}')
 
-    for mol_id in done_jobs_record.DFT_opt_freq:
-        if mol_id not in done_jobs_record.WFT_sp:
-            done_jobs_record.FF_conf.remove(mol_id)
-            done_jobs_record.semiempirical_opt.remove(mol_id)
-            done_jobs_record.DFT_opt_freq.remove(mol_id)
+        for mol_id in done_jobs_record.DFT_opt_freq:
+            if mol_id not in done_jobs_record.WFT_sp:
+                done_jobs_record.FF_conf.remove(mol_id)
+                done_jobs_record.semiempirical_opt.remove(mol_id)
+                done_jobs_record.DFT_opt_freq.remove(mol_id)
 
     # # DFT QM descriptor calculation
     # os.makedirs(args.DFT_QM_descriptor_folder, exist_ok=True)
