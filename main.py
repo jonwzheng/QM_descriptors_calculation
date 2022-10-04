@@ -571,13 +571,13 @@ else:
                 done_jobs_record.DFT_opt_freq.remove(mol_id)
 
     # keep doing COSMO and DLPNO first before restarting failed DFT jobs
-    if not args.skip_COSMO:
-
-        run_COSMO_stage()
-
     if not args.skip_DLPNO:
 
         run_DLPNO_stage()
+
+    if not args.skip_COSMO:
+
+        run_COSMO_stage()
 
     if not args.skip_semiempirical_opt:
 
