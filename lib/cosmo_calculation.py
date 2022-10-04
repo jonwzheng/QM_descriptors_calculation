@@ -170,13 +170,14 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 tabfile = f'{mol_id}_{cosmo_name}.tab'
                 os.remove(tabfile)
     else:
-        for mol_id in done_jobs_record.DFT_opt_freq:
-            if len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index):
-                del done_jobs_record.COSMO[mol_id]
-                done_jobs_record.DFT_opt_freq.remove(mol_id)
-                done_jobs_record.semiempirical_opt.remove(mol_id)
-                done_jobs_record.FF_conf.remove(mol_id)
-        done_jobs_record.save(project_dir, task_id)
+        pass
+        # for mol_id in done_jobs_record.DFT_opt_freq:
+        #     if len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index):
+        #         del done_jobs_record.COSMO[mol_id]
+        #         done_jobs_record.DFT_opt_freq.remove(mol_id)
+        #         done_jobs_record.semiempirical_opt.remove(mol_id)
+        #         done_jobs_record.FF_conf.remove(mol_id)
+        # done_jobs_record.save(project_dir, task_id)
     os.remove(sdf)
     
 def generate_cosmo_input(name, cosmotherm_path, cosmo_database_path, T_list, row):
