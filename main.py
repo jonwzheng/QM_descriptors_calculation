@@ -379,8 +379,7 @@ if args.is_test:
 
 else:
 
-    if not args.skip_semiempirical_opt:
-
+    def run_semiempirical_stage():
         # semiempirical optimization
         logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
 
@@ -437,8 +436,7 @@ else:
         logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('='*80)
 
-    if not args.skip_DFT_opt_freq:
-
+    def run_DFT_opt_freq_stage():
         try:
             assert G16_PATH is not None
         except AssertionError as e:
@@ -491,8 +489,7 @@ else:
         logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('='*80)
 
-    if not args.skip_COSMO:
-
+    def run_COSMO_stage():
         assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None, f"COSMO_DATABASE_PATH and COSMOTHERM_PATH must be provided for Turbomole and COSMO calculations"
 
         logger.info('starting Turbomole and COSMO calculations for DFT-optimized conformers...')
@@ -531,8 +528,7 @@ else:
         logger.info(f'Overall walltime: {time.time()-start_time}')
         logger.info('='*80)
 
-    if not args.skip_DLPNO:
-
+    def run_DLPNO_stage():
         try:
             assert ORCA_PATH is not None
         except AssertionError as e:
@@ -573,6 +569,31 @@ else:
                 done_jobs_record.FF_conf.remove(mol_id)
                 done_jobs_record.semiempirical_opt.remove(mol_id)
                 done_jobs_record.DFT_opt_freq.remove(mol_id)
+
+    # keep doing COSMO and DLPNO first before restarting failed DFT jobs
+    if not args.skip_COSMO:
+
+        run_COSMO_stage()
+
+    if not args.skip_DLPNO:
+
+        run_DLPNO_stage()
+
+    if not args.skip_semiempirical_opt:
+
+        run_semiempirical_stage()        
+
+    if not args.skip_DFT_opt_freq:
+
+        run_DFT_opt_freq_stage()
+
+    if not args.skip_COSMO:
+
+        run_COSMO_stage()
+
+    if not args.skip_DLPNO:
+
+        run_DLPNO_stage()
 
     # # DFT QM descriptor calculation
     # os.makedirs(args.DFT_QM_descriptor_folder, exist_ok=True)
