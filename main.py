@@ -544,6 +544,7 @@ else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
         for opt_sdf in opt_sdfs:
             mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
+            start = time.time()
             os.makedirs(os.path.join(args.DLPNO_sp_folder, mol_id), exist_ok=True)
             if not args.xyz_DFT_opt:
                 shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
