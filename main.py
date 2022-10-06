@@ -20,7 +20,7 @@ from lib import dlpno_sp_calc
 from lib.cosmo_calculation import read_cosmo_tab_result, get_dHsolv_value
 
 parser = ArgumentParser()
-parser.add_argument('--input_smiles', type=str, required=False,
+parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
@@ -149,17 +149,16 @@ logger = create_logger(name="worker", task_id=args.task_id)
 submit_dir = os.path.abspath(os.getcwd())
 project_dir = os.path.abspath(os.path.join(args.output_folder, f"{args.output_folder}_{args.task_id}"))
 
+df = pd.read_csv(args.input_smiles, index_col=0)
+assert len(df['id']) == len(set(df['id'])), "ids must be unique"
+#df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
+df = df[args.task_id:len(df.index):args.num_tasks]
+
 if args.xyz_DFT_opt is not None:
     with open(args.xyz_DFT_opt, "rb") as f:
         xyz_DFT_opt = pkl.load(f)
-    df = pd.DataFrame({"id": list(xyz_DFT_opt.keys())})
-    df = df[args.task_id:len(df.index):args.num_tasks]
 else:
     xyz_DFT_opt = None
-    df = pd.read_csv(args.input_smiles, index_col=0)
-    assert len(df['id']) == len(set(df['id'])), "ids must be unique"
-    #df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
-    df = df[args.task_id:len(df.index):args.num_tasks]
 
 done_jobs_record = DoneJobsRecord()
 
