@@ -29,7 +29,7 @@ input_smiles=descend_300K_data_down_30K_tree-20220520_sampled_mols.csv
 xyz_DFT_opt=CNO_radicals_dft_opt_xyz.pkl
 
 python $QMD_PATH/main.py --input_smiles $input_smiles --task_id $SLURM_ARRAY_TASK_ID --num_tasks $SLURM_ARRAY_TASK_COUNT --COSMOtherm_path $COSMOTHERM_PATH --COSMO_database_path $COSMO_DATABASE_PATH --skip_conf_search_FF --skip_semiempirical_opt --skip_DFT_opt_freq --xyz_DFT_opt $xyz_DFT_opt --COSMO_input_pure_solvents $QMD_PATH/common_solvent_list_final.csv --skip_DLPNO
-
+# python $QMD_PATH/main.py --input_smiles $input_smiles --task_id $SLURM_ARRAY_TASK_ID --num_tasks $SLURM_ARRAY_TASK_COUNT --COSMOtherm_path $COSMOTHERM_PATH --COSMO_database_path $COSMO_DATABASE_PATH --skip_conf_search_FF --skip_semiempirical_opt --skip_DFT_opt_freq --skip_COSMO --xyz_DFT_opt $xyz_DFT_opt
 ~                                                                                                                                                                                                                                              
 ~                                                                                                                                                                                                                                              
 ~                                                                                                                                                                                                                                              
