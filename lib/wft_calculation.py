@@ -51,8 +51,6 @@ def dlpno_sp_calc(mol_id, orca_path, charge, mult, n_procs, job_ram, xyz_DFT_opt
         os.chdir(mol_dir)
         raise RuntimeError(f"ORCA calculation failed for {mol_id}")
 
-    os.remove(sdf)
-
 def generate_dlpno_sp_input(xyz_str: str,
                                 charge: int,
                                 multiplicity: int,
