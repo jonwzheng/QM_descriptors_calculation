@@ -145,8 +145,7 @@ ORCA_PATH = args.ORCA_path
 
 start_time = time.time()
 
-name = os.path.splitext(args.input_smiles)[0]
-logger = create_logger(name=name, task_id=args.task_id)
+logger = create_logger(name="worker", task_id=args.task_id)
 submit_dir = os.path.abspath(os.getcwd())
 project_dir = os.path.abspath(os.path.join(args.output_folder, f"{args.output_folder}_{args.task_id}"))
 
