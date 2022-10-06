@@ -19,8 +19,8 @@ def _genConf(s, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, return_dic
     if not m:
         return
     try:
+        m = Chem.AddHs(m)
         AllChem.EmbedMolecule(m, AllChem.ETKDG())
-        m = Chem.AddHs(m, addCoords=True)
     except:
         return
 
