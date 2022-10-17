@@ -538,7 +538,7 @@ else:
         os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
 
         if args.xyz_DFT_opt:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
+            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt and mol_id not in done_jobs_record.WFT_sp]
         else:
             opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
         for opt_sdf in opt_sdfs:
