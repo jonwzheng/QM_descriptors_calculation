@@ -103,8 +103,8 @@ parser.add_argument('--skip_DLPNO', action="store_true",
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
                     help='number of process for DLPNO calculations')
-parser.add_argument('--DLPNO_sp_job_ram', type=int, default=16000,
-                    help='amount of ram (MB) allocated for each DLPNO calculation')
+parser.add_argument('--DLPNO_sp_job_ram', type=int, default=3072,
+                    help='amount of ram (MB) per core allocated for each DLPNO calculation')
 
 # test
 parser.add_argument('--is_test', type=bool, default=False,
