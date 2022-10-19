@@ -76,7 +76,7 @@ for mol_id in mol_ids:
     charge = mol_id_to_charge_dict[mol_id]
     mult = mol_id_to_mult_dict[mol_id]
     coords = xyz_DFT_opt[mol_id]
-    script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram)
+    script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
 
     infile = f"{mol_id}.in"
     with open(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", infile), "w+") as f:
