@@ -59,15 +59,19 @@ submit_dir = os.path.abspath(os.getcwd())
 project_dir = os.path.abspath(os.path.join(args.output_folder))
 
 os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder), exist_ok=True)
+os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs"), exist_ok=True)
+os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs"), exist_ok=True)
+
 mol_ids = list(xyz_DFT_opt.keys())
 for ind, mol_id in enumerate(mol_ids):
-    ids = int(ind/1000)
-    os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, f"inputs_{ids}"), exist_ok=True)
+    ids = str(int(ind/1000))
+    os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}"), exist_ok=True)
+    os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs", f"outputs_{ids}"), exist_ok=True)
     charge = mol_id_to_charge_dict[mol_id]
     mult = mol_id_to_mult_dict[mol_id]
     coords = xyz_DFT_opt[mol_id]
     script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram)
 
     infile = f"{mol_id}.in"
-    with open(os.path.join(project_dir, args.DLPNO_sp_folder, f"inputs_{ids}", infile), "w+") as f:
+    with open(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", infile), "w+") as f:
         f.write(script)
