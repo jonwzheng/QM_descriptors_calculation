@@ -68,7 +68,7 @@ def generate_dlpno_sp_input(xyz_str: str,
     else:
         raise NotImplementedError
 
-    script = f"""!{reference} dlpno-ccsd(t) def2-svp def2-svp/c NormalPNO
+    script = f"""!{reference} dlpno-ccsd(t) def2-svp def2-svp/c TightSCF NormalPNO
 !sp 
 
 %maxcore {memory_mb}
