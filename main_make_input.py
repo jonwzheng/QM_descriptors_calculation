@@ -18,6 +18,10 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
+parser.add_argument('--task_id', type=int, default=0,
+                    help='task id for job arrays or LLsub')
+parser.add_argument('--num_tasks', type=int, default=1,
+                    help='Number of tasks for job arrays or LLsub')
 parser.add_argument('--xyz_DFT_opt', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
@@ -33,6 +37,7 @@ with open(args.xyz_DFT_opt, "rb") as f:
     xyz_DFT_opt = pkl.load(f)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
+df = df[args.task_id:len(df.index):args.num_tasks]
 
 # create id to smile mapping
 mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
@@ -62,9 +67,10 @@ os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder), exist_ok=True)
 os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs"), exist_ok=True)
 os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs"), exist_ok=True)
 
-mol_ids = list(xyz_DFT_opt.keys())
-for ind, mol_id in enumerate(mol_ids):
-    ids = str(int(ind/1000))
+mol_ids = list(df["id"])
+mol_ids = [mol_id for mol_id in mol_ids if mol_id in xyz_DFT_opt]
+for mol_id in mol_ids:
+    ids = str(int(int(mol_id.split("id")[1])/1000))
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}"), exist_ok=True)
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs", f"outputs_{ids}"), exist_ok=True)
     charge = mol_id_to_charge_dict[mol_id]
