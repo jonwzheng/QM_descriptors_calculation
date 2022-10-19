@@ -14,6 +14,8 @@ import rdkit.Chem as Chem
 from lib.wft_calculation import generate_dlpno_sp_input
 
 parser = ArgumentParser()
+parser.add_argument('--input_smiles', type=str, required=True,
+                    help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
 parser.add_argument('--xyz_DFT_opt', type=str, default=None,
