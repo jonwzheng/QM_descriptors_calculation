@@ -305,7 +305,7 @@ def parser(mol_log):
             failed_jobs[mol_id]['reason'] = 'freq'
             failed_jobs[mol_id]['mol_smi'] = mol_smi
             failed_jobs[mol_id]['dft_freq'] = load_freq(g16_log)
-            failed_jobs[mol_id]['dft_freq_neg'] = check_neg_freq(load_freq(g16_log))
+            failed_jobs[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
             failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
             failed_jobs[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
             failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
@@ -322,7 +322,7 @@ def parser(mol_log):
         valid_mol[mol_id] = dict()
         valid_mol[mol_id]['mol_smi'] = mol_smi
         valid_mol[mol_id]['dft_freq'] = load_freq(g16_log)
-        valid_mol[mol_id]['dft_freq_neg'] = check_neg_freq(load_freq(g16_log))
+        valid_mol[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
         valid_mol[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
         valid_mol[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
         valid_mol[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
