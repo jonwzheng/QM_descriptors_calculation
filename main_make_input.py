@@ -72,6 +72,10 @@ for mol_id in mol_ids:
     ids = str(int(int(mol_id.split("id")[1])/1000))
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}"), exist_ok=True)
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs", f"outputs_{ids}"), exist_ok=True)
+    try:
+        os.remove(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", f"{mol_id}.tmp")
+    except:
+        pass
     if not os.path.exists(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", f"{mol_id}.in")):
         charge = mol_id_to_charge_dict[mol_id]
         mult = mol_id_to_mult_dict[mol_id]
