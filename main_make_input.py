@@ -73,7 +73,7 @@ for mol_id in mol_ids:
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}"), exist_ok=True)
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs", f"outputs_{ids}"), exist_ok=True)
     try:
-        os.remove(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", f"{mol_id}.tmp")
+        os.remove(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", f"{mol_id}.tmp"))
     except:
         pass
     if not os.path.exists(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", f"{mol_id}.in")):
