@@ -5,13 +5,12 @@ from argparse import ArgumentParser
 
 import os
 import re
-import io
 import sys
 import shutil
 
 import numpy as np
 import pandas as pd
-import pickle
+import pickle as pkl
 
 from joblib import Parallel, delayed
 
@@ -351,8 +350,13 @@ for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_f
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log) for mol_log in mol_log_paths)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pickle.dump(out, outfile)
+    pkl.dump(out, outfile)
 
+xyz_DFT_opt = {}
+for failed_dict, success_dict in out:
+    if success_dict:
+        for mol_id in success_dict:
+            xyz_DFT_opt[mol_id] = success_dict[mol_id]["dft_xyz"]
 
-
-
+with open(f"{output_file_name}_xyz.pkl", "wb") as f:
+    pkl.dump(xyz_DFT_opt, f)
