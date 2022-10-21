@@ -346,10 +346,10 @@ def main():
     df = pd.read_csv(args.input_smiles)
     mol_log_paths = []
     submit_dir = os.getcwd()
-    for suboutput_folder in os.listdir(os.path.join(submit_dir, "output")):
-        for mol_log in os.listdir(os.path.join(submit_dir, "output", suboutput_folder)):
+    for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs")):
+        for mol_log in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder)):
             if ".log" in mol_log:
-                mol_log_paths.append(os.path.join(submit_dir, "output", suboutput_folder, mol_log))
+                mol_log_paths.append(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, mol_log))
 
     out = Parallel(n_jobs=94, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log, df) for mol_log in mol_log_paths)
 
