@@ -18,10 +18,6 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
-parser.add_argument('--task_id', type=int, default=0,
-                    help='task id for job arrays or LLsub')
-parser.add_argument('--num_tasks', type=int, default=1,
-                    help='Number of tasks for job arrays or LLsub')
 parser.add_argument('--xyz_DFT_opt', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
