@@ -263,7 +263,7 @@ def load_energies(self, zpe_scale_factor):
 
 # In[71]:
 
-def parser(mol_log, df):
+def parser(mol_log):
 
     zpe_scale_factor = 0.986
     # LevelOfTheory(method='wb97xd',basis='def2svp',software='gaussian')": 0.986,  # [4]
@@ -336,31 +336,20 @@ def parser(mol_log, df):
         failed_jobs[mol_id]['reason'] = 'parser3'
     return failed_jobs, valid_mol
 
+input_smiles_path = sys.argv[1]
 
-def main(input_smiles_path):
+df = pd.read_csv(input_smiles_path)
+mol_log_paths = []
+submit_dir = os.getcwd()
+for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs")):
+    for mol_log in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder)):
+        if ".log" in mol_log:
+            mol_log_paths.append(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, mol_log))
 
-    df = pd.read_csv(input_smiles_path)
-    mol_log_paths = []
-    submit_dir = os.getcwd()
-    for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs")):
-        for mol_log in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder)):
-            if ".log" in mol_log:
-                mol_log_paths.append(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, mol_log))
+out = Parallel(n_jobs=94, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log) for mol_log in mol_log_paths)
 
-    out = Parallel(n_jobs=94, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log, df) for mol_log in mol_log_paths)
-
-    with open(os.path.join(submit_dir, f'{os.path.basename(args.input_smiles).split(".csv")[0]}.pkl'), 'wb') as outfile:
-        pickle.dump(out, outfile)
-
-
-if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument('--input_smiles', type=str, required=True,
-                        help='input smiles included in a .csv file')
-    args = parser.parse_args()
-    
-    main(args.input_smiles)
-
+with open(os.path.join(submit_dir, f'{os.path.basename(input_smiles_path).split(".csv")[0]}.pkl'), 'wb') as outfile:
+    pickle.dump(out, outfile)
 
 
 
