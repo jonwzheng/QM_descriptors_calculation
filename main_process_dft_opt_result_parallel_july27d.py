@@ -346,7 +346,7 @@ for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_f
         if ".log" in mol_log:
             mol_log_paths.append(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, mol_log))
 
-out = Parallel(n_jobs=94, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log) for mol_log in mol_log_paths)
+out = Parallel(n_jobs=int(sys.argv[2]), backend="multiprocessing", verbose=5)(delayed(parser)(mol_log) for mol_log in mol_log_paths)
 
 with open(os.path.join(submit_dir, f'{os.path.basename(input_smiles_path).split(".csv")[0]}.pkl'), 'wb') as outfile:
     pickle.dump(out, outfile)
