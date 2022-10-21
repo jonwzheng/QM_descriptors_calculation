@@ -37,7 +37,6 @@ with open(args.xyz_DFT_opt, "rb") as f:
     xyz_DFT_opt = pkl.load(f)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
-df = df[args.task_id:len(df.index):args.num_tasks]
 
 # create id to smile mapping
 mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
@@ -73,11 +72,13 @@ for mol_id in mol_ids:
     ids = str(int(int(mol_id.split("id")[1])/1000))
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}"), exist_ok=True)
     os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs", f"outputs_{ids}"), exist_ok=True)
-    charge = mol_id_to_charge_dict[mol_id]
-    mult = mol_id_to_mult_dict[mol_id]
-    coords = xyz_DFT_opt[mol_id]
-    script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
+    if not os.path.exists(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", f"{mol_id}.in")):
+        charge = mol_id_to_charge_dict[mol_id]
+        mult = mol_id_to_mult_dict[mol_id]
+        coords = xyz_DFT_opt[mol_id]
+        script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
 
-    infile = f"{mol_id}.in"
-    with open(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", infile), "w+") as f:
-        f.write(script)
+        with open(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs", f"inputs_{ids}", f"{mol_id}.in"), "w+") as f:
+            f.write(script)
+    else:
+        continue
