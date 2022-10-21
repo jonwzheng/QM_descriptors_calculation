@@ -102,38 +102,38 @@ def make_input_file_from_xyz(symbols, coords):
 
 
 def load_geometry(self, periodictable=periodictable, initial=False):
-       """
-       Return the optimum geometry of the molecular configuration from the
-       Gaussian log file. If multiple such geometries are identified, only the
-       last is returned.
-       """
-       step = -1
-       number, coord, symbol = [], [], []
+    """
+    Return the optimum geometry of the molecular configuration from the
+    Gaussian log file. If multiple such geometries are identified, only the
+    last is returned.
+    """
+    step = -1
+    number, coord, symbol = [], [], []
 
-       with open(self, 'r') as f:
-           line = f.readline()
-           while line != '':
-               # Automatically determine the number of atoms
-               if 'Input orientation:' in line:
-                   step += 1
-                   number, coord = [], []
-                   for i in range(5):
-                       line = f.readline()
-                   while '---------------------------------------------------------------------' not in line:
-                       data = line.split()
-                       number.append(int(data[1]))
-                       coord.append([float(data[3]), float(data[4]), float(data[5])])
-                       line = f.readline()
-               line = f.readline()
-               
-               if coord and initial:
-                   break
+    with open(self, 'r') as f:
+        line = f.readline()
+        while line != '':
+            # Automatically determine the number of atoms
+            if 'Input orientation:' in line:
+                step += 1
+                number, coord = [], []
+                for i in range(5):
+                    line = f.readline()
+                while '---------------------------------------------------------------------' not in line:
+                    data = line.split()
+                    number.append(int(data[1]))
+                    coord.append([float(data[3]), float(data[4]), float(data[5])])
+                    line = f.readline()
+            line = f.readline()
 
-       number = np.array(number)
-       symbol = [periodictable[x] for x in number]
-       
-       xyz_str = make_input_file_from_xyz(symbol, coord)
-       return xyz_str, step
+            if coord and initial:
+                break
+
+    number = np.array(number)
+    symbol = [periodictable[x] for x in number]
+
+    xyz_str = make_input_file_from_xyz(symbol, coord)
+    return xyz_str, step
 
 
 # In[62]:
@@ -274,7 +274,7 @@ def parser(mol_log, df):
     valid_mol = dict()
 
 
-    mol_id = int(mol_log.split('.log')[0])
+    mol_id = os.path.basename(mol_log).split(".log")[0]
     mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
 
     g16_log = mol_log
@@ -337,13 +337,9 @@ def parser(mol_log, df):
     return failed_jobs, valid_mol
 
 
-def main():
-    parser = ArgumentParser()
-    parser.add_argument('--input_smiles', type=str, required=True,
-                        help='input smiles included in a .csv file')
-    args = parser.parse_args()
+def main(input_smiles_path):
 
-    df = pd.read_csv(args.input_smiles)
+    df = pd.read_csv(input_smiles_path)
     mol_log_paths = []
     submit_dir = os.getcwd()
     for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs")):
@@ -353,12 +349,17 @@ def main():
 
     out = Parallel(n_jobs=94, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log, df) for mol_log in mol_log_paths)
 
-    with open(os.path.join(submit_dir, f'{args.input_smiles.split(".csv")[0]}.pkl'), 'wb') as outfile:
+    with open(os.path.join(submit_dir, f'{os.path.basename(args.input_smiles).split(".csv")[0]}.pkl'), 'wb') as outfile:
         pickle.dump(out, outfile)
 
 
 if __name__ == '__main__':
-    main()
+    parser = ArgumentParser()
+    parser.add_argument('--input_smiles', type=str, required=True,
+                        help='input smiles included in a .csv file')
+    args = parser.parse_args()
+    
+    main(args.input_smiles)
 
 
 
