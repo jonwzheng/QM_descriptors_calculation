@@ -29,44 +29,46 @@ echo $PATH
 
 SubmitDir=`pwd`
 
-for folder in $SubmitDir/output/DLPNO_sp/inputs/inputs_*; do
+for i in {1..5}; do
+    for folder in $SubmitDir/output/DLPNO_sp/inputs/inputs_*; do
 
-    folderind="${folder##$SubmitDir/output/DLPNO_sp/inputs/inputs_}"
-    echo "folderind $folderind"
-    
-    for filename in $folder/*.in; do
+        folderind="${folder##$SubmitDir/output/DLPNO_sp/inputs/inputs_}"
+        echo "folderind $folderind"
         
-        input=`basename $filename .in`
-        
-        echo "input $input"
-        if [ -e $folder/$input.in ]
-        then
-            mv $folder/$input.in $folder/$input.tmp
-
-            ScratchDir=$TMPDIR/$USER/scratch/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$input
-            echo "ScratchDir $ScratchDir"
-            mkdir -p $ScratchDir
-
-            cd $ScratchDir
-            cp $folder/$input.tmp $input.in
-            $orcadir/orca $input.in > $input.log
-            cp $input.log $SubmitDir/output/DLPNO_sp/outputs/outputs_$folderind/
-            if [ -e $input.log ]
+        for filename in $folder/*.in; do
+            
+            input=`basename $filename .in`
+            
+            echo "input $input"
+            if [ -e $folder/$input.in ]
             then
-                if grep -Fq "aborting the run" $input.log
+                mv $folder/$input.in $folder/$input.tmp
+
+                ScratchDir=$TMPDIR/$USER/scratch/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$input
+                echo "ScratchDir $ScratchDir"
+                mkdir -p $ScratchDir
+
+                cd $ScratchDir
+                cp $folder/$input.tmp $input.in
+                $orcadir/orca $input.in > $input.log
+                cp $input.log $SubmitDir/output/DLPNO_sp/outputs/outputs_$folderind/
+                if [ -e $input.log ]
                 then
+                    if grep -Fq "aborting the run" $input.log
+                    then
+                        echo "failed"
+                        mv $folder/$input.tmp $folder/$input.in
+                    else
+                        echo "done"
+                        rm $folder/$input.tmp
+                    fi
+                else
                     echo "failed"
                     mv $folder/$input.tmp $folder/$input.in
-                else
-                    echo "done"
-                    rm $folder/$input.tmp
                 fi
-            else
-                echo "failed"
-                mv $folder/$input.tmp $folder/$input.in
+                cd $SubmitDir
+                rm -rf $ScratchDir
             fi
-            cd $SubmitDir
-            rm -rf $ScratchDir
-        fi
+        done
     done
 done

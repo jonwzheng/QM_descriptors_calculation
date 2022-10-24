@@ -11,6 +11,8 @@ import shutil
 import numpy as np
 import pandas as pd
 import pickle as pkl
+from rdmc.mol import RDKitMol
+from rdmc.external.gaussian import GaussianLog
 
 from joblib import Parallel, delayed
 
@@ -275,8 +277,19 @@ def parser(mol_log):
 
     mol_id = os.path.basename(mol_log).split(".log")[0]
     mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
+    pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
 
     g16_log = mol_log
+
+    glog = GaussianLog(g16_log)
+    post_adj = glog.get_mol(refid=glog.num_all_geoms-1,  # The last geometry in the job
+                            converged=False,
+                            sanitize=False,
+                            backend='openbabel').GetAdjacencyMatrix()
+    if not (pre_adj == post_adj).all():
+        failed_jobs[mol_id] = dict()
+        failed_jobs[mol_id]['status'] = False
+        failed_jobs[mol_id]['reason'] = 'adjacency matrix'
 
     job_stat = check_job_status(read_log_file(g16_log))
 
