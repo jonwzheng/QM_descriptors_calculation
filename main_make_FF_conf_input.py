@@ -79,6 +79,8 @@ assert XTB_PATH is not None, f"XTB_PATH must be provided to use GFNFF"
 
 mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])
+inputs_dir = os.path.join(FF_conf_dir, "inputs")
+os.makedirs(inputs_dir, exist_ok=True)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
     ids = str(int(int(mol_id.split("id")[1])/1000))
