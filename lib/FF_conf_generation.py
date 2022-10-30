@@ -40,7 +40,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
             os.chdir(scratch_dir_mol_id)
 
             input_file_mol_id = f'{mol_id}_{id}.sdf'
-            write_mol_to_sdf(mol, input_file_mol_id, id)
+            write_mol_to_sdf(mol._mol, input_file_mol_id, id)
 
             xtb_command = os.path.join(XTB_path, 'xtb')
             output_file_mol_id = f'{mol_id}_{id}.log'
