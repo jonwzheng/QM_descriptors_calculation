@@ -22,6 +22,7 @@ export PATH=$XTB_PATH:$PATH
 QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_workflow
 input_smiles=/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_cosmo_dlpno/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_input.csv
 
-scratchdir=$HOME/scratch/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID
-mkdir -p $scratchdir
-python $QMD_PATH/main_FF_conf.py --input_smiles $input_smiles --XTB_path $XTB_PATH
+scratch_dir=$HOME/scratch/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID
+mkdir -p $scratch_dir
+
+python $QMD_PATH/main_FF_conf.py --input_smiles $input_smiles --XTB_path $XTB_PATH --scratch_dir $scratch_dir
