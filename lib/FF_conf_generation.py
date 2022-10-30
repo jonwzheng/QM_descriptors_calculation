@@ -10,7 +10,6 @@ from .file_parser import write_mol_to_sdf, load_sdf
 import os
 import traceback
 from rdmc.mol import RDKitMol
-import numpy as np
 
 # algorithm to generate nc conformations
 def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, n_lowest_E_confs_to_save, scratch_dir, save_dir, input_dir):
@@ -21,7 +20,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
     num_confs = tnr if tnr < max_n_conf else max_n_conf
     mol.EmbedMultipleConfs(num_confs, maxAttempts=max_try, pruneRmsThresh=rms,
                             randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
-    ids = list(np.arange(mol.GetNumConformers()))
+    ids = list(range(mol.GetNumConformers()))
 
     diz = []
     pre_adj = mol.GetAdjacencyMatrix()
