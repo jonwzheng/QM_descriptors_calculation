@@ -81,7 +81,8 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
 
     ids_to_save = [id for (en, id) in ids[:n_lowest_E_confs_to_save]]
     ens_to_save = [en for (en, id) in ids[:n_lowest_E_confs_to_save]]
-    write_mol_to_sdf(mol, os.path.join(save_dir, '{}_confs.sdf'.format(mol_id)), ids_to_save, ens_to_save)
+    print(ids_to_save)
+    write_mol_to_sdf(mol._mol, os.path.join(save_dir, '{}_confs.sdf'.format(mol_id)), confIds=ids_to_save, confEns=ens_to_save)
     os.remove(os.path.join(input_dir, f"{mol_id}.in"))
 
 # filter conformers based on relative energy
