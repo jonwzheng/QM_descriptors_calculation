@@ -78,7 +78,7 @@ df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
 # conformer searching
-conf_search_FFs = ["MMFF94s", "GFNFF", "all"]
+conf_search_FFs = ["GFNFF", "MMFF94s"]
 
 assert XTB_PATH is not None, f"XTB_PATH must be provided to use GFNFF"
 
