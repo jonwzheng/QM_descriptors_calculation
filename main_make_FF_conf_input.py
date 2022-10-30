@@ -75,7 +75,7 @@ FF_conf_dir = os.path.join(output_dir, args.FF_conf_folder)
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
-assert XTB_PATH is not None, f"XTB_PATH must be provided to use GFNFF"
+assert XTB_PATH is not None, "XTB_PATH must be provided to use GFNFF"
 
 mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])

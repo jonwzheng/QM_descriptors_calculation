@@ -3,30 +3,25 @@ from __future__ import print_function, absolute_import
 import shutil
 import subprocess
 
-from multiprocessing import Process, Manager
-
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from concurrent import futures
 from .log_parser import XtbLog
 from .file_parser import write_mol_to_sdf, load_sdf
 import os
 import traceback
+from rdmc.mol import RDKitMol
+import numpy as np
 
 # algorithm to generate nc conformations
 def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, n_lowest_E_confs_to_save, job_id, task_id, scratch_dir, save_dir, input_dir):
-    mol = Chem.MolFromSmiles(smi)
-    mol = Chem.AddHs(mol)
-    nr = int(AllChem.CalcNumRotatableBonds(mol))
+    mol = RDKitMol.FromSmiles(smi)
+    nr = int(AllChem.CalcNumRotatableBonds(mol._mol))
 
     tnr = 3**nr
-    num_conf_attempts = tnr if tnr < max_n_conf else max_n_conf
-    ids = AllChem.EmbedMultipleConfs(mol, numConfs=num_conf_attempts, maxAttempts=max_try, pruneRmsThresh=rms,
-                                   randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
-
-    if len(ids) == 0:
-        ids = AllChem.EmbedMultipleConfs(mol, numConfs=num_conf_attempts, maxAttempts=max_try, pruneRmsThresh=rms,
-                                   randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True, useRandomCoords=True,)
+    num_confs = tnr if tnr < max_n_conf else max_n_conf
+    mol.EmbedMultipleConfs(mol, n=num_confs, maxAttempts=max_try, pruneRmsThresh=rms,
+                            randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
+    ids = np.arange(mol.GetNumConformers())
 
     diz = []
     pre_adj = mol.GetAdjacencyMatrix()
