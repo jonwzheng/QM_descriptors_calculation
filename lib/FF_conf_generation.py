@@ -50,7 +50,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
 
             log = XtbLog(output_file_mol_id)
             en = float(log.E)
-            opt_mol = load_sdf("xtbopt.sdf")[0]
+            opt_mol = RDKitMol.FromSDF("xtbopt.sdf")
             post_adj = opt_mol.GetAdjacencyMatrix()
             if (pre_adj == post_adj).all():
                 opt_conf = opt_mol.GetConformer()
