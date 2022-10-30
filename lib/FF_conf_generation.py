@@ -13,7 +13,7 @@ from rdmc.mol import RDKitMol
 import numpy as np
 
 # algorithm to generate nc conformations
-def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, n_lowest_E_confs_to_save, job_id, task_id, scratch_dir, save_dir, input_dir):
+def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, n_lowest_E_confs_to_save, scratch_dir, save_dir, input_dir):
     mol = RDKitMol.FromSmiles(smi)
     nr = int(AllChem.CalcNumRotatableBonds(mol._mol))
 
