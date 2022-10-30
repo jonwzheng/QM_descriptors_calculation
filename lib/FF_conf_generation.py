@@ -19,7 +19,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
 
     tnr = 3**nr
     num_confs = tnr if tnr < max_n_conf else max_n_conf
-    mol.EmbedMultipleConfs(mol, n=num_confs, maxAttempts=max_try, pruneRmsThresh=rms,
+    mol.EmbedMultipleConfs(num_confs, maxAttempts=max_try, pruneRmsThresh=rms,
                             randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
     ids = np.arange(mol.GetNumConformers())
 
