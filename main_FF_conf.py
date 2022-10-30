@@ -19,12 +19,6 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
-parser.add_argument('--job_id', type=int, default=0,
-                    help='slurm job id')
-parser.add_argument('--task_id', type=int, default=0,
-                    help='task id for job arrays or LLsub')
-parser.add_argument('--scratch_dir', type=int, default=0,
-                    help='scratch directory')
 
 # conformer searching
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
@@ -60,6 +54,8 @@ parser.add_argument('--COSMO_database_path', type=str, required=False, default=N
                     help='path to COSMO_database')
 parser.add_argument('--ORCA_path', type=str, required=False, default=None,
                     help='path to ORCA')
+parser.add_argument('--scratch_dir', type=str, required=True,
+                    help='scratch directory')
 
 args = parser.parse_args()
 
@@ -94,12 +90,13 @@ for conf_search_FF in conf_search_FFs:
         subinputs_dir = os.path.join(FF_conf_dir, "inputs", subinputs_folder)
         suboutputs_dir = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}")
         for input_file in os.listdir(subinputs_dir):
-            mol_id = input_file.split(".in")[0]
-            try:
-                os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
-            except:
-                continue
-            else:
-                ids = str(int(int(mol_id.split("id")[1])/1000))
-                smi = mol_id_to_smiles[mol_id]
-                _genConf(smi, mol_id, XTB_PATH, conf_search_FF, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.job_id, args.task_id, args.scratch_dir, suboutputs_dir, subinputs_dir)
+            if ".in" in input_file:
+                mol_id = input_file.split(".in")[0]
+                try:
+                    os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                except:
+                    continue
+                else:
+                    ids = str(int(int(mol_id.split("id")[1])/1000))
+                    smi = mol_id_to_smiles[mol_id]
+                    _genConf(smi, mol_id, XTB_PATH, conf_search_FF, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.scratch_dir, suboutputs_dir, subinputs_dir)

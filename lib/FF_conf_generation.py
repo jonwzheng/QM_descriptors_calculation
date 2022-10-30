@@ -36,7 +36,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
             econf = (en, id)
             diz.append(econf)
         elif conf_search_FF == "GFNFF":
-            scratch_dir_mol_id = os.path.join(scratch_dir, f'{job_id}_{task_id}_{mol_id}_{id}')
+            scratch_dir_mol_id = os.path.join(scratch_dir, f'{mol_id}_{id}')
             os.makedirs(scratch_dir_mol_id)
             os.chdir(scratch_dir_mol_id)
 
