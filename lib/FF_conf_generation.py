@@ -20,6 +20,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
     num_confs = tnr if tnr < max_n_conf else max_n_conf
     mol.EmbedMultipleConfs(num_confs, maxAttempts=max_try, pruneRmsThresh=rms,
                             randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
+    mol = mol._mol
     ids = list(range(mol.GetNumConformers()))
 
     diz = []
@@ -40,7 +41,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
             os.chdir(scratch_dir_mol_id)
 
             input_file_mol_id = f'{mol_id}_{id}.sdf'
-            write_mol_to_sdf(mol._mol, input_file_mol_id, id)
+            write_mol_to_sdf(mol, input_file_mol_id, id)
 
             xtb_command = os.path.join(XTB_path, 'xtb')
             output_file_mol_id = f'{mol_id}_{id}.log'
@@ -80,7 +81,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
 
     ids_to_save = [id for (en, id) in ids[:n_lowest_E_confs_to_save]]
     ens_to_save = [en for (en, id) in ids[:n_lowest_E_confs_to_save]]
-    write_mol_to_sdf(mol._mol, os.path.join(save_dir, '{}_confs.sdf'.format(mol_id)), confIds=ids_to_save, confEns=ens_to_save)
+    write_mol_to_sdf(mol, os.path.join(save_dir, '{}_confs.sdf'.format(mol_id)), confIds=ids_to_save, confEns=ens_to_save)
     os.remove(os.path.join(input_dir, f"{mol_id}.in"))
 
 # filter conformers based on relative energy
