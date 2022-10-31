@@ -92,6 +92,7 @@ for conf_search_FF in conf_search_FFs:
         for input_file in os.listdir(subinputs_dir):
             if ".in" in input_file:
                 mol_id = input_file.split(".in")[0]
+                print(mol_id)
                 try:
                     os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
                 except:
@@ -99,4 +100,5 @@ for conf_search_FF in conf_search_FFs:
                 else:
                     ids = str(int(int(mol_id.split("id")[1])/1000))
                     smi = mol_id_to_smiles[mol_id]
+                    print(smi)
                     _genConf(smi, mol_id, XTB_PATH, conf_search_FF, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.scratch_dir, suboutputs_dir, subinputs_dir)
