@@ -22,6 +22,11 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
                             randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
     mol = mol._mol
     ids = list(range(mol.GetNumConformers()))
+    if len(ids) == 0:
+        print(f"{mol_id} failed embedding")
+        return
+    else:
+        print(f"{len(ids)} embedded for {mol_id}")
 
     diz = []
     pre_adj = Chem.GetAdjacencyMatrix(mol)
@@ -65,6 +70,13 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
             os.chdir(current_dir)
             shutil.rmtree(scratch_dir_mol_id)
     
+    if len(diz) == 0:
+        print(f"{mol_id} no conformer found after optimization")
+        os.rename(os.path.join(input_dir, f"{mol_id}.tmp"), os.path.join(input_dir, f"{mol_id}.in"))
+        return
+    else:
+        print(f"{len(ids)} conformers found for {mol_id}")
+
     if E_cutoff_fraction:
         n, diz2 = energy_filter(mol, diz, E_cutoff_fraction)
     else:
