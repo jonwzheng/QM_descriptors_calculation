@@ -53,20 +53,20 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
             with open(output_file_mol_id, 'w') as out:
                 subprocess.call([xtb_command, '--gfnff', input_file_mol_id, '--opt'],
                                 stdout=out, stderr=out)
-
-            log = XtbLog(output_file_mol_id)
-            if log.termination:
-                en = float(log.E)
-                opt_mol = load_sdf("xtbopt.sdf")[0]
-                post_adj = Chem.GetAdjacencyMatrix(opt_mol)
-                if (pre_adj == post_adj).all():
-                    opt_conf = opt_mol.GetConformer()
-                    conf = mol.GetConformer(id)
-                    for i in range(mol.GetNumAtoms()):
-                        pt = opt_conf.GetAtomPosition(i)
-                        conf.SetAtomPosition(i, (pt.x, pt.y, pt.z))
-                    econf = (en, id)
-                    diz.append(econf)
+            if os.path.exists(output_file_mol_id):
+                log = XtbLog(output_file_mol_id)
+                if log.termination:
+                    en = float(log.E)
+                    opt_mol = load_sdf("xtbopt.sdf")[0]
+                    post_adj = Chem.GetAdjacencyMatrix(opt_mol)
+                    if (pre_adj == post_adj).all():
+                        opt_conf = opt_mol.GetConformer()
+                        conf = mol.GetConformer(id)
+                        for i in range(mol.GetNumAtoms()):
+                            pt = opt_conf.GetAtomPosition(i)
+                            conf.SetAtomPosition(i, (pt.x, pt.y, pt.z))
+                        econf = (en, id)
+                        diz.append(econf)
             os.chdir(current_dir)
             shutil.rmtree(scratch_dir_mol_id)
     

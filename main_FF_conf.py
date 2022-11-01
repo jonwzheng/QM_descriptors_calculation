@@ -1,17 +1,6 @@
 from argparse import ArgumentParser
 import os
-import shutil
-import time
-import tarfile
-import csv
-
-import pickle as pkl
 import pandas as pd
-import traceback
-
-import rdkit.Chem as Chem
-
-from lib.utils import create_logger
 from lib.FF_conf_generation import _genConf
 
 parser = ArgumentParser()

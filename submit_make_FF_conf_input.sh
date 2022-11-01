@@ -11,7 +11,7 @@ echo "Running on node : $SLURMD_NODENAME"
 echo "Current directory : $(pwd)"
 echo "============================================================"
 
-conda activate QM_descriptors
+conda activate rdmc_env
 
 #xtb
 source /home/gridsan/groups/RMG/Software/xtb-6.4.1/share/xtb/config_env.bash
