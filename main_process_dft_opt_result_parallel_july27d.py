@@ -289,6 +289,7 @@ def parser(mol_log):
     if not (pre_adj == post_adj).all():
         failed_jobs[mol_id] = dict()
         failed_jobs[mol_id]['status'] = False
+        failed_jobs[mol_id]['mol_smi'] = mol_smi
         failed_jobs[mol_id]['reason'] = 'adjacency matrix'
 
     job_stat = check_job_status(read_log_file(g16_log))
