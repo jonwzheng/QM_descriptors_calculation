@@ -20,7 +20,10 @@ def parser(mol_confs_sdf):
     
     mol_id = os.path.basename(mol_confs_sdf).split("_confs.sdf")[0]
     mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
-    pre_adj = Chem.GetAdjacencyMatrix(Chem.MolFromSmiles(mol_smi))
+    pre_mol = Chem.MolFromSmiles(mol_smi)
+    pre_mol = Chem.AddHs(pre_mol)
+    Chem.SanitizeMol(pre_mol)
+    pre_adj = Chem.GetAdjacencyMatrix(pre_mol)
     
     failed_jobs[mol_id] = dict()
     valid_mol[mol_id] = dict()
@@ -28,12 +31,12 @@ def parser(mol_confs_sdf):
     mols = Chem.SDMolSupplier(mol_confs_sdf, removeHs=False, sanitize=True)
     for conf_id, mol in enumerate(mols):
         post_adj = Chem.GetAdjacencyMatrix(mol)
-        if (pre_adj == post_adj):
+        if (pre_adj == post_adj).all():
             try:
                 xyz = Chem.MolToXYZBlock(mol)
                 en = mol.GetProp("ConfEnergies")
                 valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
-                valid_mol[mol_id][conf_id]["ff_en"] = en
+                valid_mol[mol_id][conf_id]["ff_energy"] = en
             except:
                 failed_jobs[mol_id][conf_id] = "failed"
         else:
