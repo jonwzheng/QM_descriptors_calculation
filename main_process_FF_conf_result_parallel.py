@@ -27,14 +27,17 @@ def parser(mol_confs_sdf):
     
     mols = Chem.SDMolSupplier(mol_confs_sdf, removeHs=False, sanitize=True)
     for conf_id, mol in enumerate(mols):
-        try:
-            xyz = Chem.MolToXYZBlock(mol)
-            en = mol.GetProp("ConfEnergies")
-            valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
-            valid_mol[mol_id][conf_id]["ff_en"] = en
-        except:
+        post_adj = Chem.GetAdjacencyMatrix(mol)
+        if (pre_adj == post_adj).all():
+            try:
+                xyz = Chem.MolToXYZBlock(mol)
+                en = mol.GetProp("ConfEnergies")
+                valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
+                valid_mol[mol_id][conf_id]["ff_en"] = en
+            except:
+                failed_jobs[mol_id][conf_id] = "failed"
+        else:
             failed_jobs[mol_id][conf_id] = "failed"
-            
         
     return failed_jobs, valid_mol
 
