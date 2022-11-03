@@ -69,9 +69,6 @@ submit_dir = os.path.abspath(os.getcwd())
 project_dir = os.path.abspath(os.path.join(args.output_folder))
 COSMO_dir = os.path.join(project_dir, args.COSMO_folder)
 
-mol_ids = list(df["id"])
-mol_ids = [mol_id for mol_id in mol_ids if mol_id in xyz_DFT_opt]
-
 df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
 df_pure = df_pure.reset_index()
 COSMOTHERM_PATH = args.COSMOtherm_path
