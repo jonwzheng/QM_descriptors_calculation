@@ -31,6 +31,12 @@ def parser(mol_confs_sdf):
     mols = Chem.SDMolSupplier(mol_confs_sdf, removeHs=False, sanitize=True)
     for conf_id, mol in enumerate(mols):
         post_adj = Chem.GetAdjacencyMatrix(mol)
+        try:
+            (pre_adj == post_adj).all()
+        except:
+            print(mol_confs_sdf)
+            break
+        
         if (pre_adj == post_adj).all():
             try:
                 xyz = Chem.MolToXYZBlock(mol)
