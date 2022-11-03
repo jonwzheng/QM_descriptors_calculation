@@ -111,6 +111,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
     os.remove(os.path.join(input_dir, f"{mol_id}.tmp"))
 
     os.chdir(current_dir)
+    shutil.rmtree(scratch_dir_mol_id)
     
 def generate_cosmo_input(name, cosmotherm_path, cosmo_database_path, T_list, row):
     """
