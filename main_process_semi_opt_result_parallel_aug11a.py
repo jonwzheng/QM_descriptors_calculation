@@ -11,7 +11,7 @@ import tarfile
 
 import numpy as np
 import pandas as pd
-import pickle
+import pickle as pkl
 
 from joblib import Parallel, delayed
 
@@ -399,7 +399,7 @@ for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "semiempir
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_confs_tar) for mol_confs_tar in mol_confs_tar_paths)
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pickle.dump(out, outfile)
+    pkl.dump(out, outfile)
 
 xyz_semiempirical_opt = {}
 for failed_dict, success_dict in out:
