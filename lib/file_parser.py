@@ -93,7 +93,7 @@ def write_mol_to_sdf(mol, path, confIds=[0], confEns=None):
     writer = Chem.SDWriter(path)
     if confEns:
         for confId, confEn in zip(confIds, confEns):
-            mol.SetProp('ConfEnergies', str(confEn) + ' kcal/mol')
+            mol.SetProp('ConfEnergies', str(confEn))
             writer.write(mol, confId=confId)
     else:
         for confId in confIds:
