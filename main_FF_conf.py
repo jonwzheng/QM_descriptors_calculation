@@ -74,20 +74,21 @@ mol_id_to_smiles = dict(zip(mol_ids, smiles_list))
 os.makedirs(args.scratch_dir, exist_ok=True)
 
 for conf_search_FF in conf_search_FFs:
-    for subinputs_folder in os.listdir(os.path.join(FF_conf_dir, "inputs")):
-        ids = subinputs_folder.split("_")[1]
-        subinputs_dir = os.path.join(FF_conf_dir, "inputs", subinputs_folder)
-        suboutputs_dir = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}")
-        for input_file in os.listdir(subinputs_dir):
-            if ".in" in input_file:
-                mol_id = input_file.split(".in")[0]
-                print(mol_id)
-                try:
-                    os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
-                except:
-                    continue
-                else:
-                    ids = str(int(int(mol_id.split("id")[1])/1000))
-                    smi = mol_id_to_smiles[mol_id]
-                    print(smi)
-                    _genConf(smi, mol_id, XTB_PATH, conf_search_FF, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.scratch_dir, suboutputs_dir, subinputs_dir)
+    for _ in range(5):
+        for subinputs_folder in os.listdir(os.path.join(FF_conf_dir, "inputs")):
+            ids = subinputs_folder.split("_")[1]
+            subinputs_dir = os.path.join(FF_conf_dir, "inputs", subinputs_folder)
+            suboutputs_dir = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}")
+            for input_file in os.listdir(subinputs_dir):
+                if ".in" in input_file:
+                    mol_id = input_file.split(".in")[0]
+                    print(mol_id)
+                    try:
+                        os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                    except:
+                        continue
+                    else:
+                        ids = str(int(int(mol_id.split("id")[1])/1000))
+                        smi = mol_id_to_smiles[mol_id]
+                        print(smi)
+                        _genConf(smi, mol_id, XTB_PATH, conf_search_FF, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.scratch_dir, suboutputs_dir, subinputs_dir)
