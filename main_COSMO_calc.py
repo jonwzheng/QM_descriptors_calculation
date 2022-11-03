@@ -12,6 +12,7 @@ import traceback
 import rdkit.Chem as Chem
 
 from lib.wft_calculation import generate_dlpno_sp_input
+from lib.cosmo_calculation import cosmo_calc
 
 parser = ArgumentParser()
 parser.add_argument('--input_smiles', type=str, required=True,
