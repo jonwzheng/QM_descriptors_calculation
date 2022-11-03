@@ -378,7 +378,6 @@ def parser(mol_confs_tar):
         valid_mol[mol_id][conf_id]['semiempirical_energy'] = load_energies(member, tar)
         valid_mol[mol_id][conf_id]['semiempirical_cpu'] = get_cpu(member, tar)
         valid_mol[mol_id][conf_id]['semiempirical_wall'] = get_wall(member, tar)
-
     
     return failed_job, valid_mol
 
@@ -404,8 +403,8 @@ with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
 
 xyz_semiempirical_opt = {}
 for failed_dict, success_dict in out:
-    if success_dict:
-        for mol_id in success_dict:
+    for mol_id in success_dict:
+        if success_dict[mol_id]:
             ens = np.array([conf_dict["semiempirical_energy"]['scf'] for conf_id, conf_dict in success_dict[mol_id].items()])
             conf_ids = np.array([conf_id for conf_id, conf_dict in success_dict[mol_id].items()])
             lowest_conf_ind = conf_ids[np.argsort(ens)[0]]
