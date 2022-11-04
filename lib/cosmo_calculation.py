@@ -13,7 +13,7 @@ from .utils import REPLACE_LETTER
 from rdkit import Chem
 from .file_parser import mol2xyz
 
-def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, xyz, scratch_dir, save_dir, input_dir):
+def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_list, df_pure, xyz, scratch_dir, tmp_mol_dir, save_dir, input_dir):
     num_atoms = len(xyz.splitlines())
     xyz = str(num_atoms) + "\n\n" + xyz
 
@@ -23,59 +23,69 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
     os.makedirs(scratch_dir_mol_id)
     os.chdir(scratch_dir_mol_id)
     
-    #turbomole
-    os.makedirs("xyz")
-    xyz_mol_id = f'{mol_id}.xyz'
-    with open(os.path.join("xyz", xyz_mol_id), "w+") as f:
-        f.write(xyz)
-
-    txtfile = f'{mol_id}.txt'
-    with open(txtfile, "w+") as f:
-        f.write(f"{mol_id} {charge} {mult}")
-
-    #run the job
-    logfile = mol_id + '.log'
-    outfile = mol_id + '.out'
-    with open(outfile, 'w') as out:
-        subprocess.run(f'calculate -l {txtfile} -m BP-TZVPD-FINE-COSMO-SP -f xyz -din xyz > {logfile}', shell=True, stdout=out, stderr=out)
-        subprocess.run(f'calculate -l {txtfile} -m BP-TZVPD-GAS-SP -f xyz -din xyz > {logfile}', shell=True, stdout=out, stderr=out)
-
-    for file in os.listdir("CosmofilesBP-TZVPD-FINE-COSMO-SP"):
-        if file.endswith("cosmo"):
-            shutil.copy(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), file)
-            break
-    else:
-        print(f"Turbomole calculation failed for {mol_id}")
-        return
-
-    for file in os.listdir("EnergyfilesBP-TZVPD-FINE-COSMO-SP"):
-        if file.endswith("energy"):
-            shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), file)
-            break
-    else:
-        print(f"Turbomole calculation failed for {mol_id}")
-        return
-
     energyfile = f"{mol_id}.energy"
     cosmofile = f"{mol_id}.cosmo"
+    if os.path.exists(os.path.join(tmp_mol_dir, energyfile)) and os.path.exists(os.path.join(tmp_mol_dir, cosmofile)):
+        shutil.copy(os.path.join(tmp_mol_dir, energyfile), energyfile)
+        shutil.copy(os.path.join(tmp_mol_dir, cosmofile), cosmofile)
+    else:
+        #turbomole
+        os.makedirs("xyz")
+        xyz_mol_id = f'{mol_id}.xyz'
+        with open(os.path.join("xyz", xyz_mol_id), "w+") as f:
+            f.write(xyz)
+
+        txtfile = f'{mol_id}.txt'
+        with open(txtfile, "w+") as f:
+            f.write(f"{mol_id} {charge} {mult}")
+
+        #run the job
+        logfile = mol_id + '.log'
+        outfile = mol_id + '.out'
+        with open(outfile, 'w') as out:
+            subprocess.run(f'calculate -l {txtfile} -m BP-TZVPD-FINE-COSMO-SP -f xyz -din xyz > {logfile}', shell=True, stdout=out, stderr=out)
+            subprocess.run(f'calculate -l {txtfile} -m BP-TZVPD-GAS-SP -f xyz -din xyz > {logfile}', shell=True, stdout=out, stderr=out)
+
+        for file in os.listdir("CosmofilesBP-TZVPD-FINE-COSMO-SP"):
+            if file.endswith("cosmo"):
+                shutil.copy(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), file)
+                shutil.copy(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), os.path.join(tmp_mol_dir, file))
+                break
+        else:
+            print(f"Turbomole calculation failed for {mol_id}")
+            return
+
+        for file in os.listdir("EnergyfilesBP-TZVPD-FINE-COSMO-SP"):
+            if file.endswith("energy"):
+                shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), file)
+                shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), os.path.join(tmp_mol_dir, file))
+                break
+        else:
+            print(f"Turbomole calculation failed for {mol_id}")
+            return
 
     # prepare for cosmo calculation
     for index, row in df_pure.iterrows():
-        script = generate_cosmo_input(mol_id, cosmotherm_path, cosmo_database_path, T_list, row)
-
         cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
         inpfile = f'{mol_id}_{cosmo_name}.inp'
+        tabfile = f'{mol_id}_{cosmo_name}.tab'
+
+        if os.path.exists(os.path.join(tmp_mol_dir, tabfile)):
+            continue
+
+        script = generate_cosmo_input(mol_id, cosmotherm_path, cosmo_database_path, T_list, row)
+        
         with open(inpfile, "w+") as f:
             f.write(script)
 
         cosmo_command = os.path.join(cosmotherm_path, "COSMOtherm", "BIN-LINUX", "cosmotherm")
-        outfile = f'{mol_id}_{cosmo_name}.out'
-        tabfile = f'{mol_id}_{cosmo_name}.tab'
-        xmlfile = f'{mol_id}_{cosmo_name}_status.xml'
         subprocess.run(f'{cosmo_command} {inpfile}', shell=True)
 
         if not os.path.exists(tabfile):
             print(f"Turbomole calculation failed for {mol_id} {cosmo_name}")
+            continue
+
+        shutil.copy(tabfile, os.path.join(tmp_mol_dir, tabfile))
 
     #compile tab files and results in tabfiles of each solvent
     
@@ -86,8 +96,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
     #tar the cosmo, energy and tab files
     tar_file = f"{mol_id}.tar"
     tar = tarfile.open(tar_file, "w")
-    tar.add(energyfile)
-    tar.add(cosmofile)
+    tar.add(os.path.join(tmp_mol_dir, energyfile))
+    tar.add(os.path.join(tmp_mol_dir, cosmofile))
 
     with open(csv_file , 'w') as csvfile:
         # creating a csv writer object
@@ -98,7 +108,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         for index, row in df_pure.iterrows():
             solvent = row.cosmo_name
             cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
-            tabfile = f'{mol_id}_{cosmo_name}.tab'
+            tabfile = os.path.join(tmp_mol_dir, f'{mol_id}_{cosmo_name}.tab')
             each_data_list = read_cosmo_tab_result(tabfile)
             each_data_list = get_dHsolv_value(each_data_list)
             csvwriter.writerows(each_data_list)
@@ -106,10 +116,10 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         
     tar.close()
 
-    shutil.copy(tarfile, os.path.join(save_dir, tarfile))
-    shutil.copy(csvfile, os.path.join(save_dir, csvfile))
+    shutil.copy(tar_file, os.path.join(save_dir, tar_file))
+    shutil.copy(csv_file, os.path.join(save_dir, csv_file))
     os.remove(os.path.join(input_dir, f"{mol_id}.tmp"))
-
+    shutil.rmtree(tmp_mol_dir)
     os.chdir(current_dir)
     shutil.rmtree(scratch_dir_mol_id)
     
