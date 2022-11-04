@@ -25,7 +25,10 @@ class OrcaLog(object):
                     error = 'MDCI'
                     break
                 elif 'Error : multiplicity' in line:
-                    error = f'The multiplicity and charge combination are wrong.'
+                    error = 'The multiplicity and charge combination are wrong.'
+                    break
+                elif 'Wavefunction not fully converged!' in line:
+                    error = 'Wavefunction not fully converged!'
                     break
                 elif 'ORCA TERMINATED NORMALLY' in line:
                     break
@@ -41,7 +44,12 @@ class OrcaLog(object):
         with open(self.path, 'r') as f:
             for line in f:
                 if 'FINAL SINGLE POINT ENERGY' in line:  # for all methods in Orca
-                    e_elect = float(line.split()[-1])
+                    try:
+                        e_elect = float(line.split()[-1])
+                    except:
+                        print(self.path)
+                        print(line)
+                        raise
         if e_elect is None:
             raise LogError('Unable to find energy in Orca output file.')
         return e_elect
@@ -53,7 +61,12 @@ def parser(mol_log):
 
 
     mol_id = os.path.basename(mol_log).split(".log")[0]
-    mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
+    try:
+        mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
+    except:
+        print(mol_id)
+        print(mol_log)
+        raise
 
     orca_log = mol_log
 
@@ -76,6 +89,9 @@ def parser(mol_log):
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
+
+# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
+# n_jobs = 8
 
 df = pd.read_csv(input_smiles_path)
 mol_log_paths = []
