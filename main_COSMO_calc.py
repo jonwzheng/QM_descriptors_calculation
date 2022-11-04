@@ -91,4 +91,5 @@ for subinputs_folder in os.listdir(os.path.join(COSMO_dir, "inputs")):
                 mult = mol_id_to_mult_dict[mol_id]
                 coords = xyz_DFT_opt[mol_id]
                 tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
+                os.makedirs(tmp_mol_dir, exist_ok=True)
                 cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, coords, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
