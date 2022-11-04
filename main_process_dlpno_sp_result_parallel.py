@@ -69,7 +69,7 @@ def parser(mol_log):
 
     valid_mol[mol_id] = dict()
     valid_mol[mol_id]['mol_smi'] = mol_smi
-    valid_mol[mol_id]['dlpno_energy'] = olog.load_energies()
+    valid_mol[mol_id]['dlpno_energy'] = olog.load_energy()
 
     return failed_jobs, valid_mol
 
