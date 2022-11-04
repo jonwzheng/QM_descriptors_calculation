@@ -85,7 +85,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
     #tar the cosmo, energy and tab files
     tar_file = f"{mol_id}.tar"
-    tar = tarfile.open(file_file, "w")
+    tar = tarfile.open(tar_file, "w")
     tar.add(energyfile)
     tar.add(cosmofile)
 
