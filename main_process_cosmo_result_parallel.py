@@ -38,6 +38,17 @@ def read_cosmo_tab_result_from_tar(f):
         line = f.readline()
     return each_data_list
 
+def parser(tar_file_path):
+    each_data_lists = []
+    tar = tarfile.open(tar_file_path)
+    for member in tar:
+        if ".tab" in member.name:
+            f = tar.extractfile(member)
+            each_data_list = read_cosmo_tab_result_from_tar(f)
+            each_data_list = get_dHsolv_value(each_data_list)
+    tar.close()
+    return each_data_lists
+
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
@@ -50,6 +61,8 @@ for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_cal
         if ".tar" in tar_file:
             tar_file_paths.append(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, tar_file))
 
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(tar_file) for tar_file in tar_file_paths)
+
 csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
 
 header = ['solvent_name', 'solute_name', 'temp (K)',
@@ -60,15 +73,10 @@ with open(csv_file , 'w') as csvfile:
     csvwriter = csv.writer(csvfile)
     # writing the header
     csvwriter.writerow(header)
-    for tar_file_path in tar_file_paths:
-        tar = tarfile.open(tar_file_path)
-        for member in tar:
-            if ".tab" in member.name:
-                f = tar.extractfile(member)
-                each_data_list = read_cosmo_tab_result_from_tar(f)
-                each_data_list = get_dHsolv_value(each_data_list)
-                csvwriter.writerows(each_data_list) 
-        tar.close()
+
+    for each_data_lists in out:
+        for each_data_list in each_data_lists:
+            csvwriter.writerows(each_data_list)
 
 df_result = pd.read_csv(csv_file)
 
