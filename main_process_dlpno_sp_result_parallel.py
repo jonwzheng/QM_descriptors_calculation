@@ -1,6 +1,7 @@
 import os
 import sys
 import pickle as pkl
+import pandas as pd
 from joblib import Parallel, delayed
 
 class OrcaLog(object):
