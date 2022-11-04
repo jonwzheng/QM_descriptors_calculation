@@ -63,11 +63,12 @@ with open(csv_file , 'w') as csvfile:
     for tar_file_path in tar_file_paths:
         tar = tarfile.open(tar_file_path)
         for member in tar:
-            f = tar.extractfile(member)
-            each_data_list = read_cosmo_tab_result_from_tar(f)
-            each_data_list = get_dHsolv_value(each_data_list)
-            csvwriter.writerows(each_data_list) 
-            tar.close()
+            if ".tab" in member.name:
+                f = tar.extractfile(member)
+                each_data_list = read_cosmo_tab_result_from_tar(f)
+                each_data_list = get_dHsolv_value(each_data_list)
+                csvwriter.writerows(each_data_list) 
+        tar.close()
 
 df_result = pd.read_csv(csv_file)
 
