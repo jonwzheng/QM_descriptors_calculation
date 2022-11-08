@@ -39,7 +39,7 @@ def parser(mol_confs_sdf):
         
         if (pre_adj == post_adj).all():
             valid_mol[mol_id][conf_id] = {}
-            xyz = "".join(Chem.MolToXYZBlock(mol).split("\n")[2:])
+            xyz = Chem.MolToXYZBlock(mol)
             en = mol.GetProp("ConfEnergies")
             valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
             valid_mol[mol_id][conf_id]["ff_energy"] = en
