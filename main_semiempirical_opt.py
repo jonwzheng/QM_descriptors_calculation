@@ -23,7 +23,7 @@ parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#o
                     help='level of theory for the Gaussian semiempirical calculation')
 parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=8,
                     help='number of process for Gaussian semiempirical calculations')
-parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=3900,
+parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=2000,
                     help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
 
 # specify paths
