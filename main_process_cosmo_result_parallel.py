@@ -1,12 +1,13 @@
 import os
 import sys
+
+sys.path.insert(0, "/home/gridsan/hwpang/RMG_shared/Software/QM_descriptors_calculation-radical_workflow/")
 import csv
 import tarfile
 import pickle as pkl
 import pandas as pd
 from joblib import Parallel, delayed
 from lib.utils import REPLACE_LETTER
-from lib.cosmo_calculation import read_cosmo_tab_result, get_dHsolv_value
 
 def read_cosmo_tab_result_from_tar(f):
     """
@@ -36,6 +37,23 @@ def read_cosmo_tab_result_from_tar(f):
             solvent_name, solute_name, temp = None, None, None
             result_values = None
         line = f.readline()
+    return each_data_list
+
+def get_dHsolv_value(each_data_list):
+    # compute solvation enthalpy
+    dGsolv_temp_dict = {}
+    ind_298 = None
+    for z in range(len(each_data_list)):
+        temp = each_data_list[z][2]
+        dGsolv = each_data_list[z][6]
+        dGsolv_temp_dict[temp] = dGsolv
+        if temp == b'298.15':
+            ind_298 = z
+    print(dGsolv_temp_dict)
+    dGsolv_298 = float(dGsolv_temp_dict[b'298.15'])
+    dSsolv_298 = - (float(dGsolv_temp_dict[b'299.15']) - float(dGsolv_temp_dict[b'297.15'])) / (299.15 - 297.15)
+    dHsolv_298 = dGsolv_298 + 298.15 * dSsolv_298
+    each_data_list[ind_298][7] = '%.8f' % dHsolv_298
     return each_data_list
 
 def parser(tar_file_path):
