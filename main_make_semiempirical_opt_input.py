@@ -64,8 +64,7 @@ assert RDMC_PATH is not None, "RDMC_PATH must be provided for semiempirical opt"
 mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])
 inputs_dir = os.path.join(semiempirical_opt_dir, "inputs")
-shutil.rmtree(inputs_dir)
-os.makedirs(inputs_dir)
+os.makedirs(inputs_dir, exist_ok=True)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
     if mol_id in xyz_FF_dict:
