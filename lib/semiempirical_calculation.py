@@ -12,25 +12,20 @@ from .log_parser import XtbLog, G16Log
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 
 
-def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, method, logger):
-    sdf = mol_id + ".sdf"
+def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, method, scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir):
+    current_dir = os.getcwd()
 
-    work_dir = os.getcwd()
+    for conf_ind, xyz in xyz_FF_dict[mol_id]:
+        comfile = f"{mol_id}_{conf_ind}.gjf"
+        logfile = f"{mol_id}_{conf_ind}.log"
+        outfile = f"{mol_id}_{conf_ind}.out"
 
-    mols = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)
-    os.remove(sdf)
-    conf_mols_ids_ens = []
-    for conf_ind, mol in enumerate(mols):
+        if os.path.exists(os.path.join(tmp_mol_dir, logfile)):
+            continue
 
-        scratch_dir = f"{mol_id}_{conf_ind}_{method}"
-        try:
-            shutil.rmtree(scratch_dir)
-        except:
-            pass
-        os.makedirs(scratch_dir)
-        os.chdir(scratch_dir)
-
-        xyz = mol2xyz(mol)
+        conf_scratch_dir = os.path.join(scratch_dir, f"{mol_id}_{conf_ind}")
+        os.makedirs(conf_scratch_dir)
+        os.chdir(conf_scratch_dir)
 
         g16_command = os.path.join(g16_path, 'g16')
 
@@ -39,52 +34,35 @@ def semiempirical_opt(mol_id, xtb_path, rdmc_path, g16_path, level_of_theory, n_
         else:
             head = '%nprocshared={}\n%mem={}mb\n{} {}\n'.format(n_procs, job_ram, level_of_theory, method)
 
-        comfile = f"{mol_id}_{conf_ind}.gjf"
         xyz2com(xyz, head=head, comfile=comfile, charge=base_charge, mult=mult, footer='\n')
-
-        logfile = f"{mol_id}_{conf_ind}.log"
-        outfile = f"{mol_id}_{conf_ind}.out"
 
         with open(outfile, 'w') as out:
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
-        log = G16Log(logfile)
-        if log.termination and np.min(log.har_frequencies) > 0:
-            mol.SetProp('ConfId', str(conf_ind))
-            mol.SetProp('ConfEnergies', str(log.E))
-            conf = mol.GetConformer()
-            for i in range(mol.GetNumAtoms()):
-                conf.SetAtomPosition(i, log.Coords[i,:])
-            conf_mols_ids_ens.append((mol, log.E))
-            shutil.copy(logfile, os.path.join(work_dir, logfile))
-            logger.info(f'optimization of conformer {conf_ind} for {mol_id} completed.')
-            os.chdir(work_dir)
-            shutil.rmtree(scratch_dir)
-        else:
-            if not log.termination:
-                logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed due to error termination.')
-            elif not (np.min(log.har_frequencies) > 0.0):
-                logger.error(f'optimization of conformer {conf_ind} for {mol_id} failed due to negative frequency.')
-            os.chdir(work_dir)
+        if not os.path.exists(logfile):
+            print(f"Semiempirical failed for {mol_id} {conf_ind}")
+            continue
 
-    if conf_mols_ids_ens:
-        #tar the logs
-        tar = tarfile.open(f"{mol_id}.tar", "w")
-        for conf_ind, mol in enumerate(mols):
-            logfile = f"{mol_id}_{conf_ind}.log"
-            if os.path.isfile(logfile):
-                tar.add(logfile)
-        tar.close()
-        conf_mols_ids_ens.sort(key=lambda x: x[1])
-        opt_mols = [mol for mol, en in conf_mols_ids_ens]
-        write_mols_to_sdf(opt_mols, f'{mol_id}_confs_opt.sdf')
-        write_mol_to_sdf(opt_mols[0], f'{mol_id}_opt.sdf')
-        for conf_ind, mol in enumerate(mols):
-            logfile = f"{mol_id}_{conf_ind}.log"
-            if os.path.isfile(logfile):
-                os.remove(logfile)
-    else:
-        raise RuntimeError(f'all optimization for {mol_id} failed')
+        shutil.copy(logfile, os.path.join(tmp_mol_dir, logfile))
+
+        os.chdir(current_dir)
+
+    mol_scratch_dir = os.path.join(scratch_dir, f"{mol_id}")
+    os.makedirs(mol_scratch_dir)
+    os.chdir(mol_scratch_dir)
+
+    #tar the log files
+    tar_file = f"{mol_id}.tar"
+    tar = tarfile.open(tar_file, "w")
+    for conf_ind, xyz in xyz_FF_dict[mol_id]:
+        logfile = f"{mol_id}_{conf_ind}.log"
+        tar.add(os.path.join(tmp_mol_dir, logfile))
+    tar.close()
+
+    shutil.copy(tar_file, os.path.join(suboutputs_dir, tar_file))
+    os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+    shutil.rmtree(tmp_mol_dir)
+    os.chdir(current_dir)
 
 def xtb_status(folder, molid):
 
