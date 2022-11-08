@@ -21,15 +21,16 @@ def read_cosmo_tab_result_from_tar(f):
     while line:
         # get the temperature and mole fraction
         if b"Settings  job" in line:
-            temp = line.split(b'T=')[1].split(b'K')[0].strip()  # temp in K
+            temp = line.split(b'T=')[1].split(b'K')[0].strip().decode('utf-8')  # temp in K
 
         # get the result values
         if b"Nr Compound" in line:
             line = f.readline()
-            solvent_name = line.split()[1]
+            solvent_name = line.split()[1].decode('utf-8')
             line = f.readline()
-            solute_name = line.split()[1]
+            solute_name = line.split()[1].decode('utf-8')
             result_values = line.split()[2:6]  # H (in bar), ln(gamma), pv (vapor pressure in bar), Gsolv (kcal/mol)
+            result_values = [result_value.decode('utf-8') for result_value in result_values]
             # save the result as one list
             each_data_list.append(
                 [solvent_name, solute_name, temp] + result_values + [None])
@@ -47,10 +48,10 @@ def get_dHsolv_value(each_data_list):
         temp = each_data_list[z][2]
         dGsolv = each_data_list[z][6]
         dGsolv_temp_dict[temp] = dGsolv
-        if temp == b'298.15':
+        if temp == '298.15':
             ind_298 = z
-    dGsolv_298 = float(dGsolv_temp_dict[b'298.15'])
-    dSsolv_298 = - (float(dGsolv_temp_dict[b'299.15']) - float(dGsolv_temp_dict[b'297.15'])) / (299.15 - 297.15)
+    dGsolv_298 = float(dGsolv_temp_dict['298.15'])
+    dSsolv_298 = - (float(dGsolv_temp_dict['299.15']) - float(dGsolv_temp_dict['297.15'])) / (299.15 - 297.15)
     dHsolv_298 = dGsolv_298 + 298.15 * dSsolv_298
     each_data_list[ind_298][7] = '%.8f' % dHsolv_298
     return each_data_list
@@ -63,12 +64,17 @@ def parser(tar_file_path):
             f = tar.extractfile(member)
             each_data_list = read_cosmo_tab_result_from_tar(f)
             each_data_list = get_dHsolv_value(each_data_list)
+            each_data_lists.append(each_data_list)
     tar.close()
     return each_data_lists
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
+
+# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
+# n_jobs = 8
+# output_file_name = "test"
 
 df = pd.read_csv(input_smiles_path)
 tar_file_paths = []
