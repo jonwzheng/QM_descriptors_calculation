@@ -71,8 +71,8 @@ with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
 xyz_FF_opt = {}
 for failed_dict, success_dict in out:
     for mol_id in success_dict:
-        if success_dict[mol_id]:
-            xyz_FF_opt[mol_id] = success_dict[mol_id]["ff_xyz"]
+        for conf_id in success_dict[mol_id]:
+            xyz_FF_opt[mol_id] = success_dict[mol_id][conf_id]["ff_xyz"]
 
 with open(f"{output_file_name}_xyz.pkl", "wb") as f:
     pkl.dump(xyz_FF_opt, f)
