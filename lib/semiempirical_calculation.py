@@ -24,6 +24,7 @@ def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_pat
             continue
 
         conf_scratch_dir = os.path.join(scratch_dir, f"{mol_id}_{conf_ind}")
+        print(conf_scratch_dir)
         os.makedirs(conf_scratch_dir)
         os.chdir(conf_scratch_dir)
 
@@ -39,11 +40,10 @@ def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_pat
         with open(outfile, 'w') as out:
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
-        glog = G16Log(logfile)
-
         shutil.copy(comfile, os.path.join(tmp_mol_dir, comfile))
         shutil.copy(outfile, os.path.join(tmp_mol_dir, outfile))
         shutil.copy(logfile, os.path.join(tmp_mol_dir, logfile))
+        glog = G16Log(logfile)
 
         os.chdir(current_dir)
 
