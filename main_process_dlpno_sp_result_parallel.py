@@ -30,6 +30,8 @@ class OrcaLog(object):
                 elif 'Wavefunction not fully converged!' in line:
                     error = 'Wavefunction not fully converged!'
                     break
+                elif 'ORCA finished by error termination in GTOInt' in line:
+                    error = 'GTOInt'
                 elif 'ORCA TERMINATED NORMALLY' in line:
                     break
         return error
