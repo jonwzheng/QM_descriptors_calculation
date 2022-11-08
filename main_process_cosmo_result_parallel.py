@@ -49,7 +49,6 @@ def get_dHsolv_value(each_data_list):
         dGsolv_temp_dict[temp] = dGsolv
         if temp == b'298.15':
             ind_298 = z
-    print(dGsolv_temp_dict)
     dGsolv_298 = float(dGsolv_temp_dict[b'298.15'])
     dSsolv_298 = - (float(dGsolv_temp_dict[b'299.15']) - float(dGsolv_temp_dict[b'297.15'])) / (299.15 - 297.15)
     dHsolv_298 = dGsolv_298 + 298.15 * dSsolv_298
