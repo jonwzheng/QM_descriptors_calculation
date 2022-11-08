@@ -43,6 +43,8 @@ def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_pat
             print(f"Semiempirical failed for {mol_id} {conf_ind}")
             continue
 
+        glog = G16Log(logfile)
+
         shutil.copy(logfile, os.path.join(tmp_mol_dir, logfile))
 
         os.chdir(current_dir)
