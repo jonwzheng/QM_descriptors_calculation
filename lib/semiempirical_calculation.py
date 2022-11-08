@@ -40,6 +40,7 @@ def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_pat
         with open(outfile, 'w') as out:
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
+        print(tmp_mol_dir)
         shutil.copy(comfile, os.path.join(tmp_mol_dir, comfile))
         shutil.copy(outfile, os.path.join(tmp_mol_dir, outfile))
         shutil.copy(logfile, os.path.join(tmp_mol_dir, logfile))
