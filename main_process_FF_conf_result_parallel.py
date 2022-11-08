@@ -38,13 +38,11 @@ def parser(mol_confs_sdf):
             break
         
         if (pre_adj == post_adj).all():
-            try:
-                xyz = Chem.MolToXYZBlock(mol)
-                en = mol.GetProp("ConfEnergies")
-                valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
-                valid_mol[mol_id][conf_id]["ff_energy"] = en
-            except:
-                failed_jobs[mol_id][conf_id] = "failed"
+            valid_mol[mol_id][conf_id] = {}
+            xyz = Chem.MolToXYZBlock(mol)
+            en = mol.GetProp("ConfEnergies")
+            valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
+            valid_mol[mol_id][conf_id]["ff_energy"] = en
         else:
             failed_jobs[mol_id][conf_id] = "failed"
         
