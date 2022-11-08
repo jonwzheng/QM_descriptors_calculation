@@ -32,6 +32,7 @@ xyz_FF_dict=reactants_products_aug11b_ff_opted_results_xyz.pkl
 scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID
 mkdir -p $scratch_dir
 
+#semiempirical
 python $QMD_PATH/main_make_semiempirical_opt_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_FF_dict $xyz_FF_dict --scratch_dir $scratch_dir
 
 rm -rf $scratch_dir
