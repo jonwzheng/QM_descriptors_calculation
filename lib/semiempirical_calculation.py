@@ -15,7 +15,7 @@ from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, method, scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir):
     current_dir = os.getcwd()
 
-    for conf_ind, xyz in xyz_FF_dict[mol_id]:
+    for conf_ind, xyz in xyz_FF_dict[mol_id].items():
         comfile = f"{mol_id}_{conf_ind}.gjf"
         logfile = f"{mol_id}_{conf_ind}.log"
         outfile = f"{mol_id}_{conf_ind}.out"
@@ -54,7 +54,7 @@ def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_pat
     #tar the log files
     tar_file = f"{mol_id}.tar"
     tar = tarfile.open(tar_file, "w")
-    for conf_ind, xyz in xyz_FF_dict[mol_id]:
+    for conf_ind, xyz in xyz_FF_dict[mol_id].items():
         logfile = f"{mol_id}_{conf_ind}.log"
         tar.add(os.path.join(tmp_mol_dir, logfile))
     tar.close()
