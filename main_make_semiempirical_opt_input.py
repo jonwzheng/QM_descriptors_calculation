@@ -2,12 +2,15 @@ from argparse import ArgumentParser
 import os
 import pickle as pkl
 import pandas as pd
+import shutil
 
 parser = ArgumentParser()
 parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
+parser.add_argument('--xyz_FF_dict', type=str, required=True,
+                    help='pickled dict mapping from mol_id to confs xyz')
 
 # semiempirical optimization calculation
 parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
@@ -51,6 +54,9 @@ semiempirical_opt_dir = os.path.join(output_dir, args.semiempirical_opt_folder)
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
+with open(args.xyz_FF_dict, "rb") as f:
+    xyz_FF_dict = pkl.load(f)
+
 assert XTB_PATH is not None, "XTB_PATH must be provided for semiempirical opt"
 assert G16_PATH is not None, "G16_PATH must be provided for semiempirical opt"
 assert RDMC_PATH is not None, "RDMC_PATH must be provided for semiempirical opt"
@@ -58,15 +64,17 @@ assert RDMC_PATH is not None, "RDMC_PATH must be provided for semiempirical opt"
 mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])
 inputs_dir = os.path.join(semiempirical_opt_dir, "inputs")
-os.makedirs(inputs_dir, exist_ok=True)
+shutil.rmtree(inputs_dir)
+os.makedirs(inputs_dir)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
-    ids = str(int(int(mol_id.split("id")[1])/1000))
-    subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", f"inputs_{ids}")
-    os.makedirs(subinputs_dir, exist_ok=True)
-    mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
-    if not os.path.exists(os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")) and not os.path.exists(mol_id_path):
-        with open(mol_id_path, "w") as f:
-            f.write(mol_id)
-    else:
-        continue
+    if mol_id in xyz_FF_dict:
+        ids = str(int(int(mol_id.split("id")[1])/1000))
+        subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", f"inputs_{ids}")
+        os.makedirs(subinputs_dir, exist_ok=True)
+        mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
+        if not os.path.exists(os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")) and not os.path.exists(mol_id_path):
+            with open(mol_id_path, "w") as f:
+                f.write(mol_id)
+        else:
+            continue
