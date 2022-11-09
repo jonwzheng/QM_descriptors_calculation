@@ -20,8 +20,6 @@ def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_pat
         logfile = f"{mol_id}_{conf_ind}.log"
         outfile = f"{mol_id}_{conf_ind}.out"
 
-        xyz = "Title\n"+xyz
-
         if os.path.exists(os.path.join(tmp_mol_dir, logfile)):
             continue
 
