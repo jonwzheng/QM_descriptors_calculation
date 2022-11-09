@@ -21,7 +21,7 @@ parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempiric
                     help='folder for semiempirical optimization')
 parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro,cartesian)',
                     help='level of theory for the Gaussian semiempirical calculation')
-parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=8,
+parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=4,
                     help='number of process for Gaussian semiempirical calculations')
 parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=2000,
                     help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
