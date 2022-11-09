@@ -48,6 +48,8 @@ def xyz2mol(xyz, smiles):
 
 def xyz2com(xyz, head, footer, comfile, charge=0, mult=1):
     title = xyz.splitlines()[1]
+    if not title:
+        title = "Title"
     coords = [x+'\n' for x in xyz.splitlines()[2:]]
 
     with open(comfile, 'w') as com:
