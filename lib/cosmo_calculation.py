@@ -48,8 +48,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
         for file in os.listdir("CosmofilesBP-TZVPD-FINE-COSMO-SP"):
             if file.endswith("cosmo"):
-                shutil.copy(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), file)
-                shutil.copy(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), os.path.join(tmp_mol_dir, file))
+                shutil.copyfile(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), file)
+                shutil.copyfile(os.path.join("CosmofilesBP-TZVPD-FINE-COSMO-SP",file), os.path.join(tmp_mol_dir, file))
                 break
         else:
             print(f"Turbomole calculation failed for {mol_id}")
@@ -57,8 +57,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
         for file in os.listdir("EnergyfilesBP-TZVPD-FINE-COSMO-SP"):
             if file.endswith("energy"):
-                shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), file)
-                shutil.copy(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), os.path.join(tmp_mol_dir, file))
+                shutil.copyfile(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), file)
+                shutil.copyfile(os.path.join("EnergyfilesBP-TZVPD-FINE-COSMO-SP", file), os.path.join(tmp_mol_dir, file))
                 break
         else:
             print(f"Turbomole calculation failed for {mol_id}")
