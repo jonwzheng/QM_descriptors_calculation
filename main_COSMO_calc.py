@@ -74,22 +74,23 @@ df_pure = df_pure.reset_index()
 COSMOTHERM_PATH = args.COSMOtherm_path
 COSMO_DATABASE_PATH = args.COSMO_database_path
 
-for subinputs_folder in os.listdir(os.path.join(COSMO_dir, "inputs")):
-    ids = subinputs_folder.split("_")[1]
-    subinputs_dir = os.path.join(COSMO_dir, "inputs", subinputs_folder)
-    suboutputs_dir = os.path.join(COSMO_dir, "outputs", f"outputs_{ids}")
-    for input_file in os.listdir(subinputs_dir):
-        if ".in" in input_file:
-            mol_id = input_file.split(".in")[0]
-            try:
-                os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
-            except:
-                continue
-            else:
-                ids = str(int(int(mol_id.split("id")[1])/1000))
-                charge = mol_id_to_charge_dict[mol_id]
-                mult = mol_id_to_mult_dict[mol_id]
-                coords = xyz_DFT_opt[mol_id]
-                tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
-                os.makedirs(tmp_mol_dir, exist_ok=True)
-                cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, coords, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
+for _ in range(5):
+    for subinputs_folder in os.listdir(os.path.join(COSMO_dir, "inputs")):
+        ids = subinputs_folder.split("_")[1]
+        subinputs_dir = os.path.join(COSMO_dir, "inputs", subinputs_folder)
+        suboutputs_dir = os.path.join(COSMO_dir, "outputs", f"outputs_{ids}")
+        for input_file in os.listdir(subinputs_dir):
+            if ".in" in input_file:
+                mol_id = input_file.split(".in")[0]
+                try:
+                    os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                except:
+                    continue
+                else:
+                    ids = str(int(int(mol_id.split("id")[1])/1000))
+                    charge = mol_id_to_charge_dict[mol_id]
+                    mult = mol_id_to_mult_dict[mol_id]
+                    coords = xyz_DFT_opt[mol_id]
+                    tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
+                    os.makedirs(tmp_mol_dir, exist_ok=True)
+                    cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, coords, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
