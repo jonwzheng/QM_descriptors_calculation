@@ -1,4 +1,5 @@
 #!/bin/bash -l
+#SBATCH --array=0-1
 
 echo "============================================================"
 echo "Job ID : $SLURM_JOB_ID"
