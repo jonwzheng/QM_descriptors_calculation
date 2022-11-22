@@ -135,48 +135,48 @@ with open("./sep1a/reactants_products_sep1a_filtered_dlpno_sp_results.pkl", "rb"
 
 fill_column(dlpno_results_dict)
 
-cosmo_results_dict = {}
-with open("./aug11b/reactants_products_aug11b_cosmo_results.pkl", "rb") as f:
-    cosmo_results_dict["aug11b"] = pkl.load(f)
-with open("./sep1a/reactants_products_sep1a_filtered_cosmo_results.pkl", "rb") as f:
-    cosmo_results_dict["sep1a"] = pkl.load(f)
+# cosmo_results_dict = {}
+# with open("./aug11b/reactants_products_aug11b_cosmo_results.pkl", "rb") as f:
+#     cosmo_results_dict["aug11b"] = pkl.load(f)
+# with open("./sep1a/reactants_products_sep1a_filtered_cosmo_results.pkl", "rb") as f:
+#     cosmo_results_dict["sep1a"] = pkl.load(f)
 
-def fill_column_cosmo(results_dict):
-    global cosmo_result
-    global df
-    global props
-    props = ['H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
-    for project, df in dfs_dict.items():
-        cosmo_result = results_dict[project]
+# def fill_column_cosmo(results_dict):
+#     global cosmo_result
+#     global df
+#     global props
+#     props = ['H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+#     for project, df in dfs_dict.items():
+#         cosmo_result = results_dict[project]
 
-        solvent_names = cosmo_result["solvent_name"].unique()
-        temps = cosmo_result["temp (K)"].unique()
+#         solvent_names = cosmo_result["solvent_name"].unique()
+#         temps = cosmo_result["temp (K)"].unique()
 
-        columns_dict = {f"{solvent_name}_{temp}_{prop}": [None for _ in df.index] for solvent_name in solvent_names for temp in temps for prop in props}
+#         columns_dict = {f"{solvent_name}_{temp}_{prop}": [None for _ in df.index] for solvent_name in solvent_names for temp in temps for prop in props}
 
-        out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(create_column_cosmo)(row_ind) for row_ind in cosmo_result.index)
+#         out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(create_column_cosmo)(row_ind) for row_ind in cosmo_result.index)
 
-        for index, props_dict in out:
-            for column_name, prop in props_dict.items():
-                columns_dict[column_name][index] = prop
+#         for index, props_dict in out:
+#             for column_name, prop in props_dict.items():
+#                 columns_dict[column_name][index] = prop
 
-        for column_name, column in columns_dict.items():
-            df[column_name] = column
+#         for column_name, column in columns_dict.items():
+#             df[column_name] = column
 
-def create_column_cosmo(row_ind):
-    global cosmo_result
-    global df
-    global props
-    props_dict = {}
-    solvent_name = cosmo_result.loc[row_ind, "solvent_name"]
-    temp = cosmo_result.loc[row_ind, "temp (K)"]
-    mol_id = cosmo_result.loc[row_ind, "solute_name"]
-    index = df.index[df["id"]==mol_id][0]
-    for prop in props:
-        props_dict[f"{solvent_name}_{temp}_{prop}"] = cosmo_result.loc[row_ind, prop]
-    return index, props_dict
+# def create_column_cosmo(row_ind):
+#     global cosmo_result
+#     global df
+#     global props
+#     props_dict = {}
+#     solvent_name = cosmo_result.loc[row_ind, "solvent_name"]
+#     temp = cosmo_result.loc[row_ind, "temp (K)"]
+#     mol_id = cosmo_result.loc[row_ind, "solute_name"]
+#     index = df.index[df["id"]==mol_id][0]
+#     for prop in props:
+#         props_dict[f"{solvent_name}_{temp}_{prop}"] = cosmo_result.loc[row_ind, prop]
+#     return index, props_dict
 
-fill_column_cosmo(cosmo_results_dict)
+# fill_column_cosmo(cosmo_results_dict)
 
 df_merged = pd.concat(list(dfs_dict.values()), ignore_index=True)
 
