@@ -9,7 +9,7 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
-parser.add_argument('--xyz_DFT_opt_freq_dict', type=str, required=True,
+parser.add_argument('--xyz_semiempirical_opt_dict', type=str, required=True,
                     help='pickled dict mapping from mol_id to confs xyz')
 
 # DFT optimization and frequency calculation
