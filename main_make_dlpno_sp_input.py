@@ -60,10 +60,6 @@ project_dir = os.path.abspath(os.path.join(args.output_folder))
 
 os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder), exist_ok=True)
 os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "inputs"), exist_ok=True)
-try:
-    shutil.rmtree(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs"))
-except:
-    pass
 os.makedirs(os.path.join(project_dir, args.DLPNO_sp_folder, "outputs"), exist_ok=True)
 
 mol_ids = list(df["id"])
