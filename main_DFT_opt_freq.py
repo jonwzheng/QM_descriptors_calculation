@@ -23,9 +23,9 @@ parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,m
                     help='level of theory for the DFT calculation')
 parser.add_argument('--DFT_opt_freq_theory_backup', type=str, default='#P opt=(calcall,maxcycle=64,noeig,nomicro,cartesian) freq scf=(tight, xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
                     help='level of theory for the DFT calculation if DFT_opt_freq_theory failed')
-parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=4,
+parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=16,
                     help='number of process for DFT calculations')
-parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
+parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=3900,
                     help='amount of ram (MB) allocated for each DFT calculation')
 
 # specify paths
