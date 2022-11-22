@@ -30,9 +30,13 @@ export GAUSS_SCRDIR=""
 QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_workflow
 input_smiles=reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv
 xyz_FF_dict=reactants_products_aug11b_ff_opted_results_xyz.pkl
+xyz_semiempirical_opt_dict=reactants_products_aug11b_semiempirical_opted_results_xyz.pkl
 
 # #ff conf
 # python $QMD_PATH/main_make_FF_conf_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH 
 
-#semi opt
-python $QMD_PATH/main_make_semiempirical_opt_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_FF_dict $xyz_FF_dict
+# #semi opt
+# python $QMD_PATH/main_make_semiempirical_opt_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_FF_dict $xyz_FF_dict
+
+#dft opt freq
+python $QMD_PATH/main_make_DFT_opt_freq_input.py --input_smiles $input_smiles --G16_path $g16root --xyz_semiempirical_opt_dict $xyz_semiempirical_opt_dict
