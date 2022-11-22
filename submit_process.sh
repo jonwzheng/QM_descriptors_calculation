@@ -15,7 +15,7 @@ output_name=reactants_products_aug11b
 # #semiempirical
 # python $QMD_PATH/main_process_semi_opt_result_parallel_aug11a.py $input_path ${output_name}_semiempirical_opted_results 48
 
-# ##dft
+# #dft
 # python $QMD_PATH/main_process_dft_opt_result_parallel_july27d.py $input_path ${output_name}_dft_opted_results 48
 
 # #dlpno
