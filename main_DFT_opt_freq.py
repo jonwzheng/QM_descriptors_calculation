@@ -25,7 +25,7 @@ parser.add_argument('--DFT_opt_freq_theory_backup', type=str, default='#P opt=(c
                     help='level of theory for the DFT calculation if DFT_opt_freq_theory failed')
 parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=16,
                     help='number of process for DFT calculations')
-parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=3900,
+parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=57600, #4000*16*0.9
                     help='amount of ram (MB) allocated for each DFT calculation')
 
 # specify paths
