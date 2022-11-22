@@ -95,19 +95,13 @@ def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logge
 
     return QM_descriptors_return
 
-def dft_scf_opt(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
-    sdf = mol_id + ".sdf"
+def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, scratch_dir, suboutputs_dir, subinputs_dir):
+    current_dir = os.getcwd()
+    mol_scratch_dir = os.path.join(scratch_dir, mol_id)
+    os.makedirs(mol_scratch_dir)
+    os.chdir(mol_scratch_dir)
 
-    mol = Chem.SDMolSupplier(sdf, removeHs=False, sanitize=False)[0]
-    xyz = mol2xyz(mol)
-
-    mol_dir = os.getcwd()
-    try:
-        shutil.rmtree("scratch")
-    except:
-        pass
-    os.makedirs("scratch")
-    os.chdir("scratch")
+    xyz = xyz_semiempirical_opt_dict[mol_id]
 
     g16_command = os.path.join(g16_path, 'g16')
     head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
@@ -120,23 +114,15 @@ def dft_scf_opt(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, bas
     with open(outfile, 'w') as out:
         subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
-    log = G16Log(logfile)
-    if log.termination and np.min(log.har_frequencies) > 0.0:
-        shutil.copy(logfile, os.path.join(mol_dir, logfile))
-        os.chdir(mol_dir)
-        conf = mol.GetConformer()
-        for i in range(mol.GetNumAtoms()):
-            conf.SetAtomPosition(i, log.Coords[i,:])
-        write_mol_to_sdf(mol, f'{mol_id}_opt.sdf')
-        os.remove(sdf)
-        shutil.rmtree("scratch")
+    # check for normal termination
+    with open(logfile, "r") as f:
+        lines = f.readlines()
+    if any(["termination" in line for line in reversed(lines)]):
+        shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
+        os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
     else:
-        os.chdir(mol_dir)
-        os.remove(sdf)
-        if not log.termination:
-            raise RuntimeError(f'DFT optimization for {mol_id} failed due to error termination.')
-        elif not (np.min(log.har_frequencies) > 0.0):
-            raise RuntimeError(f'DFT optimization for {mol_id} failed due to negative frequency.')
+        raise
+    os.chdir(current_dir)
 
 def dft_scf_sp(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
     sdf = mol_id + ".sdf"
