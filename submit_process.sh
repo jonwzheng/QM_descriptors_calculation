@@ -12,8 +12,8 @@ output_name=reactants_products_aug11b
 # #FF conf xyzs
 # python $QMD_PATH/main_process_FF_conf_result_parallel.py $input_path ${output_name}_ff_opted_results 48
 
-#semiempirical
-python $QMD_PATH/main_process_semi_opt_result_parallel_aug11a.py $input_path ${output_name}_semiempirical_opted_results 48
+# #semiempirical
+# python $QMD_PATH/main_process_semi_opt_result_parallel_aug11a.py $input_path ${output_name}_semiempirical_opted_results 48
 
 # ##dft
 # python $QMD_PATH/main_process_dft_opt_result_parallel_july27d.py $input_path ${output_name}_dft_opted_results 48
