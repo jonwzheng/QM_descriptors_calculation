@@ -102,7 +102,7 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, level_of_theory, n
     os.chdir(mol_scratch_dir)
 
     xyz = xyz_semiempirical_opt_dict[mol_id]
-
+    xyz = str(len(xyz.splitlines())) + "\n" + mol_id + "\n" + xyz
     g16_command = os.path.join(g16_path, 'g16')
     head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
 
