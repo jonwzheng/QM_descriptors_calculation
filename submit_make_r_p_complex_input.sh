@@ -9,7 +9,7 @@ echo "Running on node : $SLURMD_NODENAME"
 echo "Current directory : $(pwd)"
 echo "============================================================"
 
-conda activate rdmc_env
+# conda activate rdmc_env
 
 #xtb
 source /home/gridsan/groups/RMG/Software/xtb-6.4.1/share/xtb/config_env.bash
@@ -18,6 +18,8 @@ export PATH=$XTB_PATH:$PATH
 
 #RDMC for gaussian-xtb
 RDMC_PATH=/home/gridsan/groups/RMG/Software/RDMC-main
+export PATH=$RDMC_PATH:$PATH
+export PYTHONPATH=$RDMC_PATH:$PYTHONPATH
 
 #gaussian
 export PATH=$PATH:/home/gridsan/groups/RMG/Software/gaussian/g16
