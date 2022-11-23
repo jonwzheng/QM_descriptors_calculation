@@ -74,6 +74,10 @@ for mol_id, smi in zip(mol_ids, smiles_list):
     ids = str(int(int(mol_id.split("id")[1])/1000))
     subinputs_dir = os.path.join(FF_conf_dir, "inputs", f"inputs_{ids}")
     os.makedirs(subinputs_dir, exist_ok=True)
+    try:
+        os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+    except:
+        pass
     mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
     if not os.path.exists(os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")) and not os.path.exists(mol_id_path):
         with open(mol_id_path, "w") as f:
