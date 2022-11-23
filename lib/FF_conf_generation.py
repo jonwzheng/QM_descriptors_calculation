@@ -72,11 +72,17 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
                         econf = (en, id)
                         diz.append(econf)
             os.chdir(current_dir)
-            shutil.rmtree(scratch_dir_mol_id)
+            try:
+                shutil.rmtree(scratch_dir_mol_id)
+            except FileNotFoundError:
+                print(scratch_dir_mol_id)
     
     if len(diz) == 0:
         print(f"{mol_id} no conformer found after optimization")
-        os.rename(os.path.join(input_dir, f"{mol_id}.tmp"), os.path.join(input_dir, f"{mol_id}.in"))
+        try:
+            os.rename(os.path.join(input_dir, f"{mol_id}.tmp"), os.path.join(input_dir, f"{mol_id}.in"))
+        except FileNotFoundError:
+            print(os.path.join(input_dir, f"{mol_id}.tmp"))
         return
     else:
         print(f"{len(ids)} conformers found for {mol_id}")
