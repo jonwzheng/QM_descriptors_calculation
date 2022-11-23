@@ -57,6 +57,7 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     os.remove(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
     shutil.rmtree(rmol_scratch_dir)
     shutil.rmtree(pmol_scratch_dir)
+    shutil.rmtree(ts_scratch_dir)
 
 def reset_r_complex(ts_mol, r_complex, formed_bonds):
     # copy current r_complex and set new positions
