@@ -14,7 +14,7 @@ parser.add_argument('--output_folder', type=str, default='output',
 parser.add_argument('--scratch_dir', type=str, required=True,
                     help='scratch dir')
 parser.add_argument('--xyz_DFT_opt_dict', type=str, required=True,
-                    help='pickled dict mapping from mol_id to xyz')
+                    help='pickled dict mapping from ts_id to xyz')
 
 # reactant complex and product complex semiempirical optimization calculation
 parser.add_argument('--r_p_complex_semi_opt_folder', type=str, default='r_p_complex_semi_opt',
@@ -63,9 +63,9 @@ assert XTB_PATH is not None, "XTB_PATH must be provided for semiempirical opt"
 assert G16_PATH is not None, "G16_PATH must be provided for semiempirical opt"
 assert RDMC_PATH is not None, "RDMC_PATH must be provided for semiempirical opt"
 
-mol_ids = list(df["id"])
-smiles_list = list(df["smiles"])
-mol_id_to_smi = dict(zip(mol_ids, smiles_list))
+ts_ids = list(df["id"])
+rxn_smiles_list = list(df["rxn_smiles"])
+ts_id_to_rxn_smi = dict(zip(ts_ids, rxn_smiles_list))
 os.makedirs(args.scratch_dir, exist_ok=True)
 
 for _ in range(5):
@@ -75,13 +75,13 @@ for _ in range(5):
         suboutputs_dir = os.path.join(r_p_complex_semi_opt_dir, "outputs", f"outputs_{ids}")
         for input_file in os.listdir(subinputs_dir):
             if ".in" in input_file:
-                mol_id = input_file.split(".in")[0]
-                print(mol_id)
+                ts_id = input_file.split(".in")[0]
+                print(ts_id)
                 try:
-                    os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                    os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{ts_id}.tmp"))
                 except:
                     continue
                 else:
-                    rxn_smi = mol_id_to_smi[mol_id]
-                    ts_xyz = xyz_DFT_opt_dict[mol_id]
-                    reset_r_p_complex(rxn_smi, ts_xyz, mol_id, RDMC_PATH, G16_PATH, args.gaussian_r_p_complex_semi_opt_theory, args.gaussian_r_p_complex_semi_opt_n_procs, args.gaussian_r_p_complex_semi_opt_job_ram, subinputs_dir, suboutputs_dir, args.scratch_dir)
+                    rxn_smi = ts_id_to_rxn_smi[ts_id]
+                    ts_xyz = xyz_DFT_opt_dict[ts_id]
+                    reset_r_p_complex(rxn_smi, ts_xyz, ts_id, RDMC_PATH, G16_PATH, args.gaussian_r_p_complex_semi_opt_theory, args.gaussian_r_p_complex_semi_opt_n_procs, args.gaussian_r_p_complex_semi_opt_job_ram, subinputs_dir, suboutputs_dir, args.scratch_dir)
