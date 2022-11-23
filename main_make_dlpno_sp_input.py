@@ -18,8 +18,10 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
-parser.add_argument('--xyz_DFT_opt', type=str, default=None,
+parser.add_argument('--xyz_DFT_opt_dict', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
+
+#dlpno sp
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=22,
                     help='number of process for DLPNO calculations')
@@ -58,8 +60,8 @@ df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
 # input files
-with open(args.xyz_DFT_opt, "rb") as f:
-    xyz_DFT_opt = pkl.load(f)
+with open(args.xyz_DFT_opt_dict, "rb") as f:
+    xyz_DFT_opt_dict = pkl.load(f)
 
 assert ORCA_PATH is not None, "ORCA_PATH must be provided for dlpno sp calc"
 
@@ -92,7 +94,7 @@ outputs_dir = os.path.join(DLPNO_sp_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
-    if mol_id in xyz_DFT_opt:
+    if mol_id in xyz_DFT_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
         subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
         os.makedirs(subinputs_dir, exist_ok=True)
@@ -106,7 +108,7 @@ for mol_id, smi in zip(mol_ids, smiles_list):
         if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.log")) and not os.path.exists(mol_id_path):
             charge = mol_id_to_charge_dict[mol_id]
             mult = mol_id_to_mult_dict[mol_id]
-            coords = xyz_DFT_opt[mol_id]
+            coords = xyz_DFT_opt_dict[mol_id]
             script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
 
             with open(mol_id_path, "w+") as f:

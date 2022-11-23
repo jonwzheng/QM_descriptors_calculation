@@ -18,7 +18,7 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
-parser.add_argument('--xyz_DFT_opt', type=str, default=None,
+parser.add_argument('--xyz_DFT_opt_dict', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
 
 # Turbomole and COSMO calculation
@@ -61,8 +61,8 @@ df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
 # input files
-with open(args.xyz_DFT_opt, "rb") as f:
-    xyz_DFT_opt = pkl.load(f)
+with open(args.xyz_DFT_opt_dict, "rb") as f:
+    xyz_DFT_opt_dict = pkl.load(f)
 
 assert COSMOTHERM_PATH is not None and COSMO_DATABASE_PATH is not None, "COSMOTHERM_PATH and COSMO_DATABASE_PATH must be provided for COSMO calc"
 
@@ -74,7 +74,7 @@ outputs_dir = os.path.join(COSMO_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
-    if mol_id in xyz_DFT_opt:
+    if mol_id in xyz_DFT_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
         subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
         os.makedirs(subinputs_dir, exist_ok=True)
