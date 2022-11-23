@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import shutil
+sys.path.insert(0, "/home/gridsan/hwpang/RMG_shared/Software/RDMC-main/")
 
 import numpy as np
 import pandas as pd
@@ -286,11 +287,15 @@ def parser(mol_log):
                             converged=False,
                             sanitize=False,
                             backend='openbabel').GetAdjacencyMatrix()
-    if not (pre_adj == post_adj).all():
-        failed_jobs[mol_id] = dict()
-        failed_jobs[mol_id]['status'] = False
-        failed_jobs[mol_id]['mol_smi'] = mol_smi
-        failed_jobs[mol_id]['reason'] = 'adjacency matrix'
+    try:
+        if not (pre_adj == post_adj).all():
+            failed_jobs[mol_id] = dict()
+            failed_jobs[mol_id]['status'] = False
+            failed_jobs[mol_id]['mol_smi'] = mol_smi
+            failed_jobs[mol_id]['reason'] = 'adjacency matrix'
+    except:
+        print(mol_log)
+        raise
 
     job_stat = check_job_status(read_log_file(g16_log))
 
@@ -352,6 +357,9 @@ def parser(mol_log):
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
+
+# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
+# n_jobs = 8
 
 df = pd.read_csv(input_smiles_path)
 mol_log_paths = []
