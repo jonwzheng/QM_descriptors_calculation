@@ -85,8 +85,7 @@ for mol_id, smi in zip(mol_ids, smiles_list):
         except:
             pass
         mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
-        if not os.path.exists(mol_id_path):
-
+        if not os.path.exists(os.path.join(COSMO_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")) and not os.path.exists(mol_id_path):
             with open(mol_id_path, "w+") as f:
                 f.write(mol_id)
         else:
