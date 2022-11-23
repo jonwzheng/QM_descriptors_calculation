@@ -10,7 +10,7 @@ def mol2xyz(mol):
     return mol.ToXYZ()
 
 def mol2charge(mol):
-    return Chem.GetFormalCharge(mol)
+    return mol.GetFormalCharge()
 
 def mol2mult(mol):
     num_radical_elec = 0
