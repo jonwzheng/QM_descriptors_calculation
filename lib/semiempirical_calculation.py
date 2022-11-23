@@ -11,8 +11,23 @@ import numpy as np
 from .log_parser import XtbLog, G16Log
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 
+def run_xtb_opt(xyz, charge, mult, mol_id, rdmc_path, g16_path, n_procs, job_ram, level_of_theory, save_dir):
+    comfile = f"{mol_id}.gjf"
+    logfile = f"{mol_id}.log"
+    outfile = f"{mol_id}.out"
 
-def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, method, scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir):
+    g16_command = os.path.join(g16_path, 'g16')
+
+    head = '%nprocshared={}\n%mem={}mb\n{}\nexternal=\"{}/rdmc/external/xtb_tools/xtb_gaussian.pl --gfn 2 -P\"\n'.format(n_procs, job_ram, level_of_theory, rdmc_path)
+
+    xyz2com(xyz, head=head, comfile=comfile, charge=charge, mult=mult, footer='\n')
+
+    with open(outfile, 'w') as out:
+        subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
+
+    shutil.copyfile(logfile, os.path.join(save_dir, logfile))
+
+def semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir):
     current_dir = os.getcwd()
 
     for conf_ind, xyz in xyz_FF_dict[mol_id].items():
@@ -27,19 +42,8 @@ def semiempirical_opt(mol_id, base_charge, mult, xyz_FF_dict, xtb_path, rdmc_pat
         os.makedirs(conf_scratch_dir)
         os.chdir(conf_scratch_dir)
 
-        g16_command = os.path.join(g16_path, 'g16')
+        run_xtb_opt(xyz, charge, mult, f"{mol_id}_{conf_ind}", rdmc_path, g16_path, n_procs, job_ram, level_of_theory, tmp_mol_dir)        
 
-        if method == "GFN2-XTB":
-            head = '%nprocshared={}\n%mem={}mb\n{}\nexternal=\"{}/rdmc/external/xtb_tools/xtb_gaussian.pl --gfn 2 -P\"\n'.format(n_procs, job_ram, level_of_theory, rdmc_path)
-        else:
-            head = '%nprocshared={}\n%mem={}mb\n{} {}\n'.format(n_procs, job_ram, level_of_theory, method)
-
-        xyz2com(xyz, head=head, comfile=comfile, charge=base_charge, mult=mult, footer='\n')
-
-        with open(outfile, 'w') as out:
-            subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
-
-        shutil.copy(logfile, os.path.join(tmp_mol_dir, logfile))
         os.chdir(current_dir)
 
     mol_scratch_dir = os.path.join(scratch_dir, f"{mol_id}")
