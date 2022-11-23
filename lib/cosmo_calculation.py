@@ -87,37 +87,23 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
         shutil.copy(tabfile, os.path.join(tmp_mol_dir, tabfile))
 
-    #compile tab files and results in tabfiles of each solvent
-    
-    csv_file = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")
-    header = ['solvent_name', 'solute_name', 'temp (K)',
-            'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
-
     #tar the cosmo, energy and tab files
     tar_file = f"{mol_id}.tar"
     tar = tarfile.open(tar_file, "w")
     tar.add(os.path.join(tmp_mol_dir, energyfile))
     tar.add(os.path.join(tmp_mol_dir, cosmofile))
 
-    with open(csv_file , 'w') as csvfile:
-        # creating a csv writer object
-        csvwriter = csv.writer(csvfile)
-        # writing the header
-        csvwriter.writerow(header)
-
-        for index, row in df_pure.iterrows():
-            solvent = row.cosmo_name
-            cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
-            tabfile = os.path.join(tmp_mol_dir, f'{mol_id}_{cosmo_name}.tab')
-            each_data_list = read_cosmo_tab_result(tabfile)
-            each_data_list = get_dHsolv_value(each_data_list)
-            csvwriter.writerows(each_data_list)
-            tar.add(tabfile)
+    for index, row in df_pure.iterrows():
+        solvent = row.cosmo_name
+        cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
+        tabfile = os.path.join(tmp_mol_dir, f'{mol_id}_{cosmo_name}.tab')
+        each_data_list = read_cosmo_tab_result(tabfile)
+        each_data_list = get_dHsolv_value(each_data_list)
+        tar.add(tabfile)
         
     tar.close()
 
     shutil.copy(tar_file, os.path.join(save_dir, tar_file))
-    shutil.copy(csv_file, os.path.join(save_dir, csv_file))
     os.remove(os.path.join(input_dir, f"{mol_id}.tmp"))
     shutil.rmtree(tmp_mol_dir)
     os.chdir(current_dir)
