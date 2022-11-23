@@ -34,5 +34,5 @@ input_smiles=/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_r
 xyz_DFT_opt_dict=/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_sep1a_all/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_dft_xyz.pkl
 
 #r p complex semi opt
-python $QMD_PATH/main_make_reset_r_p_complex_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_DFT_opt_dict $xyz_DFT_opt_dict
+python $QMD_PATH/main_make_reset_r_p_complex_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root/g16 --xyz_DFT_opt_dict $xyz_DFT_opt_dict
 

@@ -43,10 +43,10 @@ xyz_DFT_opt_dict=reactants_products_aug11b_dft_opted_results_xyz.pkl
 # python $QMD_PATH/main_make_FF_conf_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH 
 
 # #semi opt
-# python $QMD_PATH/main_make_semiempirical_opt_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_FF_dict $xyz_FF_dict
+# python $QMD_PATH/main_make_semiempirical_opt_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root/g16 --xyz_FF_dict $xyz_FF_dict
 
 # #dft opt freq
-# python $QMD_PATH/main_make_DFT_opt_freq_input.py --input_smiles $input_smiles --G16_path $g16root --xyz_semiempirical_opt_dict $xyz_semiempirical_opt_dict
+# python $QMD_PATH/main_make_DFT_opt_freq_input.py --input_smiles $input_smiles --G16_path $g16root/g16 --xyz_semiempirical_opt_dict $xyz_semiempirical_opt_dict
 
 #cosmo
 python $QMD_PATH/main_make_cosmo_input.py --input_smiles $input_smiles --xyz_DFT_opt_dict $xyz_DFT_opt_dict --COSMOtherm_path $COSMOTHERM_PATH --COSMO_database_path $COSMO_DATABASE_PATH
