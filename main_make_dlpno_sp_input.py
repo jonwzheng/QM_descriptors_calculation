@@ -94,9 +94,9 @@ os.makedirs(outputs_dir, exist_ok=True)
 for mol_id, smi in zip(mol_ids, smiles_list):
     if mol_id in xyz_DFT_opt:
         ids = str(int(int(mol_id.split("id")[1])/1000))
-        subinputs_dir = os.path.join(subinputs_dir, f"inputs_{ids}")
+        subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
         os.makedirs(subinputs_dir, exist_ok=True)
-        suboutputs_dir = os.path.join(suboutputs_dir, f"outputs_{ids}")
+        suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
         os.makedirs(suboutputs_dir, exist_ok=True)
         try:
             os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
