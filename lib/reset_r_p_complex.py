@@ -41,6 +41,10 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     run_xtb_opt(xyz, charge, mult, pmol_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram)
     os.chdir(current_dir)
 
+    ts_scratch_dir = os.path.join(scratch_dir, ts_id)
+    os.makedirs(ts_scratch_dir)
+    os.chdir(ts_scratch_dir)
+
     #tar the cosmo, energy and tab files
     tar_file = f"{ts_id}.tar"
     tar = tarfile.open(tar_file, "w")
@@ -49,6 +53,7 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     tar.close()
 
     shutil.copyfile(tar_file, os.path.join(suboutputs_dir, tar_file))
+    os.chdir(current_dir)
     os.remove(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
     shutil.rmtree(rmol_scratch_dir)
     shutil.rmtree(pmol_scratch_dir)
