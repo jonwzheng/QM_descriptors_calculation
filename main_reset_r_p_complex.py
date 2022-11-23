@@ -13,7 +13,7 @@ parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
 parser.add_argument('--scratch_dir', type=str, required=True,
                     help='scratch dir')
-parser.add_argument('--xyz_DFT_dict', type=str, required=True,
+parser.add_argument('--xyz_DFT_opt_dict', type=str, required=True,
                     help='pickled dict mapping from mol_id to xyz')
 
 # reactant complex and product complex semiempirical optimization calculation
@@ -56,8 +56,8 @@ r_p_complex_semi_opt_dir = os.path.join(output_dir, args.r_p_complex_semi_opt_fo
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
-with open(args.xyz_DFT_dict, "rb") as f:
-    xyz_DFT_dict = pkl.load(f)
+with open(args.xyz_DFT_opt_dict, "rb") as f:
+    xyz_DFT_opt_dict = pkl.load(f)
 
 assert XTB_PATH is not None, "XTB_PATH must be provided for semiempirical opt"
 assert G16_PATH is not None, "G16_PATH must be provided for semiempirical opt"
@@ -83,5 +83,5 @@ for _ in range(5):
                     continue
                 else:
                     rxn_smi = mol_id_to_smi[mol_id]
-                    ts_xyz = xyz_DFT_dict[mol_id]
+                    ts_xyz = xyz_DFT_opt_dict[mol_id]
                     reset_r_p_complex(rxn_smi, ts_xyz, mol_id, RDMC_PATH, G16_PATH, args.gaussian_r_p_complex_semi_opt_theory, args.gaussian_r_p_complex_semi_opt_n_procs, args.gaussian_r_p_complex_semi_opt_job_ram, subinputs_dir, suboutputs_dir, args.scratch_dir)
