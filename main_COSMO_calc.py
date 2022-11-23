@@ -31,10 +31,20 @@ parser.add_argument('--COSMO_temperatures', type=str, nargs="+", required=False,
                     help='temperatures used for COSMO calculation')
 parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, default='common_solvent_list_final.csv',
                     help='input file containing pure solvents used for COSMO calculation.')
+
+# specify paths
+parser.add_argument('--XTB_path', type=str, required=False, default=None,
+                    help='path to installed XTB')
+parser.add_argument('--G16_path', type=str, required=False, default=None,
+                    help='path to installed Gaussian 16')
+parser.add_argument('--RDMC_path', type=str, required=False, default=None,
+                    help='path to RDMC to use xtb-gaussian script for xtb optimization calculation.')
 parser.add_argument('--COSMOtherm_path', type=str, required=False, default=None,
                     help='path to COSMOthermo')
 parser.add_argument('--COSMO_database_path', type=str, required=False, default=None,
                     help='path to COSMO_database')
+parser.add_argument('--ORCA_path', type=str, required=False, default=None,
+                    help='path to ORCA')
 
 args = parser.parse_args()
 
