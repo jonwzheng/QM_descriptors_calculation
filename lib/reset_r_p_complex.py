@@ -28,6 +28,7 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     charge = mol2charge(new_r_complex)
     mult = mol2mult(new_r_complex)
     run_xtb_opt(xyz, charge, mult, rmol_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram)
+    shutil.copyfile(f"{rmol_id}.log", os.path.join(suboutputs_dir, f"{rmol_id}.log"))
     os.chdir(current_dir)
 
     pmol_id = f"{ts_id}_p"
@@ -39,6 +40,7 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     charge = mol2charge(new_p_complex)
     mult = mol2mult(new_p_complex)
     run_xtb_opt(xyz, charge, mult, pmol_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram)
+    shutil.copyfile(f"{pmol_id}.log", os.path.join(suboutputs_dir, f"{pmol_id}.log"))
     os.chdir(current_dir)
 
     ts_scratch_dir = os.path.join(scratch_dir, ts_id)
