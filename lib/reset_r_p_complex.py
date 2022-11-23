@@ -1,13 +1,11 @@
 import os
-from rdkit import Chem
-import subprocess
+import tarfile
 import shutil
 
 from rdmc.mol import RDKitMol
 from rdmc.forcefield import OpenBabelFF
 from rdmc.ts import get_formed_and_broken_bonds
 
-from lib.file_parser import xyz2com
 from lib.semiempirical_calculation import run_xtb_opt
 from lib.utils import mol2charge, mol2mult, mol2xyz
 
@@ -21,28 +19,39 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
 
     formed_bonds, broken_bonds = get_formed_and_broken_bonds(r_complex, p_complex)
     
-    mol_id = f"{ts_id}_r"
-    mol_scratch_dir = os.path.join(current_dir, mol_id)
-    os.chdir(mol_scratch_dir)
+    rmol_id = f"{ts_id}_r"
+    rmol_scratch_dir = os.path.join(scratch_dir, rmol_id)
+    os.makedirs(rmol_scratch_dir)
+    os.chdir(rmol_scratch_dir)
     new_r_complex = reset_r_complex(ts_mol, r_complex, formed_bonds)
     xyz = mol2xyz(new_r_complex)
     charge = mol2charge(new_r_complex)
     mult = mol2mult(new_r_complex)
-    run_xtb_opt(xyz, charge, mult, mol_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, suboutputs_dir)
+    run_xtb_opt(xyz, charge, mult, rmol_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram)
     os.chdir(current_dir)
-    shutil.rmtree(mol_scratch_dir)
 
-    mol_id = f"{ts_id}_p"
-    mol_scratch_dir = os.path.join(current_dir, mol_id)
+    pmol_id = f"{ts_id}_p"
+    pmol_scratch_dir = os.path.join(scratch_dir, pmol_id)
+    os.makedirs(pmol_scratch_dir)
+    os.chdir(pmol_scratch_dir) 
     new_p_complex = reset_p_complex(new_r_complex, p_complex, broken_bonds)
     xyz = mol2xyz(new_p_complex)
     charge = mol2charge(new_p_complex)
     mult = mol2mult(new_p_complex)
-    run_xtb_opt(xyz, charge, mult, mol_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, suboutputs_dir)
+    run_xtb_opt(xyz, charge, mult, pmol_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram)
     os.chdir(current_dir)
-    shutil.rmtree(mol_scratch_dir)
 
+    #tar the cosmo, energy and tab files
+    tar_file = f"{ts_id}.tar"
+    tar = tarfile.open(tar_file, "w")
+    tar.add(os.path.join(rmol_scratch_dir, f"{rmol_id}.log"))
+    tar.add(os.path.join(pmol_scratch_dir, f"{pmol_id}.log"))
+    tar.close()
+
+    shutil.copyfile(tar_file, os.path.join(suboutputs_dir, tar_file))
     os.remove(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
+    shutil.rmtree(rmol_scratch_dir)
+    shutil.rmtree(pmol_scratch_dir)
 
 def reset_r_complex(ts_mol, r_complex, formed_bonds):
     # copy current r_complex and set new positions

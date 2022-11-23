@@ -11,7 +11,7 @@ import numpy as np
 from .log_parser import XtbLog, G16Log
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf, write_mols_to_sdf
 
-def run_xtb_opt(xyz, charge, mult, mol_id, rdmc_path, g16_path, n_procs, job_ram, level_of_theory, save_dir):
+def run_xtb_opt(xyz, charge, mult, mol_id, rdmc_path, g16_path, n_procs, job_ram, level_of_theory):
     comfile = f"{mol_id}.gjf"
     logfile = f"{mol_id}.log"
     outfile = f"{mol_id}.out"
@@ -23,9 +23,7 @@ def run_xtb_opt(xyz, charge, mult, mol_id, rdmc_path, g16_path, n_procs, job_ram
     xyz2com(xyz, head=head, comfile=comfile, charge=charge, mult=mult, footer='\n')
 
     with open(outfile, 'w') as out:
-        subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
-
-    shutil.copyfile(logfile, os.path.join(save_dir, logfile))
+        subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out) 
 
 def semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir):
     current_dir = os.getcwd()
@@ -42,8 +40,8 @@ def semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g1
         os.makedirs(conf_scratch_dir)
         os.chdir(conf_scratch_dir)
 
-        run_xtb_opt(xyz, charge, mult, f"{mol_id}_{conf_ind}", rdmc_path, g16_path, n_procs, job_ram, level_of_theory, tmp_mol_dir)        
-
+        run_xtb_opt(xyz, charge, mult, f"{mol_id}_{conf_ind}", rdmc_path, g16_path, n_procs, job_ram, level_of_theory)        
+        shutil.copyfile(logfile, os.path.join(tmp_mol_dir, logfile))
         os.chdir(current_dir)
 
     mol_scratch_dir = os.path.join(scratch_dir, f"{mol_id}")
