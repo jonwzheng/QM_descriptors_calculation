@@ -21,7 +21,7 @@ parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
 parser.add_argument('--scratch_dir', type=str, required=True,
                     help='scfratch directory')
-parser.add_argument('--xyz_DFT_opt', type=str, default=None,
+parser.add_argument('--xyz_DFT_opt_dict', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
 
 # Turbomole and COSMO calculation
@@ -49,8 +49,8 @@ parser.add_argument('--ORCA_path', type=str, required=False, default=None,
 args = parser.parse_args()
 
 # input files
-with open(args.xyz_DFT_opt, "rb") as f:
-    xyz_DFT_opt = pkl.load(f)
+with open(args.xyz_DFT_opt_dict, "rb") as f:
+    xyz_DFT_opt_dict = pkl.load(f)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
 
@@ -100,7 +100,7 @@ for _ in range(5):
                     ids = str(int(int(mol_id.split("id")[1])/1000))
                     charge = mol_id_to_charge_dict[mol_id]
                     mult = mol_id_to_mult_dict[mol_id]
-                    coords = xyz_DFT_opt[mol_id]
+                    coords = xyz_DFT_opt_dict[mol_id]
                     tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
                     os.makedirs(tmp_mol_dir, exist_ok=True)
                     cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, coords, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
