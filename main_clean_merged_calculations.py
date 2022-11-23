@@ -50,11 +50,11 @@ submit_dir = os.getcwd()
 #             print(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, mol_id+".log"))
 #             shutil.rmtree(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, job_folder))
 
-for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs")):
-    for job_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder)):
-        if os.path.isdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, job_folder)):
-            print(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, job_folder))
-            shutil.rmtree(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, job_folder))
+# for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs")):
+#     for job_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder)):
+#         if os.path.isdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, job_folder)):
+#             print(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, job_folder))
+#             shutil.rmtree(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, job_folder))
 
 # for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs")):
 #     for job_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder)):
@@ -65,9 +65,9 @@ for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_f
 #             print(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, mol_id+".tar"))
 #             shutil.rmtree(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, job_folder))
             
-# for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs")):
-#     for job_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder)):
-#         mol_id = job_folder
-#         if os.path.isdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, job_folder)) and os.path.exists(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, mol_id+".tar")):
-#             print(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, job_folder))
-#             shutil.rmtree(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, job_folder))
+for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs")):
+    for job_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder)):
+        mol_id = job_folder
+        if os.path.isdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, job_folder)):
+            print(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, job_folder))
+            # shutil.rmtree(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, job_folder))
