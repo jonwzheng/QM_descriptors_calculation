@@ -29,55 +29,65 @@ parser.add_argument('--COSMO_temperatures', type=str, nargs="+", required=False,
 parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, default='common_solvent_list_final.csv',
                     help='input file containing pure solvents used for COSMO calculation.')
 
+# specify paths
+parser.add_argument('--XTB_path', type=str, required=False, default=None,
+                    help='path to installed XTB')
+parser.add_argument('--G16_path', type=str, required=False, default=None,
+                    help='path to installed Gaussian 16')
+parser.add_argument('--RDMC_path', type=str, required=False, default=None,
+                    help='path to RDMC to use xtb-gaussian script for xtb optimization calculation.')
+parser.add_argument('--COSMOtherm_path', type=str, required=False, default=None,
+                    help='path to COSMOthermo')
+parser.add_argument('--COSMO_database_path', type=str, required=False, default=None,
+                    help='path to COSMO_database')
+parser.add_argument('--ORCA_path', type=str, required=False, default=None,
+                    help='path to ORCA')
+
 args = parser.parse_args()
+
+XTB_PATH = args.XTB_path
+G16_PATH = args.G16_path
+RDMC_PATH = args.RDMC_path
+COSMOTHERM_PATH = args.COSMOtherm_path
+COSMO_DATABASE_PATH = args.COSMO_database_path
+ORCA_PATH = args.ORCA_path
+
+submit_dir = os.path.abspath(os.getcwd())
+output_dir = os.path.join(submit_dir, args.output_folder)
+COSMO_dir = os.path.join(output_dir, args.COSMO_folder)
+os.makedirs(COSMO_dir, exist_ok=True)
+
+df = pd.read_csv(args.input_smiles, index_col=0)
+assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
 # input files
 with open(args.xyz_DFT_opt, "rb") as f:
     xyz_DFT_opt = pkl.load(f)
 
-df = pd.read_csv(args.input_smiles, index_col=0)
-
-# create id to smile mapping
-mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
-mol_id_to_charge_dict = dict()
-mol_id_to_mult_dict = dict()
-for k, v in mol_id_to_smi_dict.items():
-    try:
-        mol = Chem.MolFromSmiles(v)
-    except Exception as e:
-        print(f'Cannot translate smi {v} to molecule for species {k}')
-
-    try:
-        charge = Chem.GetFormalCharge(mol)
-        mol_id_to_charge_dict[k] = charge
-    except Exception as e:
-        print(f'Cannot determine molecular charge for species {k} with smi {v}')
-
-    num_radical_elec = 0
-    for atom in mol.GetAtoms():
-        num_radical_elec += atom.GetNumRadicalElectrons()
-    mol_id_to_mult_dict[k] =  num_radical_elec + 1
-
-submit_dir = os.path.abspath(os.getcwd())
-project_dir = os.path.abspath(os.path.join(args.output_folder))
-
-os.makedirs(os.path.join(project_dir, args.COSMO_folder), exist_ok=True)
-os.makedirs(os.path.join(project_dir, args.COSMO_folder, "inputs"), exist_ok=True)
-os.makedirs(os.path.join(project_dir, args.COSMO_folder, "outputs"), exist_ok=True)
+assert COSMOTHERM_PATH is not None and COSMO_DATABASE_PATH is not None, "COSMOTHERM_PATH and COSMO_DATABASE_PATH must be provided for COSMO calc"
 
 mol_ids = list(df["id"])
-mol_ids = [mol_id for mol_id in mol_ids if mol_id in xyz_DFT_opt]
-for mol_id in mol_ids:
-    ids = str(int(int(mol_id.split("id")[1])/1000))
-    os.makedirs(os.path.join(project_dir, args.COSMO_folder, "inputs", f"inputs_{ids}"), exist_ok=True)
-    os.makedirs(os.path.join(project_dir, args.COSMO_folder, "outputs", f"outputs_{ids}"), exist_ok=True)
-    try:
-        os.remove(os.path.join(project_dir, args.COSMO_folder, "inputs", f"inputs_{ids}", f"{mol_id}.tmp"))
-    except:
-        pass
-    if not os.path.exists(os.path.join(project_dir, args.COSMO_folder, "inputs", f"inputs_{ids}", f"{mol_id}.in")):
+smiles_list = list(df["smiles"])
+inputs_dir = os.path.join(COSMO_dir, "inputs")
+outputs_dir = os.path.join(COSMO_dir, "outputs")
+os.makedirs(inputs_dir, exist_ok=True)
+os.makedirs(outputs_dir, exist_ok=True)
 
-        with open(os.path.join(project_dir, args.COSMO_folder, "inputs", f"inputs_{ids}", f"{mol_id}.in"), "w+") as f:
-            f.write(mol_id)
-    else:
-        continue
+for mol_id, smi in zip(mol_ids, smiles_list):
+    if mol_id in xyz_DFT_opt:
+        ids = str(int(int(mol_id.split("id")[1])/1000))
+        subinputs_dir = os.path.join(COSMO_dir, "inputs", f"inputs_{ids}")
+        suboutputs_dir = os.path.join(COSMO_dir, "outputs", f"outputs_{ids}")
+        os.makedirs(subinputs_dir, exist_ok=True)
+        os.makedirs(suboutputs_dir, exist_ok=True)
+        try:
+            os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+        except:
+            pass
+        mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
+        if not os.path.exists(mol_id_path):
+
+            with open(mol_id_path, "w+") as f:
+                f.write(mol_id)
+        else:
+            continue
