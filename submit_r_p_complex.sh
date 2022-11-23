@@ -37,6 +37,6 @@ mkdir -p $scratch_dir
 echo $scratch_dir
 
 #r p complex semi opt
-python $QMD_PATH/main_reset_r_p_complex.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_DFT_opt_dict $xyz_DFT_opt_dict --scratch_dir $scratch_dir
+python $QMD_PATH/main_reset_r_p_complex.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root/g16 --xyz_DFT_opt_dict $xyz_DFT_opt_dict --scratch_dir $scratch_dir
 
 rm -rf $scratch_dir
