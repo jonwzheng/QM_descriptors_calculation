@@ -1,5 +1,4 @@
 #!/bin/bash -l
-#SBATCH --array=0-49
 
 echo "============================================================"
 echo "Job ID : $SLURM_JOB_ID"
@@ -9,7 +8,7 @@ echo "Running on node : $SLURMD_NODENAME"
 echo "Current directory : $(pwd)"
 echo "============================================================"
 
-conda activate rdmc_env
+#conda activate rdmc_env
 
 #xtb
 source /home/gridsan/groups/RMG/Software/xtb-6.4.1/share/xtb/config_env.bash
@@ -18,6 +17,8 @@ export PATH=$XTB_PATH:$PATH
 
 #RDMC for gaussian-xtb
 RDMC_PATH=/home/gridsan/groups/RMG/Software/RDMC-main
+export PATH=$RDMC_PATH:$PATH
+export PYTHONPATH=$RDMC_PATH:$PYTHONPATH
 
 #gaussian
 export PATH=$PATH:/home/gridsan/groups/RMG/Software/gaussian/g16
@@ -31,6 +32,11 @@ QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_wo
 input_smiles=/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_sep1a_all/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_input.csv
 xyz_DFT_opt_dict=/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_sep1a_all/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_dft_xyz.pkl
 
-#r p complex semi opt
-python $QMD_PATH/main_reset_r_p_complex.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_DFT_opt_dict $xyz_DFT_opt_dict
+scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID
+mkdir -p $scratch_dir
+echo $scratch_dir
 
+#r p complex semi opt
+python $QMD_PATH/main_reset_r_p_complex.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_DFT_opt_dict $xyz_DFT_opt_dict --scratch_dir $scratch_dir
+
+rm -rf $scratch_dir
