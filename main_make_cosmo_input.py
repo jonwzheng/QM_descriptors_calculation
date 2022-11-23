@@ -69,23 +69,23 @@ assert COSMOTHERM_PATH is not None and COSMO_DATABASE_PATH is not None, "COSMOTH
 mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])
 inputs_dir = os.path.join(COSMO_dir, "inputs")
-outputs_dir = os.path.join(COSMO_dir, "outputs")
 os.makedirs(inputs_dir, exist_ok=True)
+outputs_dir = os.path.join(COSMO_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
     if mol_id in xyz_DFT_opt:
         ids = str(int(int(mol_id.split("id")[1])/1000))
-        subinputs_dir = os.path.join(COSMO_dir, "inputs", f"inputs_{ids}")
-        suboutputs_dir = os.path.join(COSMO_dir, "outputs", f"outputs_{ids}")
+        subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
         os.makedirs(subinputs_dir, exist_ok=True)
+        suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
         os.makedirs(suboutputs_dir, exist_ok=True)
         try:
             os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
         except:
             pass
         mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
-        if not os.path.exists(os.path.join(COSMO_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")) and not os.path.exists(mol_id_path):
+        if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")) and not os.path.exists(mol_id_path):
             with open(mol_id_path, "w+") as f:
                 f.write(mol_id)
         else:

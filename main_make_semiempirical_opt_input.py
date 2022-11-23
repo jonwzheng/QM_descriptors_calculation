@@ -50,6 +50,7 @@ ORCA_PATH = args.ORCA_path
 submit_dir = os.path.abspath(os.getcwd())
 output_dir = os.path.join(submit_dir, args.output_folder)
 semiempirical_opt_dir = os.path.join(output_dir, args.semiempirical_opt_folder)
+os.makedirs(semiempirical_opt_dir, exist_ok=True)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
@@ -65,18 +66,22 @@ mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])
 inputs_dir = os.path.join(semiempirical_opt_dir, "inputs")
 os.makedirs(inputs_dir, exist_ok=True)
+outputs_dir = os.path.join(semiempirical_opt_dir, "outputs")
+os.makedirs(outputs_dir, exist_ok=True)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
     if mol_id in xyz_FF_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
-        subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", f"inputs_{ids}")
+        subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
         os.makedirs(subinputs_dir, exist_ok=True)
+        suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
+        os.makedirs(suboutputs_dir, exist_ok=True)
         try:
             os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
         except:
             pass
         mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
-        if not os.path.exists(os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")) and not os.path.exists(mol_id_path):
+        if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")) and not os.path.exists(mol_id_path):
             with open(mol_id_path, "w") as f:
                 f.write(mol_id)
         else:
