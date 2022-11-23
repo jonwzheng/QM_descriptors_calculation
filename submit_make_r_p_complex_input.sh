@@ -9,7 +9,7 @@ echo "Running on node : $SLURMD_NODENAME"
 echo "Current directory : $(pwd)"
 echo "============================================================"
 
-# conda activate rdmc_env
+conda activate rdmc_env
 
 #xtb
 source /home/gridsan/groups/RMG/Software/xtb-6.4.1/share/xtb/config_env.bash
@@ -28,8 +28,9 @@ export GAUSS_SCRDIR=""
 
 #QMD
 QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_workflow
-input_smiles=reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv
-xyz_DFT_opt_dict=reactants_products_aug11b_dft_opted_results_xyz.pkl
+input_smiles=/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_sep1a_all/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_input.csv
+xyz_DFT_opt_dict=/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_sep1a_all/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_dft_xyz.pkl
 
-#semi opt
+#r p complex semi opt
 python $QMD_PATH/main_make_reset_r_p_complex_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root --xyz_DFT_opt_dict $xyz_DFT_opt_dict
+
