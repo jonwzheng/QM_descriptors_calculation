@@ -15,7 +15,7 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     r_complex_smi, p_complex_smi = rxn_smi.split(">>")
     r_complex = RDKitMol.FromSmiles(r_complex_smi)
     p_complex = RDKitMol.FromSmiles(p_complex_smi)
-    ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False)
+    ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
 
     formed_bonds, broken_bonds = get_formed_and_broken_bonds(r_complex, p_complex)
     
