@@ -1,7 +1,5 @@
 import os
 import sys
-
-sys.path.insert(0, "/home/gridsan/hwpang/RMG_shared/Software/QM_descriptors_calculation-radical_workflow/")
 import csv
 import tarfile
 import pickle as pkl
@@ -27,13 +25,15 @@ def read_cosmo_tab_result_from_tar(f):
         if b"Nr Compound" in line:
             line = f.readline()
             solvent_name = line.split()[1].decode('utf-8')
+            solvent_smiles = solvent_name_to_smi[solvent_name]
             line = f.readline()
             solute_name = line.split()[1].decode('utf-8')
+            solute_smiles = mol_id_to_smi[solute_name]
             result_values = line.split()[2:6]  # H (in bar), ln(gamma), pv (vapor pressure in bar), Gsolv (kcal/mol)
             result_values = [result_value.decode('utf-8') for result_value in result_values]
             # save the result as one list
             each_data_list.append(
-                [solvent_name, solute_name, temp] + result_values + [None])
+                [solvent_name, solvent_smiles, solute_name, solute_smiles, temp] + result_values + [None])
             # initialize everything
             solvent_name, solute_name, temp = None, None, None
             result_values = None
@@ -45,15 +45,15 @@ def get_dHsolv_value(each_data_list):
     dGsolv_temp_dict = {}
     ind_298 = None
     for z in range(len(each_data_list)):
-        temp = each_data_list[z][2]
-        dGsolv = each_data_list[z][6]
+        temp = each_data_list[z][4]
+        dGsolv = each_data_list[z][8]
         dGsolv_temp_dict[temp] = dGsolv
         if temp == '298.15':
             ind_298 = z
     dGsolv_298 = float(dGsolv_temp_dict['298.15'])
     dSsolv_298 = - (float(dGsolv_temp_dict['299.15']) - float(dGsolv_temp_dict['297.15'])) / (299.15 - 297.15)
     dHsolv_298 = dGsolv_298 + 298.15 * dSsolv_298
-    each_data_list[ind_298][7] = '%.8f' % dHsolv_298
+    each_data_list[ind_298][9] = '%.8f' % dHsolv_298
     return each_data_list
 
 def parser(tar_file_path):
@@ -71,12 +71,18 @@ def parser(tar_file_path):
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
+solvent_path = sys.argv[4]
 
 # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
 # n_jobs = 8
 # output_file_name = "test"
 
 df = pd.read_csv(input_smiles_path)
+mol_id_to_smi = dict(zip(df.id, df.smiles))
+
+df_solvent = pd.read_csv(solvent_path)
+solvent_name_to_smi = dict(zip(df.cosmo_name, df.smiles))
+
 tar_file_paths = []
 submit_dir = os.getcwd()
 for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs")):
@@ -88,7 +94,7 @@ out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(pars
 
 csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
 
-header = ['solvent_name', 'solute_name', 'temp (K)',
+header = ['solvent_name', 'solvent_smiles', 'solute_name', 'solute_smiles', 'temp (K)',
         'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
 
 with open(csv_file , 'w') as csvfile:
