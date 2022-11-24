@@ -60,7 +60,11 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
 
     shutil.copyfile(tar_file, os.path.join(suboutputs_dir, tar_file))
     os.chdir(current_dir)
-    os.remove(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
+    try:
+        os.remove(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
+    except FileNotFoundError:
+        print("File not found")
+        print(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
     shutil.rmtree(rmol_scratch_dir)
     shutil.rmtree(pmol_scratch_dir)
     shutil.rmtree(ts_scratch_dir)
