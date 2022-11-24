@@ -35,6 +35,6 @@ scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$LLSUB_RANK-$LLSUB_
 mkdir -p $scratch_dir
 
 #semiempirical
-python $QMD_PATH/main_make_semiempirical_opt_input.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root/g16 --xyz_FF_dict $xyz_FF_dict --scratch_dir $scratch_dir
+python $QMD_PATH/main_semiempirical_opt.py --input_smiles $input_smiles --XTB_path $XTB_PATH --RDMC_path $RDMC_PATH --G16_path $g16root/g16 --xyz_FF_dict $xyz_FF_dict --scratch_dir $scratch_dir
 
 rm -rf $scratch_dir
