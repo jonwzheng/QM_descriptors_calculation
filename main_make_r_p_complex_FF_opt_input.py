@@ -15,14 +15,8 @@ parser.add_argument('--xyz_DFT_opt_dict', type=str, required=True,
                     help='pickled dict mapping from mol_id to xyz')
 
 # reactant complex and product complex semiempirical optimization calculation
-parser.add_argument('--r_p_complex_semi_opt_folder', type=str, default='r_p_complex_semi_opt',
+parser.add_argument('--r_p_complex_FF_opt_folder', type=str, default='r_p_complex_FF_opt',
                     help='folder for reactant complex and product complex semiempirical optimization')
-parser.add_argument('--gaussian_r_p_complex_semi_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro,cartesian)',
-                    help='level of theory for the Gaussian reactant complex and product complex semiempirical calculation')
-parser.add_argument('--gaussian_r_p_complex_semi_opt_n_procs', type=int, default=8,
-                    help='number of process for Gaussian reactant complex and product complex semiempirical calculations')
-parser.add_argument('--gaussian_r_p_complex_semi_opt_job_ram', type=int, default=2000,
-                    help='amount of ram (MB) allocated for Gaussian reactant complex and product complex semiempirical calculation')
 
 # specify paths
 parser.add_argument('--XTB_path', type=str, required=False, default=None,
@@ -49,7 +43,7 @@ ORCA_PATH = args.ORCA_path
 
 submit_dir = os.path.abspath(os.getcwd())
 output_dir = os.path.join(submit_dir, args.output_folder)
-r_p_complex_semi_opt_dir = os.path.join(output_dir, args.r_p_complex_semi_opt_folder)
+r_p_complex_FF_opt_dir = os.path.join(output_dir, args.r_p_complex_FF_opt_folder)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
@@ -57,15 +51,13 @@ assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 with open(args.xyz_DFT_opt_dict, "rb") as f:
     xyz_DFT_opt_dict = pkl.load(f)
 
-assert XTB_PATH is not None, "XTB_PATH must be provided for semiempirical opt"
-assert G16_PATH is not None, "G16_PATH must be provided for semiempirical opt"
-assert RDMC_PATH is not None, "RDMC_PATH must be provided for semiempirical opt"
+assert RDMC_PATH is not None, "RDMC_PATH must be provided for FF opt"
 
 mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])
-inputs_dir = os.path.join(r_p_complex_semi_opt_dir, "inputs")
+inputs_dir = os.path.join(r_p_complex_FF_opt_dir, "inputs")
 os.makedirs(inputs_dir, exist_ok=True)
-outputs_dir = os.path.join(r_p_complex_semi_opt_dir, "outputs")
+outputs_dir = os.path.join(r_p_complex_FF_opt_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
 for mol_id, smi in zip(mol_ids, smiles_list):
