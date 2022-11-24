@@ -81,7 +81,7 @@ df = pd.read_csv(input_smiles_path)
 mol_id_to_smi = dict(zip(df.id, df.smiles))
 
 df_solvent = pd.read_csv(solvent_path)
-solvent_name_to_smi = dict(zip(df.cosmo_name, df.smiles))
+solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, df_solvent.smiles))
 
 tar_file_paths = []
 submit_dir = os.getcwd()
