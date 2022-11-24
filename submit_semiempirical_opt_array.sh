@@ -29,7 +29,7 @@ QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_wo
 input_smiles=reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv
 xyz_FF_dict=reactants_products_aug11b_ff_opted_results_xyz.pkl
 
-scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID
+scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$LLSUB_RANK-$LLSUB_SIZE
 mkdir -p $scratch_dir
 
 #semiempirical
