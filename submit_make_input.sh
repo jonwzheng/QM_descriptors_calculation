@@ -18,6 +18,8 @@ export PATH=$XTB_PATH:$PATH
 
 #RDMC for gaussian-xtb
 RDMC_PATH=/home/gridsan/groups/RMG/Software/RDMC-main
+export PATH=$RDMC_PATH:$PATH
+export PYTHONPATH=$RDMC_PATH:$PYTHONPATH
 
 #gaussian
 export PATH=$PATH:/home/gridsan/groups/RMG/Software/gaussian/g16
