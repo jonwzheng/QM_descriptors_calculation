@@ -69,6 +69,54 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     shutil.rmtree(pmol_scratch_dir)
     shutil.rmtree(ts_scratch_dir)
 
+def reset_r_p_complex_FF_opt(rxn_smi, ts_xyz, ts_id, subinputs_dir, suboutputs_dir, scratch_dir):
+    current_dir = os.path.abspath(os.getcwd())
+
+    r_complex_smi, p_complex_smi = rxn_smi.split(">>")
+    r_complex = RDKitMol.FromSmiles(r_complex_smi)
+    p_complex = RDKitMol.FromSmiles(p_complex_smi)
+    ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
+
+    formed_bonds, broken_bonds = get_formed_and_broken_bonds(r_complex, p_complex)
+    
+    rmol_id = f"{ts_id}_r"
+    rmol_scratch_dir = os.path.join(scratch_dir, rmol_id)
+    os.makedirs(rmol_scratch_dir)
+    os.chdir(rmol_scratch_dir)
+    new_r_complex = reset_r_complex(ts_mol, r_complex, formed_bonds)
+    new_r_complex.ToSDFFile(f"{rmol_id}.sdf")
+    os.chdir(current_dir)
+
+    pmol_id = f"{ts_id}_p"
+    pmol_scratch_dir = os.path.join(scratch_dir, pmol_id)
+    os.makedirs(pmol_scratch_dir)
+    os.chdir(pmol_scratch_dir) 
+    new_p_complex = reset_p_complex(new_r_complex, p_complex, broken_bonds)
+    new_p_complex.ToSDFFile(f"{pmol_id}.sdf")
+    os.chdir(current_dir)
+
+    ts_scratch_dir = os.path.join(scratch_dir, ts_id)
+    os.makedirs(ts_scratch_dir)
+    os.chdir(ts_scratch_dir)
+
+    #tar the cosmo, energy and tab files
+    tar_file = f"{ts_id}.tar"
+    tar = tarfile.open(tar_file, "w")
+    tar.add(os.path.join(rmol_scratch_dir, f"{rmol_id}.sdf"))
+    tar.add(os.path.join(pmol_scratch_dir, f"{pmol_id}.sdf"))
+    tar.close()
+
+    shutil.copyfile(tar_file, os.path.join(suboutputs_dir, tar_file))
+    os.chdir(current_dir)
+    try:
+        os.remove(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
+    except FileNotFoundError:
+        print("File not found")
+        print(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
+    shutil.rmtree(rmol_scratch_dir)
+    shutil.rmtree(pmol_scratch_dir)
+    shutil.rmtree(ts_scratch_dir)
+
 def reset_r_complex(ts_mol, r_complex, formed_bonds):
     # copy current r_complex and set new positions
     new_r_complex = r_complex.Copy(quickCopy=True)
