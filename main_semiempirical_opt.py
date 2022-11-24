@@ -89,28 +89,25 @@ for k, v in mol_id_to_smi_dict.items():
 
 os.makedirs(args.scratch_dir, exist_ok=True)
 
-semiempirical_opt_methods = ["GFN2-XTB", "pm7", "am1"]
-
-for semiempirical_opt_method in semiempirical_opt_methods:
-    for _ in range(5):
-        for subinputs_folder in os.listdir(os.path.join(semiempirical_opt_dir, "inputs")):
-            ids = subinputs_folder.split("_")[1]
-            subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", subinputs_folder)
-            suboutputs_dir = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}")
-            for input_file in os.listdir(subinputs_dir):
-                if ".in" in input_file:
-                    mol_id = input_file.split(".in")[0]
-                    print(mol_id)
-                    try:
-                        os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
-                    except:
-                        continue
-                    else:
-                        ids = str(int(int(mol_id.split("id")[1])/1000))
-                        smi = mol_id_to_smi_dict[mol_id]
-                        charge = mol_id_to_charge_dict[mol_id]
-                        mult = mol_id_to_mult_dict[mol_id]
-                        print(smi)
-                        tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
-                        os.makedirs(tmp_mol_dir, exist_ok=True)
-                        semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, semiempirical_opt_method, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
+for _ in range(5):
+    for subinputs_folder in os.listdir(os.path.join(semiempirical_opt_dir, "inputs")):
+        ids = subinputs_folder.split("_")[1]
+        subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", subinputs_folder)
+        suboutputs_dir = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}")
+        for input_file in os.listdir(subinputs_dir):
+            if ".in" in input_file:
+                mol_id = input_file.split(".in")[0]
+                print(mol_id)
+                try:
+                    os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                except:
+                    continue
+                else:
+                    ids = str(int(int(mol_id.split("id")[1])/1000))
+                    smi = mol_id_to_smi_dict[mol_id]
+                    charge = mol_id_to_charge_dict[mol_id]
+                    mult = mol_id_to_mult_dict[mol_id]
+                    print(smi)
+                    tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
+                    os.makedirs(tmp_mol_dir, exist_ok=True)
+                    semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
