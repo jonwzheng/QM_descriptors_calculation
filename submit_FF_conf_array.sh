@@ -25,7 +25,7 @@ export PATH=$XTB_PATH:$PATH
 QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_workflow
 input_smiles=reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_lookup_table_sep1a_filtered.csv
 
-scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID
+scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$LLSUB_RANK-$LLSUB_SIZE
 mkdir -p $scratch_dir
 echo $scratch_dir
 
