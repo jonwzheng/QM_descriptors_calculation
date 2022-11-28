@@ -23,11 +23,13 @@ def parser(ts_id, submit_dir):
         for member in tar:
             if "_r.sdf" in member.name:
                 f = tar.extractfile(member)
-                r_mol = Chem.ForwardSDMolSupplier(f, removeHs=False)[0]
+                mols = Chem.ForwardSDMolSupplier(f, removeHs=False)
+                r_mol = [mol for mol in mols][0]
                 r_mol.SetProp("_Name", r_smi)
             elif "_p.sdf" in member.name:
                 f = tar.extractfile(member)
-                p_mol = Chem.ForwardSDMolSupplier(f, removeHs=False)[0]
+                mols = Chem.ForwardSDMolSupplier(f, removeHs=False)
+                p_mol = [mol for mol in mols][0]
                 p_mol.SetProp("_Name", p_smi)
         tar.close()
         return ts_id, r_smi, p_smi, ts_mol, r_mol, p_mol
