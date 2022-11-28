@@ -6,6 +6,9 @@ import pickle as pkl
 import pandas as pd
 from joblib import Parallel, delayed
 
+# import sys
+# sys.path.insert(0, "/home/gridsan/hwpang/RMG_shared/Software/RDMC-main/")
+
 from rdkit import Chem
 from rdmc.mol import RDKitMol
 
@@ -25,12 +28,10 @@ def parser(ts_id, submit_dir):
                 f = tar.extractfile(member)
                 mols = Chem.ForwardSDMolSupplier(f, removeHs=False)
                 r_mol = [mol for mol in mols][0]
-                r_mol.SetProp("_Name", r_smi)
             elif "_p.sdf" in member.name:
                 f = tar.extractfile(member)
                 mols = Chem.ForwardSDMolSupplier(f, removeHs=False)
-                p_mol = [mol for mol in mols][0]
-                p_mol.SetProp("_Name", p_smi)
+                p_mol = [mol for mol in mols][0]    
         tar.close()
         return ts_id, r_smi, p_smi, ts_mol, r_mol, p_mol
     else:
@@ -43,13 +44,15 @@ ts_id_to_xyz_path = sys.argv[4]
 
 submit_dir = os.getcwd()
 
-# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
+# input_smiles_path = "/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_sep1a_all/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_input.csv"
 # n_jobs = 8
 # output_file_name = "test"
+# ts_id_to_xyz_path = "/home/gridsan/groups/RMG/Projects/Hao-Wei-Oscar-Yunsie/production_run/HAbs/inputs/TS_sep1a_all/wb97xd_and_xtb_opted_ts_combo_results_hashed_sep1a_ts_dft_xyz.pkl"
 
 df = pd.read_csv(input_smiles_path)
 ts_id_to_smi = dict(zip(df.id, df.rxn_smiles))
 ts_ids = list(df.id)
+# ts_ids = list(df.id)[:10]
 with open(ts_id_to_xyz_path, "rb") as f:
     ts_id_to_xyz = pkl.load(f)
 
@@ -70,6 +73,8 @@ with open(csv_file , 'w') as csvfile:
 
     for ts_id, r_smi, p_smi, ts_mol, r_mol, p_mol in out:
         csvwriter.writerow([ts_id, r_smi, p_smi])
+        r_mol.SetProp("_Name", r_smi)
+        p_mol.SetProp("_Name", p_smi)
         ts_writer.write(ts_mol)
         r_writer.write(r_mol)
         p_writer.write(p_mol)
