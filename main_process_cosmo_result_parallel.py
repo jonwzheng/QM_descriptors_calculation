@@ -56,22 +56,28 @@ def get_dHsolv_value(each_data_list):
     each_data_list[ind_298][9] = '%.8f' % dHsolv_298
     return each_data_list
 
-def parser(tar_file_path):
-    each_data_lists = []
-    tar = tarfile.open(tar_file_path)
-    for member in tar:
-        if ".tab" in member.name:
-            f = tar.extractfile(member)
-            each_data_list = read_cosmo_tab_result_from_tar(f)
-            each_data_list = get_dHsolv_value(each_data_list)
-            each_data_lists.append(each_data_list)
-    tar.close()
-    return each_data_lists
+def parser(mol_id):
+    tar_file_path = os.path.join(submit_dir, "output", "COSMO_calc", "outputs", f"{mol_id}.tar")
+    if os.path.isfile(tar_file_path):
+        each_data_lists = []
+        tar = tarfile.open(tar_file_path)
+        for member in tar:
+            if ".tab" in member.name:
+                f = tar.extractfile(member)
+                each_data_list = read_cosmo_tab_result_from_tar(f)
+                each_data_list = get_dHsolv_value(each_data_list)
+                each_data_lists.append(each_data_list)
+        tar.close()
+        return each_data_lists
+    else:
+        return None
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
 solvent_path = sys.argv[4]
+
+submit_dir = os.getcwd()
 
 # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
 # n_jobs = 8
@@ -79,18 +85,13 @@ solvent_path = sys.argv[4]
 
 df = pd.read_csv(input_smiles_path)
 mol_id_to_smi = dict(zip(df.id, df.smiles))
+mol_ids = list(df.id)
 
 df_solvent = pd.read_csv(solvent_path)
 solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, df_solvent.smiles))
 
-tar_file_paths = []
-submit_dir = os.getcwd()
-for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs")):
-    for tar_file in os.listdir(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder)):
-        if ".tar" in tar_file:
-            tar_file_paths.append(os.path.join(submit_dir, "output", "COSMO_calc", "outputs", suboutput_folder, tar_file))
-
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(tar_file) for tar_file in tar_file_paths)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
+out = [x for x in out if x is not None]
 
 csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
 

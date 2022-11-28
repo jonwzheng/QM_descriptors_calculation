@@ -265,108 +265,111 @@ def load_energies(self, zpe_scale_factor):
 
 # In[71]:
 
-def parser(mol_log):
+def parser(mol_id):
 
-    zpe_scale_factor = 0.986
-    # LevelOfTheory(method='wb97xd',basis='def2svp',software='gaussian')": 0.986,  # [4]
-    # [4] Calculated as described in 10.1021/ct100326h
-    # https://github.com/ReactionMechanismGenerator/RMG-database/blob/main/input/quantum_corrections/data.py
+    ids = str(int(int(mol_id.split("id")[1])/1000)) 
+    g16_log = os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", f"outputs_{ids}", f"{mol_id}.log")
 
-    failed_jobs = dict()
-    valid_mol = dict()
+    if os.path.isfile(g16_log):
 
+        zpe_scale_factor = 0.986
+        # LevelOfTheory(method='wb97xd',basis='def2svp',software='gaussian')": 0.986,  # [4]
+        # [4] Calculated as described in 10.1021/ct100326h
+        # https://github.com/ReactionMechanismGenerator/RMG-database/blob/main/input/quantum_corrections/data.py
 
-    mol_id = os.path.basename(mol_log).split(".log")[0]
-    mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
-    pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
+        failed_jobs = dict()
+        valid_mol = dict()
 
-    g16_log = mol_log
+        mol_smi = mol_id_to_smi[mol_id]
+        pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
 
-    glog = GaussianLog(g16_log)
-    post_adj = glog.get_mol(refid=glog.num_all_geoms-1,  # The last geometry in the job
-                            converged=False,
-                            sanitize=False,
-                            backend='openbabel').GetAdjacencyMatrix()
+        glog = GaussianLog(g16_log)
+        post_adj = glog.get_mol(refid=glog.num_all_geoms-1,  # The last geometry in the job
+                                converged=False,
+                                sanitize=False,
+                                backend='openbabel').GetAdjacencyMatrix()
 
-    if not (pre_adj == post_adj).all():
-        failed_jobs[mol_id] = dict()
-        failed_jobs[mol_id]['status'] = False
-        failed_jobs[mol_id]['mol_smi'] = mol_smi
-        failed_jobs[mol_id]['reason'] = 'adjacency matrix'
-
-    job_stat = check_job_status(read_log_file(g16_log))
-
-    if not job_stat:
-        try:
+        if not (pre_adj == post_adj).all():
             failed_jobs[mol_id] = dict()
             failed_jobs[mol_id]['status'] = False
-            failed_jobs[mol_id]['reason'] = 'error termination'
             failed_jobs[mol_id]['mol_smi'] = mol_smi
-            failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-            failed_jobs[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-            failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-            failed_jobs[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
-            failed_jobs[mol_id]['wall'] = get_wall(read_log_file(g16_log))
-        except:
-            failed_jobs[mol_id] = dict()
-            failed_jobs[mol_id]['status'] = False
-            failed_jobs[mol_id]['reason'] = 'parser1'
-        return failed_jobs, valid_mol
+            failed_jobs[mol_id]['reason'] = 'adjacency matrix'
 
-    if not check_freq(g16_log):
+        job_stat = check_job_status(read_log_file(g16_log))
+
+        if not job_stat:
+            try:
+                failed_jobs[mol_id] = dict()
+                failed_jobs[mol_id]['status'] = False
+                failed_jobs[mol_id]['reason'] = 'error termination'
+                failed_jobs[mol_id]['mol_smi'] = mol_smi
+                failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
+                failed_jobs[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+                failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
+                failed_jobs[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
+                failed_jobs[mol_id]['wall'] = get_wall(read_log_file(g16_log))
+            except:
+                failed_jobs[mol_id] = dict()
+                failed_jobs[mol_id]['status'] = False
+                failed_jobs[mol_id]['reason'] = 'parser1'
+            return failed_jobs, valid_mol
+
+        if not check_freq(g16_log):
+            try:
+                failed_jobs[mol_id] = dict()
+                failed_jobs[mol_id]['status'] = False
+                failed_jobs[mol_id]['reason'] = 'freq'
+                failed_jobs[mol_id]['mol_smi'] = mol_smi
+                failed_jobs[mol_id]['dft_freq'] = load_freq(g16_log)
+                failed_jobs[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
+                failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
+                failed_jobs[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+                failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
+                failed_jobs[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
+                failed_jobs[mol_id]['wall'] = get_wall(read_log_file(g16_log))
+            except:
+                failed_jobs[mol_id] = dict()
+                failed_jobs[mol_id]['status'] = False
+                failed_jobs[mol_id]['reason'] = 'parser2'
+
+            return failed_jobs, valid_mol
+
         try:
-            failed_jobs[mol_id] = dict()
-            failed_jobs[mol_id]['status'] = False
-            failed_jobs[mol_id]['reason'] = 'freq'
-            failed_jobs[mol_id]['mol_smi'] = mol_smi
-            failed_jobs[mol_id]['dft_freq'] = load_freq(g16_log)
-            failed_jobs[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
-            failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-            failed_jobs[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-            failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-            failed_jobs[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
-            failed_jobs[mol_id]['wall'] = get_wall(read_log_file(g16_log))
+            valid_mol[mol_id] = dict()
+            valid_mol[mol_id]['mol_smi'] = mol_smi
+            valid_mol[mol_id]['dft_freq'] = load_freq(g16_log)
+            valid_mol[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
+            valid_mol[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
+            valid_mol[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+            valid_mol[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
+            valid_mol[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
+            valid_mol[mol_id]['wall'] = get_wall(read_log_file(g16_log))
+            valid_mol[mol_id]['energy'] = load_energies(g16_log, zpe_scale_factor)
         except:
+            del valid_mol[mol_id]
             failed_jobs[mol_id] = dict()
             failed_jobs[mol_id]['status'] = False
-            failed_jobs[mol_id]['reason'] = 'parser2'
-
+            failed_jobs[mol_id]['reason'] = 'parser3'
         return failed_jobs, valid_mol
-
-    try:
-        valid_mol[mol_id] = dict()
-        valid_mol[mol_id]['mol_smi'] = mol_smi
-        valid_mol[mol_id]['dft_freq'] = load_freq(g16_log)
-        valid_mol[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
-        valid_mol[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-        valid_mol[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-        valid_mol[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-        valid_mol[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
-        valid_mol[mol_id]['wall'] = get_wall(read_log_file(g16_log))
-        valid_mol[mol_id]['energy'] = load_energies(g16_log, zpe_scale_factor)
-    except:
-        del valid_mol[mol_id]
-        failed_jobs[mol_id] = dict()
-        failed_jobs[mol_id]['status'] = False
-        failed_jobs[mol_id]['reason'] = 'parser3'
-    return failed_jobs, valid_mol
+    else:
+        return None
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
 
+submit_dir = os.getcwd()
+
 # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
 # n_jobs = 8
 
 df = pd.read_csv(input_smiles_path)
-mol_log_paths = []
-submit_dir = os.getcwd()
-for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs")):
-    for mol_log in os.listdir(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder)):
-        if ".log" in mol_log:
-            mol_log_paths.append(os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", suboutput_folder, mol_log))
+mol_ids = df['id'].tolist()
+mol_id_to_smi = dict(zip(df['id'], df['smiles']))
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log) for mol_log in mol_log_paths)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
+
+out = [x for x in out if x is not None]
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)

@@ -22,8 +22,7 @@ def parser(mol_id):
         valid_mol = dict()
 
         mol_smi = mol_id_to_smi[mol_id]
-        pre_mol = RDKitMol.FromSmiles(mol_smi)
-        pre_adj = pre_mol.GetAdjacencyMatrix()
+        pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
         
         failed_jobs[mol_id] = dict()
         valid_mol[mol_id] = dict()

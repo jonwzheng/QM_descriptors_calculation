@@ -356,8 +356,7 @@ def parser(mol_id, submit_dir):
         failed_job = dict()
 
         mol_smi = mol_id_to_smi[mol_id]
-        pre_mol = RDKitMol.FromSmiles(mol_smi)
-        pre_adj = pre_mol.GetAdjacencyMatrix()
+        pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
 
         valid_mol[mol_id] = dict()
         failed_job[mol_id] = dict()

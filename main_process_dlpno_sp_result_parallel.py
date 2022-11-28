@@ -56,54 +56,49 @@ class OrcaLog(object):
             raise LogError('Unable to find energy in Orca output file.')
         return e_elect
 
-def parser(mol_log):
+def parser(mol_id):
 
-    failed_jobs = dict()
-    valid_mol = dict()
+    orca_log = os.path.join(submit_dir, "output", "DLPNO_sp", "outputs", f"{mol_id}.log")
 
+    if os.path.isfile(orca_log):
 
-    mol_id = os.path.basename(mol_log).split(".log")[0]
-    try:
-        mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
-    except:
-        print(mol_id)
-        print(mol_log)
-        raise
+        failed_jobs = dict()
+        valid_mol = dict()
 
-    orca_log = mol_log
+        mol_smi = mol_id_to_smi[mol_id]
 
-    olog = OrcaLog(orca_log)
+        olog = OrcaLog(orca_log)
 
-    error = olog.check_for_errors()
+        error = olog.check_for_errors()
 
-    if error is not None:
-        failed_jobs[mol_id] = dict()
-        failed_jobs[mol_id]['status'] = False
-        failed_jobs[mol_id]['reason'] = error
+        if error is not None:
+            failed_jobs[mol_id] = dict()
+            failed_jobs[mol_id]['status'] = False
+            failed_jobs[mol_id]['reason'] = error
+            return failed_jobs, valid_mol
+
+        valid_mol[mol_id] = dict()
+        valid_mol[mol_id]['mol_smi'] = mol_smi
+        valid_mol[mol_id]['dlpno_energy'] = olog.load_energy()
+
         return failed_jobs, valid_mol
-
-    valid_mol[mol_id] = dict()
-    valid_mol[mol_id]['mol_smi'] = mol_smi
-    valid_mol[mol_id]['dlpno_energy'] = olog.load_energy()
-
-    return failed_jobs, valid_mol
+    else:
+        return None
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
 
+submit_dir = os.getcwd()
+
 # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
 # n_jobs = 8
 
 df = pd.read_csv(input_smiles_path)
-mol_log_paths = []
-submit_dir = os.getcwd()
-for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "DLPNO_sp", "outputs")):
-    for mol_log in os.listdir(os.path.join(submit_dir, "output", "DLPNO_sp", "outputs", suboutput_folder)):
-        if ".log" in mol_log:
-            mol_log_paths.append(os.path.join(submit_dir, "output", "DLPNO_sp", "outputs", suboutput_folder, mol_log))
+mol_ids = df['id'].tolist()
+mol_id_to_smi = dict(zip(df['id'].tolist(), df['smiles'].tolist()))
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_log) for mol_log in mol_log_paths)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)
