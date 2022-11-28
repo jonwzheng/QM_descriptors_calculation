@@ -17,7 +17,7 @@ def parser(ts_id, submit_dir):
         ts_smi = ts_id_to_smi[ts_id]
         r_smi, p_smi = ts_smi.split(">>")
         ts_xyz = ts_id_to_xyz[ts_id]
-        ts_mol = RDKitMol.FromXYZ(ts_xyz, sanitize=False)
+        ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
         ts_mol.SetProp("_Name", ts_id)
         for member in tar:
             if "_r.log" in member.name:
