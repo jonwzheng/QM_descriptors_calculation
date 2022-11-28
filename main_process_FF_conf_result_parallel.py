@@ -44,7 +44,7 @@ def parser(mol_id):
                 valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
                 valid_mol[mol_id][conf_id]["ff_energy"] = en
             else:
-                failed_jobs[mol_id][conf_id] = "failed connectivity"
+                failed_jobs[mol_id][conf_id] = 'adjacency matrix'
             
         return failed_jobs, valid_mol
     else:
