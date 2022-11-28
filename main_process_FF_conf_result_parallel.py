@@ -13,57 +13,60 @@ import pickle as pkl
 from joblib import Parallel, delayed
 from rdkit import Chem
 
-def parser(mol_confs_sdf):
+def parser(mol_id):
 
     failed_jobs = dict()
     valid_mol = dict()
-    
-    mol_id = os.path.basename(mol_confs_sdf).split("_confs.sdf")[0]
-    mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
-    pre_mol = Chem.MolFromSmiles(mol_smi)
-    pre_mol = Chem.AddHs(pre_mol)
-    Chem.SanitizeMol(pre_mol)
-    pre_adj = Chem.GetAdjacencyMatrix(pre_mol)
-    
-    failed_jobs[mol_id] = dict()
-    valid_mol[mol_id] = dict()
-    
-    mols = Chem.SDMolSupplier(mol_confs_sdf, removeHs=False, sanitize=True)
-    for conf_id, mol in enumerate(mols):
-        post_adj = Chem.GetAdjacencyMatrix(mol)
-        try:
-            (pre_adj == post_adj).all()
-        except:
-            print(mol_confs_sdf)
-            break
+
+    ids = str(int(int(mol_id.split("id")[1])/1000)) 
+    mol_confs_sdf = os.path.join(submit_dir, "output", "FF_conf", "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
+    if os.path.isfile(mol_confs_sdf):
+        mol_smi = mol_id_to_smi[mol_id]
+        pre_mol = Chem.MolFromSmiles(mol_smi)
+        pre_mol = Chem.AddHs(pre_mol)
+        Chem.SanitizeMol(pre_mol)
+        pre_adj = Chem.GetAdjacencyMatrix(pre_mol)
         
-        if (pre_adj == post_adj).all():
-            valid_mol[mol_id][conf_id] = {}
-            xyz = Chem.MolToXYZBlock(mol)
-            en = mol.GetProp("ConfEnergies")
-            valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
-            valid_mol[mol_id][conf_id]["ff_energy"] = en
-        else:
-            failed_jobs[mol_id][conf_id] = "failed"
+        failed_jobs[mol_id] = dict()
+        valid_mol[mol_id] = dict()
         
-    return failed_jobs, valid_mol
+        mols = Chem.SDMolSupplier(mol_confs_sdf, removeHs=False, sanitize=True)
+        for conf_id, mol in enumerate(mols):
+            post_adj = Chem.GetAdjacencyMatrix(mol)
+            try:
+                (pre_adj == post_adj).all()
+            except:
+                print(mol_confs_sdf)
+                break
+            
+            if (pre_adj == post_adj).all():
+                valid_mol[mol_id][conf_id] = {}
+                xyz = Chem.MolToXYZBlock(mol)
+                en = mol.GetProp("ConfEnergies")
+                valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
+                valid_mol[mol_id][conf_id]["ff_energy"] = en
+            else:
+                failed_jobs[mol_id][conf_id] = "failed"
+            
+        return failed_jobs, valid_mol
+    else:
+        return None
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
 
+submit_dir = os.getcwd()
+
 # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
 # n_jobs = 8
 
 df = pd.read_csv(input_smiles_path)
-mol_confs_sdf_paths = []
-submit_dir = os.getcwd()
-for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "FF_conf", "outputs")):
-    for mol_confs_sdf in os.listdir(os.path.join(submit_dir, "output", "FF_conf", "outputs", suboutput_folder)):
-        if ".sdf" in mol_confs_sdf:
-            mol_confs_sdf_paths.append(os.path.join(submit_dir, "output", "FF_conf", "outputs", suboutput_folder, mol_confs_sdf))
+mol_ids = list(df.id)
+mol_id_to_smi = dict(zip(df.id, df.smiles))
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_confs_sdf) for mol_confs_sdf in mol_confs_sdf_paths)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
+out = [x for x in out if x is not None]
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)
