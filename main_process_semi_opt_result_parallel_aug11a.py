@@ -15,6 +15,8 @@ import pickle as pkl
 
 from joblib import Parallel, delayed
 
+from rdmc.mol import RDKitMol
+
 
 periodictable = ["", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
              "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br",
@@ -345,59 +347,72 @@ def get_title_card(member, tar, flag=b"Initial command:"):
             break
     return title_card.decode()
 
-def parser(mol_confs_tar):
+def parser(mol_id, submit_dir):
 
-    valid_mol = dict()
-    failed_job = dict()
+    ids = str(int(int(mol_id.split("id")[1])/1000)) 
+    mol_confs_tar = os.path.join(submit_dir, "output", "semiempirical_opt", "outputs", f"outputs_{ids}", f"{mol_id}.tar")
+    if os.path.isfile(mol_confs_tar):
+        valid_mol = dict()
+        failed_job = dict()
 
-    mol_id = os.path.basename(mol_confs_tar).split(".tar")[0]
-    mol_smi = df.loc[df['id'] == mol_id]['smiles'].tolist()[0]
-    valid_mol[mol_id] = dict()
-    failed_job[mol_id] = dict()
+        mol_smi = mol_id_to_smi[mol_id]
+        pre_mol = RDKitMol.FromSmiles(mol_smi)
+        pre_adj = pre_mol.GetAdjacencyMatrix()
 
-    tar = tarfile.open(mol_confs_tar)
-    for member in tar:
-        conf_id = member.name.split(f"{mol_id}_")[1]
-        conf_id = conf_id.split(".log")[0]
+        valid_mol[mol_id] = dict()
+        failed_job[mol_id] = dict()
 
-        job_stat = check_job_status(member, tar)
-        if not job_stat:
-            failed_job[mol_id][conf_id] = "job status"
-            continue
+        tar = tarfile.open(mol_confs_tar)
+        for member in tar:
+            conf_id = member.name.split(f"{mol_id}_")[1]
+            conf_id = conf_id.split(".log")[0]
 
-        if not check_freq(member, tar):
-            failed_job[mol_id][conf_id] = "freq check"
-            continue
+            job_stat = check_job_status(member, tar)
+            if not job_stat:
+                failed_job[mol_id][conf_id] = "job status"
+                continue
 
-        valid_mol[mol_id][conf_id] = dict()
-        valid_mol[mol_id][conf_id]['mol_smi'] = mol_smi
-        valid_mol[mol_id][conf_id]['semiempirical_title_card'] = get_title_card(member, tar)
-        valid_mol[mol_id][conf_id]['semiempirical_freq'] = load_freq(member, tar)
-        valid_mol[mol_id][conf_id]['semiempirical_xyz'], valid_mol[mol_id][conf_id]['semiempirical_xyz_dict'], valid_mol[mol_id][conf_id]['semiempirical_steps'] = load_geometry(member, tar)
-        valid_mol[mol_id][conf_id]['semiempirical_xyz_std_ori'], valid_mol[mol_id][conf_id]['semiempirical_xyz_dict_std_ori'], _ = load_geometry_std(member, tar)
-        valid_mol[mol_id][conf_id]['semiempirical_energy'] = load_energies(member, tar)
-        valid_mol[mol_id][conf_id]['semiempirical_cpu'] = get_cpu(member, tar)
-        valid_mol[mol_id][conf_id]['semiempirical_wall'] = get_wall(member, tar)
-    
-    return failed_job, valid_mol
+            if not check_freq(member, tar):
+                failed_job[mol_id][conf_id] = "freq check"
+                continue
+
+            xyz, _, _ = load_geometry(member, tar)
+            post_mol = RDKitMol.FromXYZ(xyz, header=False)
+            post_adj = post_mol.GetAdjacencyMatrix()
+            if (pre_adj == post_adj).all():
+
+                valid_mol[mol_id][conf_id] = dict()
+                valid_mol[mol_id][conf_id]['mol_smi'] = mol_smi
+                valid_mol[mol_id][conf_id]['semiempirical_title_card'] = get_title_card(member, tar)
+                valid_mol[mol_id][conf_id]['semiempirical_freq'] = load_freq(member, tar)
+                valid_mol[mol_id][conf_id]['semiempirical_xyz'], valid_mol[mol_id][conf_id]['semiempirical_xyz_dict'], valid_mol[mol_id][conf_id]['semiempirical_steps'] = load_geometry(member, tar)
+                valid_mol[mol_id][conf_id]['semiempirical_xyz_std_ori'], valid_mol[mol_id][conf_id]['semiempirical_xyz_dict_std_ori'], _ = load_geometry_std(member, tar)
+                valid_mol[mol_id][conf_id]['semiempirical_energy'] = load_energies(member, tar)
+                valid_mol[mol_id][conf_id]['semiempirical_cpu'] = get_cpu(member, tar)
+                valid_mol[mol_id][conf_id]['semiempirical_wall'] = get_wall(member, tar)
+            else:
+                failed_job[mol_id][conf_id] = 'adjacency matrix'
+                continue
+        
+        return failed_job, valid_mol
+    else:
+        return None
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
 
+submit_dir = os.getcwd()
+
 # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
 
 df = pd.read_csv(input_smiles_path)
-mol_confs_tar_paths = []
-submit_dir = os.getcwd()
-for suboutput_folder in os.listdir(os.path.join(submit_dir, "output", "semiempirical_opt", "outputs")):
-    for mol_confs_tar in os.listdir(os.path.join(submit_dir, "output", "semiempirical_opt", "outputs", suboutput_folder)):
-        if ".tar" in mol_confs_tar:
-            mol_confs_tar_paths.append(os.path.join(submit_dir, "output", "semiempirical_opt", "outputs", suboutput_folder,mol_confs_tar))
+mol_id_to_smi = dict(zip(df.id, df.smiles))
+mol_ids = list(df.id)
 
-# out = [parser(mol_confs_tar_paths[0])]
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id, submit_dir) for mol_id in mol_ids)
+out = [x for x in out is x is not None]
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_confs_tar) for mol_confs_tar in mol_confs_tar_paths)
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)
 

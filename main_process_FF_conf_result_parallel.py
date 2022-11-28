@@ -11,28 +11,26 @@ import pandas as pd
 import pickle as pkl
 
 from joblib import Parallel, delayed
-from rdkit import Chem
+from rdmc.mol import RDKitMol
 
 def parser(mol_id):
-
-    failed_jobs = dict()
-    valid_mol = dict()
 
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     mol_confs_sdf = os.path.join(submit_dir, "output", "FF_conf", "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
     if os.path.isfile(mol_confs_sdf):
+        failed_jobs = dict()
+        valid_mol = dict()
+
         mol_smi = mol_id_to_smi[mol_id]
-        pre_mol = Chem.MolFromSmiles(mol_smi)
-        pre_mol = Chem.AddHs(pre_mol)
-        Chem.SanitizeMol(pre_mol)
-        pre_adj = Chem.GetAdjacencyMatrix(pre_mol)
+        pre_mol = RDKitMol.FromSmiles(mol_smi)
+        pre_adj = pre_mol.GetAdjacencyMatrix()
         
         failed_jobs[mol_id] = dict()
         valid_mol[mol_id] = dict()
         
-        mols = Chem.SDMolSupplier(mol_confs_sdf, removeHs=False, sanitize=True)
+        mols = RDKitMol.FromFile(mol_confs_sdf)
         for conf_id, mol in enumerate(mols):
-            post_adj = Chem.GetAdjacencyMatrix(mol)
+            post_adj = mol.GetAdjacencyMatrix()
             try:
                 (pre_adj == post_adj).all()
             except:
@@ -41,12 +39,12 @@ def parser(mol_id):
             
             if (pre_adj == post_adj).all():
                 valid_mol[mol_id][conf_id] = {}
-                xyz = Chem.MolToXYZBlock(mol)
+                xyz = mol.ToXYZ()
                 en = mol.GetProp("ConfEnergies")
                 valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
                 valid_mol[mol_id][conf_id]["ff_energy"] = en
             else:
-                failed_jobs[mol_id][conf_id] = "failed"
+                failed_jobs[mol_id][conf_id] = "failed connectivity"
             
         return failed_jobs, valid_mol
     else:
