@@ -411,7 +411,7 @@ mol_id_to_smi = dict(zip(df.id, df.smiles))
 mol_ids = list(df.id)
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id, submit_dir) for mol_id in mol_ids)
-out = [x for x in out is x is not None]
+out = [x for x in out if x is not None]
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)
