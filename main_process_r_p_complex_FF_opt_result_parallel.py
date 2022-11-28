@@ -47,7 +47,7 @@ submit_dir = os.getcwd()
 # output_file_name = "test"
 
 df = pd.read_csv(input_smiles_path)
-ts_id_to_smi = dict(zip(df.id, df.smiles))
+ts_id_to_smi = dict(zip(df.id, df.rxn_smiles))
 ts_ids = list(df.id)
 with open(ts_id_to_xyz_path, "rb") as f:
     ts_id_to_xyz = pkl.load(f)
