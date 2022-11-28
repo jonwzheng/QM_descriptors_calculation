@@ -68,7 +68,7 @@ with open(csv_file , 'w') as csvfile:
     csvwriter.writerow(header)
 
     for ts_id, r_smi, p_smi, ts_mol, r_mol, p_mol in out:
-        csvwriter.writerows([ts_id, r_smi, p_smi])
+        csvwriter.writerow([ts_id, r_smi, p_smi])
         ts_writer.write(ts_mol._mol, confId=0)
         r_writer.write(r_mol._mol, confId=0)
         p_writer.write(p_mol._mol, confId=0)
