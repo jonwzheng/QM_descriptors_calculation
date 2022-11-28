@@ -70,9 +70,9 @@ with open(csv_file , 'w') as csvfile:
 
     for ts_id, r_smi, p_smi, ts_mol, r_mol, p_mol in out:
         csvwriter.writerow([ts_id, r_smi, p_smi])
-        ts_writer.write(ts_mol, confId=0)
-        r_writer.write(r_mol, confId=0)
-        p_writer.write(p_mol, confId=0)
+        ts_writer.write(ts_mol)
+        r_writer.write(r_mol)
+        p_writer.write(p_mol)
 
 ts_writer.close()
 r_writer.close()
