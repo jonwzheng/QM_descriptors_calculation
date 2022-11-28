@@ -18,6 +18,7 @@ def parser(ts_id, submit_dir):
         r_smi, p_smi = ts_smi.split(">>")
         ts_xyz = ts_id_to_xyz[ts_id]
         ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
+        ts_mol = ts_mol._mol
         ts_mol.SetProp("_Name", ts_id)
         for member in tar:
             if "_r.sdf" in member.name:
@@ -69,9 +70,9 @@ with open(csv_file , 'w') as csvfile:
 
     for ts_id, r_smi, p_smi, ts_mol, r_mol, p_mol in out:
         csvwriter.writerow([ts_id, r_smi, p_smi])
-        ts_writer.write(ts_mol._mol, confId=0)
-        r_writer.write(r_mol._mol, confId=0)
-        p_writer.write(p_mol._mol, confId=0)
+        ts_writer.write(ts_mol, confId=0)
+        r_writer.write(r_mol, confId=0)
+        p_writer.write(p_mol, confId=0)
 
 ts_writer.close()
 r_writer.close()
