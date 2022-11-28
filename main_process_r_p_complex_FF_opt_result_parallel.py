@@ -20,12 +20,12 @@ def parser(ts_id, submit_dir):
         ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
         ts_mol.SetProp("_Name", ts_id)
         for member in tar:
-            if "_r.log" in member.name:
+            if "_r.sdf" in member.name:
                 f = tar.extractfile(member)
                 suppl = Chem.ForwardSDMolSupplier(f)
                 r_mol = [mol for mol in suppl][0]
                 r_mol.SetProp("_Name", r_smi)
-            elif "_p.log" in member.name:
+            elif "_p.sdf" in member.name:
                 f = tar.extractfile(member)
                 suppl = Chem.ForwardSDMolSupplier(f)
                 p_mol = [mol for mol in suppl][0]
