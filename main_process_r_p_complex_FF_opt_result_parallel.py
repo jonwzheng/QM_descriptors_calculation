@@ -73,6 +73,7 @@ with open(csv_file , 'w') as csvfile:
 
     for ts_id, r_smi, p_smi, ts_mol, r_mol, p_mol in out:
         csvwriter.writerow([ts_id, r_smi, p_smi])
+        ts_mol.SetProp("_Name", ts_id)
         r_mol.SetProp("_Name", r_smi)
         p_mol.SetProp("_Name", p_smi)
         ts_writer.write(ts_mol)
