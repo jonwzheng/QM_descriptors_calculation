@@ -103,4 +103,5 @@ for _ in range(5):
                     coords = xyz_DFT_opt_dict[mol_id]
                     tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
                     os.makedirs(tmp_mol_dir, exist_ok=True)
+                    print(mol_id)
                     cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, coords, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
