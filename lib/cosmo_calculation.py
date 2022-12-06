@@ -83,9 +83,9 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
         if not os.path.exists(tabfile):
             print(f"Turbomole calculation failed for {mol_id} {cosmo_name}")
-            continue
-
-        shutil.copy(tabfile, os.path.join(tmp_mol_dir, tabfile))
+            return 
+        else:
+            shutil.copy(tabfile, os.path.join(tmp_mol_dir, tabfile))
 
     #tar the cosmo, energy and tab files
     tar_file = f"{mol_id}.tar"
