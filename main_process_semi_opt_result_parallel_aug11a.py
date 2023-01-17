@@ -364,7 +364,7 @@ def parser(mol_id, submit_dir):
         tar = tarfile.open(mol_confs_tar)
         for member in tar:
             conf_id = member.name.split(f"{mol_id}_")[1]
-            conf_id = conf_id.split(".log")[0]
+            conf_id = int(conf_id.split(".log")[0])
 
             job_stat = check_job_status(member, tar)
             if not job_stat:
