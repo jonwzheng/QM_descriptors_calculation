@@ -59,13 +59,11 @@ class OrcaLog(object):
 def parser(mol_id):
 
     orca_log = os.path.join(submit_dir, "output", "DLPNO_sp", "outputs", f"{mol_id}.log")
+    failed_jobs = dict()
+    valid_mol = dict()
+    mol_smi = mol_id_to_smi[mol_id]
 
     if os.path.isfile(orca_log):
-
-        failed_jobs = dict()
-        valid_mol = dict()
-
-        mol_smi = mol_id_to_smi[mol_id]
 
         olog = OrcaLog(orca_log)
 
