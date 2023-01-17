@@ -81,9 +81,11 @@ def parser(mol_id):
         valid_mol[mol_id]['mol_smi'] = mol_smi
         valid_mol[mol_id]['dlpno_energy'] = olog.load_energy()
 
-        return failed_jobs, valid_mol
     else:
-        return None
+        failed_jobs[mol_id] = dict()
+        failed_jobs[mol_id]['status'] = False
+        failed_jobs[mol_id]['reason'] = "No log file."
+    return failed_jobs, valid_mol
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
