@@ -112,6 +112,6 @@ with open(csv_file , 'w') as csvfile:
 df_result = pd.read_csv(csv_file)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(df_result, outfile)
+    pkl.dump(df_result, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
 os.remove(csv_file)
