@@ -16,6 +16,7 @@ import pickle as pkl
 from joblib import Parallel, delayed
 
 from rdmc.mol import RDKitMol
+import rdkit
 
 
 periodictable = ["", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
@@ -376,7 +377,11 @@ def parser(mol_id, submit_dir):
                 continue
 
             xyz, _, _ = load_geometry(member, tar)
-            post_mol = RDKitMol.FromXYZ(xyz, header=False)
+            try:
+                post_mol = RDKitMol.FromXYZ(xyz, header=False)
+            except rdkit.Chem.rdchem.AtomValenceException:
+                failed_job[mol_id][conf_id] = 'AtomValenceException'
+                continue
             post_adj = post_mol.GetAdjacencyMatrix()
             if (pre_adj == post_adj).all():
 
