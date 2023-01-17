@@ -304,10 +304,10 @@ def parser(mol_id):
                 failed_jobs[mol_id]['reason'] = 'error termination'
                 failed_jobs[mol_id]['mol_smi'] = mol_smi
                 failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-                failed_jobs[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+                failed_jobs[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
                 failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-                failed_jobs[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
-                failed_jobs[mol_id]['wall'] = get_wall(read_log_file(g16_log))
+                failed_jobs[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
+                failed_jobs[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
             except:
                 failed_jobs[mol_id] = dict()
                 failed_jobs[mol_id]['status'] = False
@@ -323,10 +323,10 @@ def parser(mol_id):
                 failed_jobs[mol_id]['dft_freq'] = load_freq(g16_log)
                 failed_jobs[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
                 failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-                failed_jobs[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+                failed_jobs[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
                 failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-                failed_jobs[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
-                failed_jobs[mol_id]['wall'] = get_wall(read_log_file(g16_log))
+                failed_jobs[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
+                failed_jobs[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
             except:
                 failed_jobs[mol_id] = dict()
                 failed_jobs[mol_id]['status'] = False
@@ -340,11 +340,11 @@ def parser(mol_id):
             valid_mol[mol_id]['dft_freq'] = load_freq(g16_log)
             valid_mol[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
             valid_mol[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-            valid_mol[mol_id]['initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+            valid_mol[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
             valid_mol[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-            valid_mol[mol_id]['cpu'] = get_cpu(read_log_file(g16_log))
-            valid_mol[mol_id]['wall'] = get_wall(read_log_file(g16_log))
-            valid_mol[mol_id]['energy'] = load_energies(g16_log, zpe_scale_factor)
+            valid_mol[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
+            valid_mol[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
+            valid_mol[mol_id]['dft_energy'] = load_energies(g16_log, zpe_scale_factor)
         except:
             del valid_mol[mol_id]
             failed_jobs[mol_id] = dict()
