@@ -378,7 +378,7 @@ def parser(mol_id, submit_dir):
 
             xyz, _, _ = load_geometry(member, tar)
             try:
-                post_mol = RDKitMol.FromXYZ(xyz, header=False)
+                post_mol = RDKitMol.FromXYZ(xyz, header=False, sanitize=False,)
             except rdkit.Chem.rdchem.AtomValenceException:
                 failed_job[mol_id][conf_id] = 'AtomValenceException'
                 continue
