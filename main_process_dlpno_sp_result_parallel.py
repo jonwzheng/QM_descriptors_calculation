@@ -110,3 +110,5 @@ with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
 
 with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
     pkl.dump(failed_jobs, outfile)
+
+print(failed_jobs)

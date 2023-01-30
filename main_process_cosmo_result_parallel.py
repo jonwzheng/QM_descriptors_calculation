@@ -118,4 +118,6 @@ with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
 with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
     pkl.dump(failed_mol_ids, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
+print(failed_mol_ids)
+
 os.remove(csv_file)
