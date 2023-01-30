@@ -81,9 +81,7 @@ def parser(mol_id):
         valid_mol[mol_id]['dlpno_energy'] = olog.load_energy()
 
     else:
-        failed_jobs[mol_id] = dict()
-        failed_jobs[mol_id]['status'] = False
-        failed_jobs[mol_id]['reason'] = "No log file."
+        failed_jobs[mol_id] = "No log file."
     return failed_jobs, valid_mol
 
 input_smiles_path = sys.argv[1]
@@ -100,6 +98,14 @@ mol_ids = df['id'].tolist()
 mol_id_to_smi = dict(zip(df['id'].tolist(), df['smiles'].tolist()))
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
+
+failed_jobs = dict()
+valid_mols = dict()
+for failed_dict, success_dict in out:
+    failed_jobs.update(failed_dict)
+    valid_mols.update(success_dict)
+
+out = (failed_jobs, valid_mols)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)

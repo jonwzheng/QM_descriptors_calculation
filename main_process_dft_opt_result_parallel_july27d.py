@@ -269,6 +269,8 @@ def parser(mol_id):
 
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     g16_log = os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", f"outputs_{ids}", f"{mol_id}.log")
+    failed_jobs = dict()
+    valid_mol = dict()
 
     if os.path.isfile(g16_log):
 
@@ -276,9 +278,6 @@ def parser(mol_id):
         # LevelOfTheory(method='wb97xd',basis='def2svp',software='gaussian')": 0.986,  # [4]
         # [4] Calculated as described in 10.1021/ct100326h
         # https://github.com/ReactionMechanismGenerator/RMG-database/blob/main/input/quantum_corrections/data.py
-
-        failed_jobs = dict()
-        valid_mol = dict()
 
         mol_smi = mol_id_to_smi[mol_id]
         pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
@@ -294,6 +293,7 @@ def parser(mol_id):
             failed_jobs[mol_id]['status'] = False
             failed_jobs[mol_id]['mol_smi'] = mol_smi
             failed_jobs[mol_id]['reason'] = 'adjacency matrix'
+            return failed_jobs, valid_mol 
 
         job_stat = check_job_status(read_log_file(g16_log))
 
@@ -352,7 +352,8 @@ def parser(mol_id):
             failed_jobs[mol_id]['reason'] = 'parser3'
         return failed_jobs, valid_mol
     else:
-        return None
+        failed_jobs[mol_id] = "log file not found"
+        return failed_jobs, valid_mol
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
@@ -369,7 +370,13 @@ mol_id_to_smi = dict(zip(df['id'], df['smiles']))
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
 
-out = [x for x in out if x is not None]
+failed_jobs = dict()
+valid_mols = dict()
+for failed_dict, success_dict in out:
+    failed_jobs.update(failed_dict)
+    valid_mols.update(success_dict)
+
+out = (failed_jobs, valid_mols)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)

@@ -17,15 +17,16 @@ def parser(mol_id):
 
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     mol_confs_sdf = os.path.join(submit_dir, "output", "FF_conf", "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
+    failed_job = dict()
+    valid_mol = dict()
+
     if os.path.isfile(mol_confs_sdf):
-        failed_jobs = dict()
-        valid_mol = dict()
+
+        failed_job[mol_id] = dict()
+        valid_mol[mol_id] = dict()
 
         mol_smi = mol_id_to_smi[mol_id]
         pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
-        
-        failed_jobs[mol_id] = dict()
-        valid_mol[mol_id] = dict()
         
         mols = RDKitMol.FromFile(mol_confs_sdf)
         for conf_id, mol in enumerate(mols):
@@ -43,11 +44,18 @@ def parser(mol_id):
                 valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
                 valid_mol[mol_id][conf_id]["ff_energy"] = en
             else:
-                failed_jobs[mol_id][conf_id] = 'adjacency matrix'
-            
-        return failed_jobs, valid_mol
+                failed_job[mol_id][conf_id] = 'adjacency matrix'
+        
+        if not valid_mol[mol_id]:
+            del valid_mol[mol_id]
+            failed_job[mol_id] = 'all confs failed'
+        
+        if not failed_job[mol_id]:
+            del failed_job[mol_id]
     else:
-        return None
+        failed_job[mol_id] = 'sdf file not found'
+
+    return failed_job, valid_mol
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
@@ -63,7 +71,14 @@ mol_ids = list(df.id)
 mol_id_to_smi = dict(zip(df.id, df.smiles))
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
-out = [x for x in out if x is not None]
+
+failed_jobs = dict()
+valid_mols = dict()
+for failed_dict, success_dict in out:
+    failed_jobs.update(failed_dict)
+    valid_mols.update(success_dict)
+
+out = (failed_jobs, valid_mols)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(out, outfile)

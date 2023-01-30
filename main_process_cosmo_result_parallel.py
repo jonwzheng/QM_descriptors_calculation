@@ -92,6 +92,7 @@ df_solvent = pd.read_csv(solvent_path)
 solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, df_solvent.smiles))
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
+failed_mol_ids = [mol_ids[i] for i in range(len(mol_ids)) if out[i] is None]
 out = [x for x in out if x is not None]
 
 csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
@@ -113,5 +114,8 @@ df_result = pd.read_csv(csv_file)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(df_result, outfile, protocol=pkl.HIGHEST_PROTOCOL)
+
+with open(os.path.join(submit_dir, f'{output_file_name}_failed_mol_ids.pkl'), 'wb') as outfile:
+    pkl.dump(failed_mol_ids, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
 os.remove(csv_file)
