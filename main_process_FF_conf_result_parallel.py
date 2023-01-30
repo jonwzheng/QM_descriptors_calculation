@@ -89,6 +89,8 @@ with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
 with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
     pkl.dump(failed_jobs, outfile)
 
+print(failed_jobs)
+
 xyz_FF_opt = {}
 for mol_id in valid_jobs:
     xyz_FF_opt[mol_id] = {conf_id: valid_jobs[mol_id][conf_id]["ff_xyz"] for conf_id in valid_jobs[mol_id]}

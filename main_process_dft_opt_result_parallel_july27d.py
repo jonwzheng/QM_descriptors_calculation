@@ -270,7 +270,7 @@ def parser(mol_id):
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     g16_log = os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", f"outputs_{ids}", f"{mol_id}.log")
     failed_jobs = dict()
-    valid_mol = dict()
+    valid_job = dict()
 
     if os.path.isfile(g16_log):
 
@@ -293,7 +293,7 @@ def parser(mol_id):
             failed_jobs[mol_id]['status'] = False
             failed_jobs[mol_id]['mol_smi'] = mol_smi
             failed_jobs[mol_id]['reason'] = 'adjacency matrix'
-            return failed_jobs, valid_mol 
+            return failed_jobs, valid_job 
 
         job_stat = check_job_status(read_log_file(g16_log))
 
@@ -312,7 +312,7 @@ def parser(mol_id):
                 failed_jobs[mol_id] = dict()
                 failed_jobs[mol_id]['status'] = False
                 failed_jobs[mol_id]['reason'] = 'parser1'
-            return failed_jobs, valid_mol
+            return failed_jobs, valid_job
 
         if not check_freq(g16_log):
             try:
@@ -332,28 +332,28 @@ def parser(mol_id):
                 failed_jobs[mol_id]['status'] = False
                 failed_jobs[mol_id]['reason'] = 'parser2'
 
-            return failed_jobs, valid_mol
+            return failed_jobs, valid_job
 
         try:
-            valid_mol[mol_id] = dict()
-            valid_mol[mol_id]['mol_smi'] = mol_smi
-            valid_mol[mol_id]['dft_freq'] = load_freq(g16_log)
-            valid_mol[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
-            valid_mol[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-            valid_mol[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-            valid_mol[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-            valid_mol[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
-            valid_mol[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
-            valid_mol[mol_id]['dft_energy'] = load_energies(g16_log, zpe_scale_factor)
+            valid_job[mol_id] = dict()
+            valid_job[mol_id]['mol_smi'] = mol_smi
+            valid_job[mol_id]['dft_freq'] = load_freq(g16_log)
+            valid_job[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
+            valid_job[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
+            valid_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+            valid_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
+            valid_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
+            valid_job[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
+            valid_job[mol_id]['dft_energy'] = load_energies(g16_log, zpe_scale_factor)
         except:
-            del valid_mol[mol_id]
+            del valid_job[mol_id]
             failed_jobs[mol_id] = dict()
             failed_jobs[mol_id]['status'] = False
             failed_jobs[mol_id]['reason'] = 'parser3'
-        return failed_jobs, valid_mol
+        return failed_jobs, valid_job
     else:
         failed_jobs[mol_id] = "log file not found"
-        return failed_jobs, valid_mol
+        return failed_jobs, valid_job
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
@@ -371,21 +371,23 @@ mol_id_to_smi = dict(zip(df['id'], df['smiles']))
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
 
 failed_jobs = dict()
-valid_mols = dict()
-for failed_dict, success_dict in out:
-    failed_jobs.update(failed_dict)
-    valid_mols.update(success_dict)
+valid_jobs = dict()
+for failed_job, valid_job in out:
+    failed_jobs.update(failed_job)
+    valid_jobs.update(valid_job)
 
-out = (failed_jobs, valid_mols)
+out = (failed_jobs, valid_jobs)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(out, outfile)
+    pkl.dump(valid_jobs, outfile)
+
+with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
+    pkl.dump(failed_jobs, outfile)
+    
 
 xyz_DFT_opt = {}
-for failed_dict, success_dict in out:
-    if success_dict:
-        for mol_id in success_dict:
-            xyz_DFT_opt[mol_id] = success_dict[mol_id]["dft_xyz"]
+for mol_id in valid_jobs:
+    xyz_DFT_opt[mol_id] = valid_jobs[mol_id]["dft_xyz"]
 
 with open(f"{output_file_name}_xyz.pkl", "wb") as f:
     pkl.dump(xyz_DFT_opt, f)

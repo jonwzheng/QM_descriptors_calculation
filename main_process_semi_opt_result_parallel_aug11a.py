@@ -352,12 +352,12 @@ def parser(mol_id, submit_dir):
 
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     mol_confs_tar = os.path.join(submit_dir, "output", "semiempirical_opt", "outputs", f"outputs_{ids}", f"{mol_id}.tar")
-    valid_mol = dict()
+    valid_job = dict()
     failed_job = dict()
 
     if os.path.isfile(mol_confs_tar):
 
-        valid_mol[mol_id] = dict()
+        valid_job[mol_id] = dict()
         failed_job[mol_id] = dict()
 
         mol_smi = mol_id_to_smi[mol_id]
@@ -386,21 +386,21 @@ def parser(mol_id, submit_dir):
             post_adj = post_mol.GetAdjacencyMatrix()
             if (pre_adj == post_adj).all():
 
-                valid_mol[mol_id][conf_id] = dict()
-                valid_mol[mol_id][conf_id]['mol_smi'] = mol_smi
-                valid_mol[mol_id][conf_id]['semiempirical_title_card'] = get_title_card(member, tar)
-                valid_mol[mol_id][conf_id]['semiempirical_freq'] = load_freq(member, tar)
-                valid_mol[mol_id][conf_id]['semiempirical_xyz'], valid_mol[mol_id][conf_id]['semiempirical_xyz_dict'], valid_mol[mol_id][conf_id]['semiempirical_steps'] = load_geometry(member, tar)
-                valid_mol[mol_id][conf_id]['semiempirical_xyz_std_ori'], valid_mol[mol_id][conf_id]['semiempirical_xyz_dict_std_ori'], _ = load_geometry_std(member, tar)
-                valid_mol[mol_id][conf_id]['semiempirical_energy'] = load_energies(member, tar)
-                valid_mol[mol_id][conf_id]['semiempirical_cpu'] = get_cpu(member, tar)
-                valid_mol[mol_id][conf_id]['semiempirical_wall'] = get_wall(member, tar)
+                valid_job[mol_id][conf_id] = dict()
+                valid_job[mol_id][conf_id]['mol_smi'] = mol_smi
+                valid_job[mol_id][conf_id]['semiempirical_title_card'] = get_title_card(member, tar)
+                valid_job[mol_id][conf_id]['semiempirical_freq'] = load_freq(member, tar)
+                valid_job[mol_id][conf_id]['semiempirical_xyz'], valid_job[mol_id][conf_id]['semiempirical_xyz_dict'], valid_job[mol_id][conf_id]['semiempirical_steps'] = load_geometry(member, tar)
+                valid_job[mol_id][conf_id]['semiempirical_xyz_std_ori'], valid_job[mol_id][conf_id]['semiempirical_xyz_dict_std_ori'], _ = load_geometry_std(member, tar)
+                valid_job[mol_id][conf_id]['semiempirical_energy'] = load_energies(member, tar)
+                valid_job[mol_id][conf_id]['semiempirical_cpu'] = get_cpu(member, tar)
+                valid_job[mol_id][conf_id]['semiempirical_wall'] = get_wall(member, tar)
             else:
                 failed_job[mol_id][conf_id] = 'adjacency matrix'
                 continue
 
-        if not valid_mol[mol_id]:
-            del valid_mol[mol_id]
+        if not valid_job[mol_id]:
+            del valid_job[mol_id]
             failed_job[mol_id] = 'all confs failed'
         
         if not failed_job[mol_id]:
@@ -409,7 +409,7 @@ def parser(mol_id, submit_dir):
     else:
         failed_job[mol_id] = "tar file not found"
 
-    return failed_job, valid_mol
+    return failed_job, valid_job
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
@@ -417,33 +417,40 @@ n_jobs = int(sys.argv[3])
 
 submit_dir = os.getcwd()
 
-# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
+##
+# input_smiles_path = "inputs/reactants_products_aug11b_inputs.csv"
+# output_file_name = "reactants_products_aug11b"
+# n_jobs = 1
 
 df = pd.read_csv(input_smiles_path)
 mol_id_to_smi = dict(zip(df.id, df.smiles))
 mol_ids = list(df.id)
 
+##
+# mol_ids = mol_ids[:500]
+
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id, submit_dir) for mol_id in mol_ids)
 
 failed_jobs = dict()
-valid_mols = dict()
-for failed_dict, success_dict in out:
-    failed_jobs.update(failed_dict)
-    valid_mols.update(success_dict)
-
-out = (failed_jobs, valid_mols)
+valid_jobs = dict()
+for failed_job, valid_job in out:
+    failed_jobs.update(failed_job)
+    valid_jobs.update(valid_job)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(out, outfile)
+    pkl.dump(valid_jobs, outfile)
+
+with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
+    pkl.dump(failed_jobs, outfile)
+
+print(failed_jobs)
 
 xyz_semiempirical_opt = {}
-for failed_dict, success_dict in out:
-    for mol_id in success_dict:
-        if success_dict[mol_id]:
-            ens = np.array([conf_dict["semiempirical_energy"]['scf'] for conf_id, conf_dict in success_dict[mol_id].items()])
-            conf_ids = np.array([conf_id for conf_id, conf_dict in success_dict[mol_id].items()])
-            lowest_conf_ind = conf_ids[np.argsort(ens)[0]]
-            xyz_semiempirical_opt[mol_id] = success_dict[mol_id][lowest_conf_ind]["semiempirical_xyz_std_ori"]
+for mol_id in valid_jobs:
+    ens = np.array([conf_dict["semiempirical_energy"]['scf'] for conf_id, conf_dict in valid_jobs[mol_id].items()])
+    conf_ids = np.array([conf_id for conf_id, conf_dict in valid_jobs[mol_id].items()])
+    lowest_conf_ind = conf_ids[np.argsort(ens)[0]]
+    xyz_semiempirical_opt[mol_id] = valid_jobs[mol_id][lowest_conf_ind]["semiempirical_xyz_std_ori"]
 
 with open(f"{output_file_name}_xyz.pkl", "wb") as f:
     pkl.dump(xyz_semiempirical_opt, f)

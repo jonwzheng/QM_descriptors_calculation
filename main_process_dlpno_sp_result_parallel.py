@@ -61,7 +61,7 @@ def parser(mol_id):
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     orca_log = os.path.join(submit_dir, "output", "DLPNO_sp", "outputs", f"outputs_{ids}", f"{mol_id}.log")
     failed_jobs = dict()
-    valid_mol = dict()
+    valid_job = dict()
     mol_smi = mol_id_to_smi[mol_id]
 
     if os.path.isfile(orca_log):
@@ -74,15 +74,15 @@ def parser(mol_id):
             failed_jobs[mol_id] = dict()
             failed_jobs[mol_id]['status'] = False
             failed_jobs[mol_id]['reason'] = error
-            return failed_jobs, valid_mol
+            return failed_jobs, valid_job
 
-        valid_mol[mol_id] = dict()
-        valid_mol[mol_id]['mol_smi'] = mol_smi
-        valid_mol[mol_id]['dlpno_energy'] = olog.load_energy()
+        valid_job[mol_id] = dict()
+        valid_job[mol_id]['mol_smi'] = mol_smi
+        valid_job[mol_id]['dlpno_energy'] = olog.load_energy()
 
     else:
         failed_jobs[mol_id] = "No log file."
-    return failed_jobs, valid_mol
+    return failed_jobs, valid_job
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
@@ -100,12 +100,13 @@ mol_id_to_smi = dict(zip(df['id'].tolist(), df['smiles'].tolist()))
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
 
 failed_jobs = dict()
-valid_mols = dict()
-for failed_dict, success_dict in out:
-    failed_jobs.update(failed_dict)
-    valid_mols.update(success_dict)
-
-out = (failed_jobs, valid_mols)
+valid_jobs = dict()
+for failed_job, valid_job in out:
+    failed_jobs.update(failed_job)
+    valid_jobs.update(valid_job)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(out, outfile)
+    pkl.dump(valid_jobs, outfile)
+
+with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
+    pkl.dump(failed_jobs, outfile)
