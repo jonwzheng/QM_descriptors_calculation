@@ -63,30 +63,35 @@ n_jobs = int(sys.argv[3])
 
 submit_dir = os.getcwd()
 
-# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
-# n_jobs = 8
+##
+# input_smiles_path = "inputs/reactants_products_aug11b_inputs.csv"
+# output_file_name = "reactants_products_aug11b"
+# n_jobs = 1
 
 df = pd.read_csv(input_smiles_path)
 mol_ids = list(df.id)
 mol_id_to_smi = dict(zip(df.id, df.smiles))
 
+##
+# mol_ids = mol_ids[:1000]
+
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
 
 failed_jobs = dict()
-valid_mols = dict()
-for failed_dict, success_dict in out:
-    failed_jobs.update(failed_dict)
-    valid_mols.update(success_dict)
-
-out = (failed_jobs, valid_mols)
+valid_jobs = dict()
+for failed_job, valid_job in out:
+    failed_jobs.update(failed_job)
+    valid_jobs.update(valid_job)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(out, outfile)
+    pkl.dump(valid_jobs, outfile)
+
+with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
+    pkl.dump(failed_jobs, outfile)
 
 xyz_FF_opt = {}
-for failed_dict, success_dict in out:
-    for mol_id in success_dict:
-        xyz_FF_opt[mol_id] = {conf_id: success_dict[mol_id][conf_id]["ff_xyz"] for conf_id in success_dict[mol_id]}
+for mol_id in valid_jobs:
+    xyz_FF_opt[mol_id] = {conf_id: valid_jobs[mol_id][conf_id]["ff_xyz"] for conf_id in valid_jobs[mol_id]}
 
 with open(f"{output_file_name}_xyz.pkl", "wb") as f:
     pkl.dump(xyz_FF_opt, f)
