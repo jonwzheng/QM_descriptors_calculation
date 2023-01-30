@@ -18,12 +18,12 @@ def parser(mol_id):
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     mol_confs_sdf = os.path.join(submit_dir, "output", "FF_conf", "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
     failed_job = dict()
-    valid_mol = dict()
+    valid_job = dict()
 
     if os.path.isfile(mol_confs_sdf):
 
         failed_job[mol_id] = dict()
-        valid_mol[mol_id] = dict()
+        valid_job[mol_id] = dict()
 
         mol_smi = mol_id_to_smi[mol_id]
         pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
@@ -38,16 +38,16 @@ def parser(mol_id):
                 break
             
             if (pre_adj == post_adj).all():
-                valid_mol[mol_id][conf_id] = {}
+                valid_job[mol_id][conf_id] = {}
                 xyz = mol.ToXYZ()
                 en = mol.GetProp("ConfEnergies")
-                valid_mol[mol_id][conf_id]["ff_xyz"] = xyz
-                valid_mol[mol_id][conf_id]["ff_energy"] = en
+                valid_job[mol_id][conf_id]["ff_xyz"] = xyz
+                valid_job[mol_id][conf_id]["ff_energy"] = en
             else:
                 failed_job[mol_id][conf_id] = 'adjacency matrix'
         
-        if not valid_mol[mol_id]:
-            del valid_mol[mol_id]
+        if not valid_job[mol_id]:
+            del valid_job[mol_id]
             failed_job[mol_id] = 'all confs failed'
         
         if not failed_job[mol_id]:
@@ -55,7 +55,7 @@ def parser(mol_id):
     else:
         failed_job[mol_id] = 'sdf file not found'
 
-    return failed_job, valid_mol
+    return failed_job, valid_job
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
