@@ -401,13 +401,15 @@ def parser(mol_id, submit_dir):
 
         if not valid_job[mol_id]:
             del valid_job[mol_id]
-            failed_job[mol_id] = 'all confs failed'
+            failed_job[mol_id]['reason'] = 'all confs failed'
+        else:
+            failed_job[mol_id]['reason'] = ''
         
         if not failed_job[mol_id]:
             del failed_job[mol_id]
-        
     else:
-        failed_job[mol_id] = "tar file not found"
+        failed_job[mol_id] = dict()
+        failed_job[mol_id]['reason'] = 'file not found'
 
     return failed_job, valid_job
 

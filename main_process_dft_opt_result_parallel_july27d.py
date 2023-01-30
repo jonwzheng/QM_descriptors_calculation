@@ -290,7 +290,6 @@ def parser(mol_id):
 
         if not (pre_adj == post_adj).all():
             failed_jobs[mol_id] = dict()
-            failed_jobs[mol_id]['status'] = False
             failed_jobs[mol_id]['mol_smi'] = mol_smi
             failed_jobs[mol_id]['reason'] = 'adjacency matrix'
             return failed_jobs, valid_job 
@@ -300,7 +299,6 @@ def parser(mol_id):
         if not job_stat:
             try:
                 failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['status'] = False
                 failed_jobs[mol_id]['reason'] = 'error termination'
                 failed_jobs[mol_id]['mol_smi'] = mol_smi
                 failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
@@ -310,14 +308,12 @@ def parser(mol_id):
                 failed_jobs[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
             except:
                 failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['status'] = False
                 failed_jobs[mol_id]['reason'] = 'parser1'
             return failed_jobs, valid_job
 
         if not check_freq(g16_log):
             try:
                 failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['status'] = False
                 failed_jobs[mol_id]['reason'] = 'freq'
                 failed_jobs[mol_id]['mol_smi'] = mol_smi
                 failed_jobs[mol_id]['dft_freq'] = load_freq(g16_log)
@@ -329,7 +325,6 @@ def parser(mol_id):
                 failed_jobs[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
             except:
                 failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['status'] = False
                 failed_jobs[mol_id]['reason'] = 'parser2'
 
             return failed_jobs, valid_job
@@ -348,11 +343,11 @@ def parser(mol_id):
         except:
             del valid_job[mol_id]
             failed_jobs[mol_id] = dict()
-            failed_jobs[mol_id]['status'] = False
             failed_jobs[mol_id]['reason'] = 'parser3'
         return failed_jobs, valid_job
     else:
-        failed_jobs[mol_id] = "log file not found"
+        failed_jobs[mol_id] = dict()
+        failed_jobs[mol_id]['reason'] = "log file not found"
         return failed_jobs, valid_job
 
 input_smiles_path = sys.argv[1]
