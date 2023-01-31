@@ -74,6 +74,8 @@ os.makedirs(inputs_dir, exist_ok=True)
 outputs_dir = os.path.join(FF_conf_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
+print("Making FF conformer input files...")
+
 for mol_id, smi in zip(mol_ids, smiles_list):
     ids = str(int(int(mol_id.split("id")[1])/1000))
     subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
@@ -88,5 +90,6 @@ for mol_id, smi in zip(mol_ids, smiles_list):
     if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}_confs.sdf")) and not os.path.exists(mol_id_path):
         with open(mol_id_path, "w") as f:
             f.write(mol_id)
+        print(mol_id)
     else:
         continue
