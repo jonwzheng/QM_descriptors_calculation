@@ -60,6 +60,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
                         en = float(log.E)
                     except:
                         shutil.copyfile(output_file_mol_id, os.path.join(current_dir, output_file_mol_id))
+                        print(f"Error in {output_file_mol_id} file")
                         raise
                     opt_mol = load_sdf("xtbopt.sdf")[0]
                     post_adj = Chem.GetAdjacencyMatrix(opt_mol)
