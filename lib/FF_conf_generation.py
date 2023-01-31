@@ -104,8 +104,10 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
     ens_to_save = [en for (en, id) in ids[:n_lowest_E_confs_to_save]]
     save_path = os.path.join(save_dir, '{}_confs.sdf'.format(mol_id))
     write_mol_to_sdf(mol, save_path, confIds=ids_to_save, confEns=ens_to_save)
-    if os.path.exists(save_path):
+    try:
         os.remove(os.path.join(input_dir, f"{mol_id}.tmp"))
+    except FileNotFoundError:
+        pass
 
 # filter conformers based on relative energy
 def energy_filter(m, diz, E_cutoff_fraction):
