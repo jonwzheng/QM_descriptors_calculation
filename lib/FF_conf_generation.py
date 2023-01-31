@@ -85,7 +85,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
             pass
         return
     else:
-        print(f"{len(ids)} conformers found for {mol_id}")
+        print(f"{len(ids)} conformers found for {mol_id} after optimization")
 
     if E_cutoff_fraction:
         n, diz2 = energy_filter(mol, diz, E_cutoff_fraction)
@@ -102,6 +102,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
     mol = o
     ids = diz3
 
+    print(f"{len(ids)} conformers saved for {mol_id} after rmse and energy cutoff")
     ids_to_save = [id for (en, id) in ids[:n_lowest_E_confs_to_save]]
     ens_to_save = [en for (en, id) in ids[:n_lowest_E_confs_to_save]]
     save_path = os.path.join(save_dir, '{}_confs.sdf'.format(mol_id))
