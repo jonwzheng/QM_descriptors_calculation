@@ -110,4 +110,9 @@ for _ in range(5):
                     print(smi)
                     tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
                     os.makedirs(tmp_mol_dir, exist_ok=True)
-                    semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
+                    try:
+                        semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
+                    except FileNotFoundError as e:
+                        print(e)
+                        print("Continuing...")
+                        continue
