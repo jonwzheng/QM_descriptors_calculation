@@ -105,11 +105,15 @@ for k, v in mol_id_to_smi_dict.items():
 
 os.makedirs(args.scratch_dir, exist_ok=True)
 
-print("Making input files for conformer searching")
+print("Making input files for conformer searching...")
 
 FF_conf_dir = os.path.join(output_dir, args.FF_conf_folder)
 
 mol_ids_smis = list(zip(mol_ids, smiles_list))
+
+print(mol_ids_smis)
+print(mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks])
+
 for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
     ids = str(int(int(mol_id.split("id")[1])/1000))
     subinputs_dir = os.path.join(FF_conf_dir, "inputs", f"inputs_{ids}")
