@@ -74,6 +74,8 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
                         diz.append(econf)
                     else:
                         print(f"{mol_id}_{id} failed adjacency matrix check")
+                else:
+                    print(f"{mol_id}_{id} failed optimization")
             os.chdir(current_dir)
             shutil.rmtree(scratch_dir_mol_id)
     
