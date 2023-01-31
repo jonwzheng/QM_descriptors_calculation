@@ -108,14 +108,12 @@ os.makedirs(args.scratch_dir, exist_ok=True)
 print("Making input files for conformer searching")
 
 FF_conf_dir = os.path.join(output_dir, args.FF_conf_folder)
-inputs_dir = os.path.join(FF_conf_dir, "inputs")
-outputs_dir = os.path.join(FF_conf_dir, "outputs")
 
 mol_ids_smis = list(zip(mol_ids, smiles_list))
 for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
     ids = str(int(int(mol_id.split("id")[1])/1000))
-    subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
-    suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
+    subinputs_dir = os.path.join(FF_conf_dir, "inputs", f"inputs_{ids}")
+    suboutputs_dir = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}")
     os.makedirs(suboutputs_dir, exist_ok=True)
     mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
     if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}_confs.sdf")) and not os.path.exists(mol_id_path) and not os.path.join(subinputs_dir, f"{mol_id}.tmp"):
