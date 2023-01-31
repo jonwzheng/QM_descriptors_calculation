@@ -71,16 +71,11 @@ for mol_id, smi in zip(mol_ids, smiles_list):
     if mol_id in xyz_semiempirical_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
         subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
-        os.makedirs(subinputs_dir, exist_ok=True)
         suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
         os.makedirs(suboutputs_dir, exist_ok=True)
-        try:
-            os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
-        except:
-            pass
         mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
         if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.log")) and not os.path.exists(mol_id_path):
+            os.makedirs(subinputs_dir, exist_ok=True)
             with open(mol_id_path, "w") as f:
                 f.write(mol_id)
-        else:
-            continue
+            print(mol_id)

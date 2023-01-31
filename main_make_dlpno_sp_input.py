@@ -109,3 +109,4 @@ for mol_id, smi in zip(mol_ids, smiles_list):
 
             with open(mol_id_path, "w+") as f:
                 f.write(script)
+            print(mol_id)
