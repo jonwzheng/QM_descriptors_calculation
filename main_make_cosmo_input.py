@@ -20,6 +20,10 @@ parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
 parser.add_argument('--xyz_DFT_opt_dict', type=str, default=None,
                     help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
+parser.add_argument('--task_id', type=int, default=0,
+                    help='task id for the calculation',)
+parser.add_argument('--num_tasks', type=int, default=1,
+                    help='number of tasks for the calculation',)
 
 # Turbomole and COSMO calculation
 parser.add_argument('--COSMO_folder', type=str, default='COSMO_calc',
@@ -73,7 +77,8 @@ os.makedirs(inputs_dir, exist_ok=True)
 outputs_dir = os.path.join(COSMO_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
-for mol_id, smi in zip(mol_ids, smiles_list):
+mol_ids_smis = zip(mol_ids, smiles_list)
+for mol_id, smi in mol_ids_smis[args.task_id:args.num_tasks:len(mol_ids_smis)]:
     if mol_id in xyz_DFT_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
         subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")

@@ -8,10 +8,10 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
-parser.add_argument('--job_id', type=int, default=0,
-                    help='slurm job id')
 parser.add_argument('--task_id', type=int, default=0,
-                    help='task id for job arrays or LLsub')
+                    help='task id for the calculation',)
+parser.add_argument('--num_tasks', type=int, default=1,
+                    help='number of tasks for the calculation',)
 
 # conformer searching
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
@@ -77,7 +77,8 @@ os.makedirs(outputs_dir, exist_ok=True)
 
 print("Making FF conformer input files...")
 
-for mol_id, smi in zip(mol_ids, smiles_list):
+mol_ids_smis = zip(mol_ids, smiles_list)
+for mol_id, smi in mol_ids_smis[args.task_id:args.num_tasks:len(mol_ids_smis)]:
     ids = str(int(int(mol_id.split("id")[1])/1000))
     subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
     suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
