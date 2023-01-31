@@ -1,14 +1,7 @@
 from argparse import ArgumentParser
 import os
-import shutil
-import time
-import tarfile
-import csv
-
 import pickle as pkl
 import pandas as pd
-import traceback
-
 import rdkit.Chem as Chem
 
 from lib.wft_calculation import generate_dlpno_sp_input
