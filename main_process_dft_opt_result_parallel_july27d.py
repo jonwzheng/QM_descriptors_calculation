@@ -371,8 +371,6 @@ for failed_job, valid_job in out:
     failed_jobs.update(failed_job)
     valid_jobs.update(valid_job)
 
-out = (failed_jobs, valid_jobs)
-
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
     pkl.dump(valid_jobs, outfile)
 
