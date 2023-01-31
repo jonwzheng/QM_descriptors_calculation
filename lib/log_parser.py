@@ -517,7 +517,7 @@ class XtbLog:
     def GetTermination(self):
         with open(self.file) as fh:
             for line in (fh):
-                if line.find("normal termination") > -1:
+                if line.find("normal termination") > -1 and not line.find("abnormal termination") > -1:
                     self.termination = True
                     return True
             self.termination = False
