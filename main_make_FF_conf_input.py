@@ -77,7 +77,7 @@ os.makedirs(outputs_dir, exist_ok=True)
 
 print("Making FF conformer input files...")
 
-mol_ids_smis = zip(mol_ids, smiles_list)
+mol_ids_smis = list(zip(mol_ids, smiles_list))
 for mol_id, smi in mol_ids_smis[args.task_id:args.num_tasks:len(mol_ids_smis)]:
     ids = str(int(int(mol_id.split("id")[1])/1000))
     subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
