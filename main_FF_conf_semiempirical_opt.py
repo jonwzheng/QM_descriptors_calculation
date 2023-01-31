@@ -67,7 +67,6 @@ ORCA_PATH = args.ORCA_path
 
 submit_dir = os.path.abspath(os.getcwd())
 output_dir = os.path.join(submit_dir, args.output_folder)
-FF_conf_dir = os.path.join(output_dir, args.FF_conf_folder)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
@@ -78,7 +77,9 @@ conf_search_FFs = ["GFNFF", "MMFF94s"]
 assert XTB_PATH is not None, f"XTB_PATH must be provided to use GFNFF"
 
 # create id to smile mapping
-mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
+mol_ids = df['id'].tolist()
+smiles_list = df['smiles'].tolist()
+mol_id_to_smi_dict = dict(zip(mol_ids, smiles_list))
 mol_id_to_charge_dict = dict()
 mol_id_to_mult_dict = dict()
 for k, v in mol_id_to_smi_dict.items():
@@ -99,6 +100,25 @@ for k, v in mol_id_to_smi_dict.items():
     mol_id_to_mult_dict[k] =  num_radical_elec + 1
 
 os.makedirs(args.scratch_dir, exist_ok=True)
+
+print("Making input files for conformer searching")
+
+FF_conf_dir = os.path.join(output_dir, args.FF_conf_folder)
+inputs_dir = os.path.join(FF_conf_dir, "inputs")
+outputs_dir = os.path.join(FF_conf_dir, "outputs")
+
+mol_ids_smis = list(zip(mol_ids, smiles_list))
+for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
+    ids = str(int(int(mol_id.split("id")[1])/1000))
+    subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
+    suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
+    os.makedirs(suboutputs_dir, exist_ok=True)
+    mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
+    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}_confs.sdf")) and not os.path.exists(mol_id_path) and not os.path.join(subinputs_dir, f"{mol_id}.tmp"):
+        os.makedirs(subinputs_dir, exist_ok=True)
+        with open(mol_id_path, "w") as f:
+            f.write(mol_id)
+        print(mol_id)
 
 print("Conformer searching with force field...")
 
@@ -128,7 +148,7 @@ for conf_search_FF in conf_search_FFs:
 
 print("Conformer searching with force field done.")
 
-print("Optimizing conformers with semiempirical method...")
+print("Making input files for semiempirical optimization")
 
 semiempirical_opt_dir = os.path.join(output_dir, args.semiempirical_opt_folder)
 
@@ -141,6 +161,8 @@ for mol_id in FF_conf_mol_ids:
     if not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.in")) and not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")) and not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")):
         with open(os.path.join(subinputs_dir, f"{mol_id}.in"), "w") as f:
             f.write(mol_id)
+
+print("Optimizing conformers with semiempirical method...")
 
 for _ in range(5):
     for subinputs_folder in os.listdir(os.path.join(semiempirical_opt_dir, "inputs")):
