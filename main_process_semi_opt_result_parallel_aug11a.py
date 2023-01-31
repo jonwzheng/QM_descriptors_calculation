@@ -405,8 +405,6 @@ def parser(mol_id, submit_dir):
         else:
             if not failed_job[mol_id]:
                 del failed_job[mol_id]
-            else:
-                failed_job[mol_id]['reason'] = 'some confs failed'
     else:
         failed_job[mol_id] = dict()
         failed_job[mol_id]['reason'] = 'file not found'

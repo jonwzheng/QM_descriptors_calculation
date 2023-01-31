@@ -347,7 +347,7 @@ def parser(mol_id):
         return failed_job, valid_job
     else:
         failed_job[mol_id] = dict()
-        failed_job[mol_id]['reason'] = "log file not found"
+        failed_job[mol_id]['reason'] = "file not found"
         return failed_job, valid_job
 
 input_smiles_path = sys.argv[1]
