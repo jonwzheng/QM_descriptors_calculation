@@ -269,7 +269,7 @@ def parser(mol_id):
 
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     g16_log = os.path.join(submit_dir, "output", "DFT_opt_freq", "outputs", f"outputs_{ids}", f"{mol_id}.log")
-    failed_jobs = dict()
+    failed_job = dict()
     valid_job = dict()
 
     if os.path.isfile(g16_log):
@@ -289,45 +289,45 @@ def parser(mol_id):
                                 backend='openbabel').GetAdjacencyMatrix()
 
         if not (pre_adj == post_adj).all():
-            failed_jobs[mol_id] = dict()
-            failed_jobs[mol_id]['mol_smi'] = mol_smi
-            failed_jobs[mol_id]['reason'] = 'adjacency matrix'
-            return failed_jobs, valid_job 
+            failed_job[mol_id] = dict()
+            failed_job[mol_id]['mol_smi'] = mol_smi
+            failed_job[mol_id]['reason'] = 'adjacency matrix'
+            return failed_job, valid_job 
 
         job_stat = check_job_status(read_log_file(g16_log))
 
         if not job_stat:
             try:
-                failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['reason'] = 'error termination'
-                failed_jobs[mol_id]['mol_smi'] = mol_smi
-                failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-                failed_jobs[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-                failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-                failed_jobs[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
-                failed_jobs[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
+                failed_job[mol_id] = dict()
+                failed_job[mol_id]['reason'] = 'error termination'
+                failed_job[mol_id]['mol_smi'] = mol_smi
+                failed_job[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
+                failed_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+                failed_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
+                failed_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
+                failed_job[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
             except:
-                failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['reason'] = 'parser1'
-            return failed_jobs, valid_job
+                failed_job[mol_id] = dict()
+                failed_job[mol_id]['reason'] = 'parser1'
+            return failed_job, valid_job
 
         if not check_freq(g16_log):
             try:
-                failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['reason'] = 'freq'
-                failed_jobs[mol_id]['mol_smi'] = mol_smi
-                failed_jobs[mol_id]['dft_freq'] = load_freq(g16_log)
-                failed_jobs[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
-                failed_jobs[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
-                failed_jobs[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-                failed_jobs[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
-                failed_jobs[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
-                failed_jobs[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
+                failed_job[mol_id] = dict()
+                failed_job[mol_id]['reason'] = 'freq'
+                failed_job[mol_id]['mol_smi'] = mol_smi
+                failed_job[mol_id]['dft_freq'] = load_freq(g16_log)
+                failed_job[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
+                failed_job[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
+                failed_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
+                failed_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
+                failed_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
+                failed_job[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
             except:
-                failed_jobs[mol_id] = dict()
-                failed_jobs[mol_id]['reason'] = 'parser2'
+                failed_job[mol_id] = dict()
+                failed_job[mol_id]['reason'] = 'parser2'
 
-            return failed_jobs, valid_job
+            return failed_job, valid_job
 
         try:
             valid_job[mol_id] = dict()
@@ -342,13 +342,13 @@ def parser(mol_id):
             valid_job[mol_id]['dft_energy'] = load_energies(g16_log, zpe_scale_factor)
         except:
             del valid_job[mol_id]
-            failed_jobs[mol_id] = dict()
-            failed_jobs[mol_id]['reason'] = 'parser3'
-        return failed_jobs, valid_job
+            failed_job[mol_id] = dict()
+            failed_job[mol_id]['reason'] = 'parser3'
+        return failed_job, valid_job
     else:
-        failed_jobs[mol_id] = dict()
-        failed_jobs[mol_id]['reason'] = "log file not found"
-        return failed_jobs, valid_job
+        failed_job[mol_id] = dict()
+        failed_job[mol_id]['reason'] = "log file not found"
+        return failed_job, valid_job
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
