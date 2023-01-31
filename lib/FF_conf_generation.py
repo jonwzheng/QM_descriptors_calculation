@@ -72,6 +72,8 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
                             conf.SetAtomPosition(i, (pt.x, pt.y, pt.z))
                         econf = (en, id)
                         diz.append(econf)
+                    else:
+                        print(f"{mol_id}_{id} failed adjacency matrix check")
             os.chdir(current_dir)
             shutil.rmtree(scratch_dir_mol_id)
     
@@ -80,7 +82,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
         try:
             os.rename(os.path.join(input_dir, f"{mol_id}.tmp"), os.path.join(input_dir, f"{mol_id}.in"))
         except FileNotFoundError:
-            print(os.path.join(input_dir, f"{mol_id}.tmp"))
+            pass
         return
     else:
         print(f"{len(ids)} conformers found for {mol_id}")
