@@ -1,5 +1,4 @@
 #!/bin/bash -l
-#SBATCH --array=0-1
 
 echo "============================================================"
 echo "Job ID : $SLURM_JOB_ID"
@@ -9,7 +8,7 @@ echo "Running on node : $SLURMD_NODENAME"
 echo "Current directory : $(pwd)"
 echo "============================================================"
 
-#conda activate rdmc_env
+conda activate rdmc_env
 
 #RDMC for gaussian-xtb
 RDMC_PATH=/home/gridsan/groups/RMG/Software/RDMC-main
@@ -23,7 +22,7 @@ export PATH=$XTB_PATH:$PATH
 
 #QMD
 QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_workflow
-input_smiles=reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_lookup_table_sep1a_filtered.csv
+input_smiles=inputs/reactants_products_aug11b_inputs.csv
 
 scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$LLSUB_RANK-$LLSUB_SIZE
 mkdir -p $scratch_dir
