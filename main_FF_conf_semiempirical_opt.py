@@ -108,11 +108,13 @@ os.makedirs(args.scratch_dir, exist_ok=True)
 print("Making input files for conformer searching...")
 
 FF_conf_dir = os.path.join(output_dir, args.FF_conf_folder)
+os.makedirs(FF_conf_dir, exist_ok=True)
+inputs_dir = os.path.join(FF_conf_dir, "inputs")
+outputs_dir = os.path.join(FF_conf_dir, "outputs")
+os.makedirs(inputs_dir, exist_ok=True)
+os.makedirs(outputs_dir, exist_ok=True)
 
 mol_ids_smis = list(zip(mol_ids, smiles_list))
-
-print(mol_ids_smis)
-print(mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks])
 
 for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
     ids = str(int(int(mol_id.split("id")[1])/1000))
@@ -120,7 +122,7 @@ for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
     suboutputs_dir = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}")
     os.makedirs(suboutputs_dir, exist_ok=True)
     mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
-    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}_confs.sdf")) and not os.path.exists(mol_id_path) and not os.path.join(subinputs_dir, f"{mol_id}.tmp"):
+    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}_confs.sdf")) and not os.path.exists(mol_id_path) and not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")):
         os.makedirs(subinputs_dir, exist_ok=True)
         with open(mol_id_path, "w") as f:
             f.write(mol_id)
@@ -157,6 +159,11 @@ print("Conformer searching with force field done.")
 print("Making input files for semiempirical optimization")
 
 semiempirical_opt_dir = os.path.join(output_dir, args.semiempirical_opt_folder)
+os.makedirs(semiempirical_opt_dir, exist_ok=True)
+inputs_dir = os.path.join(semiempirical_opt_dir, "inputs")
+outputs_dir = os.path.join(semiempirical_opt_dir, "outputs")
+os.makedirs(inputs_dir, exist_ok=True)
+os.makedirs(outputs_dir, exist_ok=True)
 
 for mol_id in FF_conf_mol_ids:
     ids = str(int(int(mol_id.split("id")[1])/1000))
