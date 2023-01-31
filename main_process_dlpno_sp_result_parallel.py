@@ -107,9 +107,9 @@ for failed_job, valid_job in out:
     valid_jobs.update(valid_job)
 
 with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(valid_jobs, outfile)
+    pkl.dump(valid_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
 with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
-    pkl.dump(failed_jobs, outfile)
+    pkl.dump(failed_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
 print(failed_jobs)
