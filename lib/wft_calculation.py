@@ -78,7 +78,10 @@ end
 
 * xyz {charge} {multiplicity}
 {xyz_str}
-*"""
+*
+
+
+"""
     return script
 
     
