@@ -12,6 +12,10 @@ parser.add_argument('--input_smiles', type=str, required=True,
                     help='input smiles included in a .csv file')
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
+parser.add_argument('--task_id', type=int, default=0,
+                    help='task id for the calculation',)
+parser.add_argument('--num_tasks', type=int, default=1,
+                    help='number of tasks for the calculation',)
 
 # conformer searching
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
