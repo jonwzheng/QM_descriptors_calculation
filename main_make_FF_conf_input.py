@@ -71,8 +71,7 @@ assert XTB_PATH is not None, "XTB_PATH must be provided to use GFNFF"
 mol_ids = list(df["id"])
 smiles_list = list(df["smiles"])
 inputs_dir = os.path.join(FF_conf_dir, "inputs")
-shutil.rmtree(inputs_dir, ignore_errors=True)
-os.makedirs(inputs_dir)
+os.makedirs(inputs_dir, exist_ok=True)
 outputs_dir = os.path.join(FF_conf_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
@@ -89,5 +88,3 @@ for mol_id, smi in zip(mol_ids, smiles_list):
         with open(mol_id_path, "w") as f:
             f.write(mol_id)
         print(mol_id)
-    else:
-        continue
