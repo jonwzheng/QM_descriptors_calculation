@@ -18,6 +18,7 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
 
     tnr = 3**nr
     num_confs = tnr if tnr < max_n_conf else max_n_conf
+    num_confs = num_confs if num_confs > n_lowest_E_confs_to_save else n_lowest_E_confs_to_save
     mol.EmbedMultipleConfs(num_confs, maxAttempts=max_try, pruneRmsThresh=rms,
                             randomSeed=1, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
     mol = mol._mol
