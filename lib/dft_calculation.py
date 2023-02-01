@@ -126,6 +126,9 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theor
             print(f"Optimization of {mol_id} with {level_of_theory} converges.")
             return True
         else:
+            with open(logfile, 'r') as f:
+                lines = f.readlines()
+            print("\n".join(lines[-10:]))
             shutil.copyfile(logfile, os.path.join(subinputs_dir, logfile))
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
