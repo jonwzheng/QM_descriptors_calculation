@@ -123,10 +123,13 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theor
             shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
             os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
             os.chdir(current_dir)
+            shutil.rmtree(mol_scratch_dir)
             print(f"Optimization of {mol_id} with {level_of_theory} terminates.")
             return
         else:
+            shutil.copyfile(logfile, os.path.join(subinputs_dir, logfile))
             os.chdir(current_dir)
+            shutil.rmtree(mol_scratch_dir)
             print(f"Optimization of {mol_id} with {level_of_theory} didn't terminate.")
             continue
 
