@@ -1,23 +1,15 @@
 from argparse import ArgumentParser
 import os
-import shutil
-import time
-import tarfile
-import csv
-
-import pickle as pkl
 import pandas as pd
-import traceback
+import tarfile
 
-import rdkit.Chem as Chem
+from rdkit import Chem
+from rdmc.mol import RDKitMol
 
-from lib import create_logger, DoneJobsRecord, REPLACE_LETTER
-from lib import csearch
-from lib import semiempirical_opt
-from lib import dft_scf_qm_descriptor, dft_scf_opt, dft_scf_sp, save_dft_sp_results
-from lib import cosmo_calc
-from lib import dlpno_sp_calc
-from lib.cosmo_calculation import read_cosmo_tab_result, get_dHsolv_value
+from lib.FF_conf_generation import _genConf
+from lib.semiempirical_calculation import semiempirical_opt
+from lib.dft_calculation import dft_scf_opt
+from lib.parser.semiempirical_opt_parser import parser as semiempirical_opt_parser, get_mol_id_to_semiempirical_opted_xyz
 
 parser = ArgumentParser()
 parser.add_argument('--input_smiles', type=str, required=True,
@@ -25,18 +17,11 @@ parser.add_argument('--input_smiles', type=str, required=True,
 parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
 parser.add_argument('--task_id', type=int, default=0,
-                    help='task id for job arrays or LLsub')
+                    help='task id for the calculation',)
 parser.add_argument('--num_tasks', type=int, default=1,
-                    help='Number of tasks for job arrays or LLsub')
-parser.add_argument('--compile', type=bool, default=True,
-                    help='Whether to compile previous calculations')
-# parser.add_argument('--output', type=str, default='QM_descriptors.pickle',
-#                     help='output as a .pickle file')
+                    help='number of tasks for the calculation',)
+
 # conformer searching
-parser.add_argument('--skip_conf_search_FF', action="store_true",
-                    help='whether to skip conformer search',)
-parser.add_argument('--conf_search_FF', type=str, default='all',
-                    help='Force field that will be used for conformer search. Options are MMFF94s and GFNFF. If all is chosen, GFNFF will be used first and MMFF94s will be used if GFNFF does not work.')
 parser.add_argument('--FF_conf_folder', type=str, default='FF_conf',
                     help='Folder name for FF searched conformers')
 parser.add_argument('--max_n_conf', type=int, default=800,
@@ -48,77 +33,20 @@ parser.add_argument('-rmspre', type=float, required=False, default=0.1,
                         help='rms threshold pre optimization')
 parser.add_argument('--rmspost', type=float, required=False, default=0.4,
                     help='rms threshold post FF minimization')
-parser.add_argument('--E_cutoff_fraction', type=float, required=False, default=0.2,
+parser.add_argument('--E_cutoff_fraction', type=float, required=False, default=0.5,
                     help='energy window for FF minimization.')
-parser.add_argument('--FF_threads', type=int, required=False, default=4,
-                    help='number of process for the FF conformer searching')
-parser.add_argument('--timeout', required=False, default=7200,
-                    help='time window for each FF conformer searching sub process')
 parser.add_argument('--n_lowest_E_confs_to_save', type=int, default=10,
                     help='number of lowest energy conformers to save')
 
 # semiempirical optimization calculation
-parser.add_argument('--skip_semiempirical_opt', action="store_true",
-                    help='whether to skip semiempirical optimization',)
 parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempirical_opt',
                     help='folder for semiempirical optimization')
-parser.add_argument('--semiempirical_method', type=str, default='all',
-                    help='method used for semiempirical optimization. Options are GFN2-XTB, pm7, am1, and all. If all is chosen, GFN2-XTB will be used first, pm7 second, and am1 third if the previous method does not work.')
 parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro,cartesian)',
                     help='level of theory for the Gaussian semiempirical calculation')
 parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=4,
                     help='number of process for Gaussian semiempirical calculations')
-parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=3000,
+parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=2000,
                     help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
-
-# DFT optimization and frequency calculation
-parser.add_argument('--skip_DFT_opt_freq', action="store_true",
-                    help='whether to skip DFT optimization and frequency calculation',)
-parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
-                    help='folder for DFT optimization and frequency calculation',)
-parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian) freq scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
-                    help='level of theory for the DFT calculation')
-parser.add_argument('--DFT_opt_freq_theory_backup', type=str, default='#P opt=(calcall,maxcycle=64,noeig,nomicro,cartesian) freq scf=(tight, xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
-                    help='level of theory for the DFT calculation if DFT_opt_freq_theory failed')
-parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=4,
-                    help='number of process for DFT calculations')
-parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=16000,
-                    help='amount of ram (MB) allocated for each DFT calculation')
-parser.add_argument('--xyz_DFT_opt', type=str, default=None,
-                    help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
-
-# Turbomole and COSMO calculation
-parser.add_argument('--skip_COSMO', action="store_true",
-                    help='whether to skip COSMO calculation',)
-parser.add_argument('--COSMO_folder', type=str, default='COSMO_calc',
-                    help='folder for COSMO calculation',)
-parser.add_argument('--COSMO_temperatures', type=str, nargs="+", required=False, default=['297.15', '298.15', '299.15'],
-                    help='temperatures used for COSMO calculation')
-parser.add_argument('--COSMO_input_pure_solvents', type=str, required=False, default='common_solvent_list_final.csv',
-                    help='input file containing pure solvents used for COSMO calculation.')
-
-# DLPNO single point calculation
-parser.add_argument('--skip_DLPNO', action="store_true",
-                    help='whether to skip DLPNO calculation',)
-parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
-parser.add_argument('--DLPNO_sp_n_procs', type=int, default=4,
-                    help='number of process for DLPNO calculations')
-parser.add_argument('--DLPNO_sp_job_ram', type=int, default=3072,
-                    help='amount of ram (MB) per core allocated for each DLPNO calculation')
-
-# test
-parser.add_argument('--is_test', type=bool, default=False,
-                    help='whether this is to test different semiempirical methods')
-
-# DFT single point calculation for test
-parser.add_argument('--DFT_sp_folder', type=str, default='DFT_sp',
-                    help='folder for DFT optimization and frequency calculation',)
-parser.add_argument('--DFT_sp_theory', type=str, default='#p guess=mix wb97xd/def2svp scf=xqc iop(2/9=2000)',
-                    help='level of theory for the DFT calculation')
-parser.add_argument('--DFT_sp_n_procs', type=int, default=4,
-                    help='number of process for DFT calculations')
-parser.add_argument('--DFT_sp_job_ram', type=int, default=3000,
-                    help='amount of ram (MB) allocated for each DFT calculation')
 
 # specify paths
 parser.add_argument('--XTB_path', type=str, required=False, default=None,
@@ -133,6 +61,8 @@ parser.add_argument('--COSMO_database_path', type=str, required=False, default=N
                     help='path to COSMO_database')
 parser.add_argument('--ORCA_path', type=str, required=False, default=None,
                     help='path to ORCA')
+parser.add_argument('--scratch_dir', type=str, required=True,
+                    help='scratch directory')
 
 args = parser.parse_args()
 
@@ -143,511 +73,211 @@ COSMOTHERM_PATH = args.COSMOtherm_path
 COSMO_DATABASE_PATH = args.COSMO_database_path
 ORCA_PATH = args.ORCA_path
 
-start_time = time.time()
-
-logger = create_logger(name="worker", task_id=args.task_id)
 submit_dir = os.path.abspath(os.getcwd())
-project_dir = os.path.abspath(os.path.join(args.output_folder, f"{args.output_folder}_{args.task_id}"))
+output_dir = os.path.join(submit_dir, args.output_folder)
 
 df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
-#df.sort_values(by='smiles', key=lambda x: x.str.len(), inplace=True) #sort by length of smiles to help even out the workload of each task
-df = df[args.task_id:len(df.index):args.num_tasks]
 
-if args.xyz_DFT_opt is not None:
-    with open(args.xyz_DFT_opt, "rb") as f:
-        xyz_DFT_opt = pkl.load(f)
-else:
-    xyz_DFT_opt = None
+# conformer searching
+conf_search_FFs = ["GFNFF", "MMFF94s"]
 
-done_jobs_record = DoneJobsRecord()
-
-try:
-    done_jobs_record.load(project_dir, args.task_id)
-    logger.info("this is a restart job...")
-    logger.info("loading completed job ids...")
-    assert done_jobs_record.task_id == args.task_id, f"Job partition must be the same as previously. Previous: {done_jobs_record.task_id} | Specified: {args.task_id}"
-    assert done_jobs_record.num_tasks == args.num_tasks, f"Job partition must be the same as previously. Previous: {done_jobs_record.num_tasks} | Specified: {args.num_tasks}"
-    assert set(done_jobs_record.all_spc_ids) == set(df["id"]), "Job partition must be the same as previously"
-except:
-    logger.info("this is a new job...")
-    logger.info("make output folder...")
-    os.makedirs(args.output_folder, exist_ok=True)
-    logger.info("making project folder...")
-    os.makedirs(project_dir, exist_ok=True)
-    done_jobs_record.initialize(list(df["id"]), args.task_id, args.num_tasks)
+assert XTB_PATH is not None, f"XTB_PATH must be provided to use GFNFF"
 
 # create id to smile mapping
-mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
-mol_id_to_charge_dict = dict()
-mol_id_to_mult_dict = dict()
-for k, v in mol_id_to_smi_dict.items():
+mol_ids = df['id'].tolist()
+smiles_list = df['smiles'].tolist()
+mol_id_to_smi = dict(zip(mol_ids, smiles_list))
+mol_id_to_charge = dict()
+mol_id_to_mult = dict()
+for k, v in mol_id_to_smi.items():
     try:
         mol = Chem.MolFromSmiles(v)
     except Exception as e:
-        logger.error(f'Cannot translate smi {v} to molecule for species {k}')
+        print(f'Cannot translate smi {v} to molecule for species {k}')
 
     try:
         charge = Chem.GetFormalCharge(mol)
-        mol_id_to_charge_dict[k] = charge
+        mol_id_to_charge[k] = charge
     except Exception as e:
-        logger.error(f'Cannot determine molecular charge for species {k} with smi {v}')
+        print(f'Cannot determine molecular charge for species {k} with smi {v}')
 
     num_radical_elec = 0
     for atom in mol.GetAtoms():
         num_radical_elec += atom.GetNumRadicalElectrons()
-    mol_id_to_mult_dict[k] =  num_radical_elec + 1
+    mol_id_to_mult[k] =  num_radical_elec + 1
 
-# switch to project folder
-logger.info("switching to project folder...")
-os.chdir(project_dir)
+os.makedirs(args.scratch_dir, exist_ok=True)
 
-# compile previous calculations
-if not args.is_test and args.compile and not args.xyz_DFT_opt:
-    for mol_id in done_jobs_record.semiempirical_opt:
-        os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
-        if not os.path.exists(f"{mol_id}.tar"):
-            tar = tarfile.open(f"{mol_id}.tar", "w")
-            for conf_ind in range(args.n_lowest_E_confs_to_save):
-                logfile = f"{mol_id}_{conf_ind}.log"
-                if os.path.isfile(logfile):
-                    tar.add(logfile)
-            tar.close()
-        for conf_ind in range(args.n_lowest_E_confs_to_save):
-            logfile = f"{mol_id}_{conf_ind}.log"
-            if os.path.isfile(logfile):
-                os.remove(logfile)
-        os.chdir(project_dir)
-    
-    df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
-    df_pure = df_pure.reset_index()
-    for mol_id in done_jobs_record.COSMO:
-        if len(done_jobs_record.COSMO[mol_id]) == len(df_pure.index):
-            os.chdir(os.path.join(args.COSMO_folder, mol_id))
+print("Making input files for conformer searching...")
 
-            if os.path.exists(f"{mol_id}_compiled_tab_file_dict.pkl"):
-                with open(f"{mol_id}_compiled_tab_file_dict.pkl", "rb") as f:
-                    compiled_tab_file_dict = pkl.load(f)
-                for index, row in df_pure.iterrows():
-                    solvent = row.cosmo_name
-                    cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
-                    tabfile = f'{mol_id}_{cosmo_name}.tab'
-                    with open(tabfile, "w") as f:
-                        lines = compiled_tab_file_dict[solvent]
-                        for line in lines:
-                            f.write(line)
-                os.remove(f"{mol_id}_compiled_tab_file_dict.pkl")
+FF_conf_dir = os.path.join(output_dir, args.FF_conf_folder)
+os.makedirs(FF_conf_dir, exist_ok=True)
+inputs_dir = os.path.join(FF_conf_dir, "inputs")
+outputs_dir = os.path.join(FF_conf_dir, "outputs")
+os.makedirs(inputs_dir, exist_ok=True)
+os.makedirs(outputs_dir, exist_ok=True)
 
-            energyfile = f"{mol_id}.energy"
-            cosmofile = f"{mol_id}.cosmo"
-            if os.path.exists(energyfile) and os.path.exists(cosmofile):
+mol_ids_smis = list(zip(mol_ids, smiles_list))
 
-                compiled_cosmo_result_path = os.path.join(f"{mol_id}_compiled_cosmo_result.csv")            
-                header = ['solvent_name', 'solute_name', 'temp (K)',
-                        'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
+    ids = str(int(int(mol_id.split("id")[1])/1000))
+    subinputs_dir = os.path.join(FF_conf_dir, "inputs", f"inputs_{ids}")
+    suboutputs_dir = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}")
+    os.makedirs(suboutputs_dir, exist_ok=True)
+    mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
+    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}_confs.sdf")):
+        os.makedirs(subinputs_dir, exist_ok=True)
+        if not os.path.exists(mol_id_path) and not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")):
+            with open(mol_id_path, "w") as f:
+                f.write(mol_id)
+            print(mol_id)
 
-                #tar the cosmo, energy and tab files
-                tar = tarfile.open(f"{mol_id}.tar", "w")
-                energyfile = f"{mol_id}.energy"
-                cosmofile = f"{mol_id}.cosmo"
-                tar.add(energyfile)
-                tar.add(cosmofile)
+print("Conformer searching with force field...")
 
-                with open(compiled_cosmo_result_path , 'w') as csvfile:
-                    # creating a csv writer object
-                    csvwriter = csv.writer(csvfile)
-                    # writing the header
-                    csvwriter.writerow(header)
+for conf_search_FF in conf_search_FFs:
+    for _ in range(2):
+        for subinputs_folder in os.listdir(os.path.join(FF_conf_dir, "inputs")):
+            ids = subinputs_folder.split("_")[1]
+            subinputs_dir = os.path.join(FF_conf_dir, "inputs", subinputs_folder)
+            suboutputs_dir = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}")
+            for input_file in os.listdir(subinputs_dir):
+                if ".in" in input_file:
+                    mol_id = input_file.split(".in")[0]
+                    print(mol_id)
+                    try:
+                        os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                    except:
+                        continue
+                    else:
+                        ids = str(int(int(mol_id.split("id")[1])/1000))
+                        smi = mol_id_to_smi[mol_id]
+                        print(smi)
+                        _genConf(smi, mol_id, XTB_PATH, conf_search_FF, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.scratch_dir, suboutputs_dir, subinputs_dir)
 
-                    for index, row in df_pure.iterrows():
-                        solvent = row.cosmo_name
-                        cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
-                        tabfile = f'{mol_id}_{cosmo_name}.tab'
-                        each_data_list = read_cosmo_tab_result(tabfile)
-                        each_data_list = get_dHsolv_value(each_data_list)
-                        csvwriter.writerows(each_data_list)
-                        tar.add(tabfile)
+
+print("Conformer searching with force field done.")
+
+print("Making input files for semiempirical optimization")
+
+semiempirical_opt_dir = os.path.join(output_dir, args.semiempirical_opt_folder)
+os.makedirs(semiempirical_opt_dir, exist_ok=True)
+inputs_dir = os.path.join(semiempirical_opt_dir, "inputs")
+outputs_dir = os.path.join(semiempirical_opt_dir, "outputs")
+os.makedirs(inputs_dir, exist_ok=True)
+os.makedirs(outputs_dir, exist_ok=True)
+
+for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
+    ids = str(int(int(mol_id.split("id")[1])/1000))
+    subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", f"inputs_{ids}")
+    suboutputs_dir = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}")
+    os.makedirs(suboutputs_dir, exist_ok=True)
+    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")) and os.path.exists(os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")):
+        os.makedirs(subinputs_dir, exist_ok=True)
+        if not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.in")) and not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")):
+            with open(os.path.join(subinputs_dir, f"{mol_id}.in"), "w") as f:
+                f.write(mol_id)
+            print(mol_id)
+
+print("Optimizing conformers with semiempirical method...")
+
+for _ in range(5):
+    for subinputs_folder in os.listdir(os.path.join(semiempirical_opt_dir, "inputs")):
+        ids = subinputs_folder.split("_")[1]
+        subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", f"inputs_{ids}")
+        suboutputs_dir = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}")
+        for input_file in os.listdir(subinputs_dir):
+            if ".in" in input_file:
+                mol_id = input_file.split(".in")[0]
+                try:
+                    os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                except:
+                    continue
+                else:
+                    ids = str(int(int(mol_id.split("id")[1])/1000))
+                    smi = mol_id_to_smi[mol_id]
+                    charge = mol_id_to_charge[mol_id]
+                    mult = mol_id_to_mult[mol_id]
+                    print(mol_id)
+                    print(smi)
+
+                    tmp_mol_dir = os.path.join(suboutputs_dir, mol_id)
+                    os.makedirs(tmp_mol_dir, exist_ok=True)
+
+                    mol_confs_sdf = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
+                    mols = RDKitMol.FromFile(mol_confs_sdf)
+                    xyz_FF_dict = {}
+                    xyz_FF_dict[mol_id] = {}
+                    for conf_id, mol in enumerate(mols):
+                        xyz_FF_dict[mol_id][conf_id] = mol.ToXYZ()
                     
-                tar.close()
+                    try:
+                        semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
+                    except FileNotFoundError as e:
+                        print(e)
+                        print("Continuing...")
+                        continue
 
-                os.remove(cosmofile)
-                os.remove(energyfile)
-                for index, row in df_pure.iterrows():
-                    cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
-                    tabfile = f'{mol_id}_{cosmo_name}.tab'
-                    os.remove(tabfile)
-                    tar.close()
-            os.chdir(project_dir)
+print("Semiempirical optimization done.")
 
-# conformer searching
-if not args.skip_conf_search_FF:
-    logger.info('starting FF conformer searching...')
-    supported_FFs = ["MMFF94s", "GFNFF", "all"]
+print("Making input files for DFT optimization and frequency calculation")
 
-    assert args.conf_search_FF in supported_FFs, f"{args.conf_search_FF} not in supported FFs."
+DFT_opt_freq_dir = os.path.join(output_dir, args.DFT_opt_freq_folder)
+os.makedirs(DFT_opt_freq_dir, exist_ok=True)
+inputs_dir = os.path.join(DFT_opt_freq_dir, "inputs")
+outputs_dir = os.path.join(DFT_opt_freq_dir, "outputs")
+os.makedirs(inputs_dir, exist_ok=True)
+os.makedirs(outputs_dir, exist_ok=True)
 
-    if args.conf_search_FF == "GFNFF" or args.conf_search_FF == "all":
-        assert XTB_PATH is not None, f"XTB_PATH must be provided to use GFNFF"
+for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
+    ids = str(int(int(mol_id.split("id")[1])/1000))
+    subinputs_dir = os.path.join(DFT_opt_freq_dir, "inputs", f"inputs_{ids}")
+    suboutputs_dir = os.path.join(DFT_opt_freq_dir, "outputs", f"outputs_{ids}")
+    os.makedirs(suboutputs_dir, exist_ok=True)
+    semiempirical_opt_tar = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")
+    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.log")) and os.path.exists(semiempirical_opt_tar):
+        os.makedirs(subinputs_dir, exist_ok=True)
+        if not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.in")) and not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")):
+            with open(os.path.join(subinputs_dir, f"{mol_id}.in"), "w") as f:
+                f.write(mol_id)
+            print(mol_id)
 
-    if args.conf_search_FF == "all":
-        conf_search_FFs = ["GFNFF", "MMFF94s"]
-    else:
-        conf_search_FFs = [args.conf_search_FF]
+print("Optimizing lowest energy conformer with DFT method...")
 
-    for conf_search_FF in conf_search_FFs:
-        supp = (x for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf)
-        conf_ids = [x[0] for x in df[['id', 'smiles']].values if x[0] not in done_jobs_record.FF_conf]
-        if conf_ids:
-            args.conf_search_FF = conf_search_FF
-            conf_ids_str = ','.join(conf_ids)
-            logger.info(f'FF conformer searching for: {conf_ids_str} using {args.conf_search_FF}')
-            done_jobs_record = csearch(supp, len(conf_ids), args, logger, done_jobs_record, project_dir)
+DFT_opt_freq_theories = [args.DFT_opt_freq_theory, args.DFT_opt_freq_theory_backup]
 
-    logger.info(f'Overall walltime: {time.time()-start_time}')
-    logger.info('='*80)
+for DFT_opt_freq_theory in DFT_opt_freq_theories:
+    for _ in range(5):
+        for subinputs_folder in os.listdir(os.path.join(DFT_opt_freq_dir, "inputs")):
+            ids = subinputs_folder.split("_")[1]
+            subinputs_dir = os.path.join(DFT_opt_freq_dir, "inputs", f"inputs_{ids}")
+            suboutputs_dir = os.path.join(DFT_opt_freq_dir, "outputs", f"outputs_{ids}")
+            for input_file in os.listdir(subinputs_dir):
+                if ".in" in input_file:
+                    mol_id = input_file.split(".in")[0]
+                    try:
+                        os.rename(os.path.join(subinputs_dir, input_file), os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                    except:
+                        continue
+                    else:
+                        semiempirical_opt_tar = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")
+                        failed_job, valid_job = semiempirical_opt_parser(semiempirical_opt_tar, mol_id_to_smi)
+                        if valid_job:
+                            ids = str(int(int(mol_id.split("id")[1])/1000))
+                            smi = mol_id_to_smi[mol_id]
+                            charge = mol_id_to_charge[mol_id]
+                            mult = mol_id_to_mult[mol_id]
+                            print(mol_id)
+                            print(smi)
+                            mol_id_to_semiempirical_opted_xyz = get_mol_id_to_semiempirical_opted_xyz(valid_job)
 
-if args.is_test:
-    semiempirical_methods = ["GFN2-XTB", "am1", "pm7"]
-    conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if len(done_jobs_record.test_semiempirical_opt.get(mol_id, []))!= len(semiempirical_methods)]
-    logger.info(f'starting geometry optimization for lowest energy FF-optimized conformers using different semiempirical methods...')
-    os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
+                            dft_scf_opt(mol_id, mol_id_to_semiempirical_opted_xyz, G16_PATH, DFT_opt_freq_theory, args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
+                        else:
+                            print(f"All semiempirical opted conformers failed for {mol_id}")
+                            try:
+                                os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+                            except FileNotFoundError as e:
+                                print(e)
+                            continue
 
-    for conf_sdf in conf_sdfs:
-        mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
-        charge = mol_id_to_charge_dict[mol_id]
-        mult = mol_id_to_mult_dict[mol_id]
-
-        for semiempirical_method in semiempirical_methods:
-            if semiempirical_method not in done_jobs_record.test_semiempirical_opt.get(mol_id, []):
-                os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method), exist_ok=True)
-                shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
-                                os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
-
-                os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method))
-                logger.info(f'starting {semiempirical_method} semiempirical geometry optimization calculation for {mol_id}...') 
-                try:
-                    semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
-                                                args.gaussian_semiempirical_opt_job_ram, charge, mult, semiempirical_method, logger)
-                    done_jobs = done_jobs_record.test_semiempirical_opt.get(mol_id, [])
-                    done_jobs.append(semiempirical_method)
-                    done_jobs_record.test_semiempirical_opt[mol_id] = done_jobs
-                    done_jobs_record.save(project_dir, args.task_id)
-                    logger.info(f'all {semiempirical_method} semiempirical geometry optimization calculations for {mol_id} completed')
-                except:
-                    logger.error(f'{semiempirical_method} semiempirical geometry optimization calculation for {mol_id} failed')
-                    logger.error(traceback.format_exc())
-                os.chdir(project_dir)
-
-    semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.test_semiempirical_opt if len(done_jobs_record.test_DFT_sp.get(mol_id, []))!= len(semiempirical_methods)]
-    logger.info(f'semiempirical geometry optimization calculations finished.')
-    logger.info('='*80)
-
-    logger.info('starting DFT single point calculations for the lowest energy semiempirical-optimized conformer...')
-    os.makedirs(os.path.join(args.DFT_sp_folder), exist_ok=True)
-    for semi_opt_sdf in semi_opt_sdfs:
-        mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
-        os.makedirs(os.path.join(args.DFT_sp_folder, mol_id), exist_ok=True)
-        charge = mol_id_to_charge_dict[mol_id]
-        mult = mol_id_to_mult_dict[mol_id]
-
-        for semiempirical_method in semiempirical_methods:
-            if semiempirical_method in done_jobs_record.test_semiempirical_opt.get(mol_id, []) and semiempirical_method not in done_jobs_record.test_DFT_sp.get(mol_id, []):
-                os.makedirs(os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method), exist_ok=True)
-                shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semiempirical_method, semi_opt_sdf),
-                                os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method, mol_id + ".sdf"))
-
-                os.chdir(os.path.join(args.DFT_sp_folder, mol_id, semiempirical_method))
-                try:
-                    dft_scf_sp(mol_id, G16_PATH, args.DFT_sp_theory, args.DFT_sp_n_procs, logger, args.DFT_sp_job_ram, charge, mult)
-                    done_jobs = done_jobs_record.test_DFT_sp.get(mol_id, [])
-                    done_jobs.append(semiempirical_method)
-                    done_jobs_record.test_DFT_sp[mol_id] = done_jobs
-                    done_jobs_record.save(project_dir, args.task_id)
-                    logger.info(f'DFT single point calculation for {semiempirical_method} optimized {mol_id} completed')
-                except:
-                    logger.error(f'DFT single point calculation for {semiempirical_method} optimized {mol_id} failed')
-                    logger.error(traceback.format_exc())
-                os.chdir(project_dir)
-    logger.info('DFT single point calculations finished.')
-    logger.info('='*80)
-    logger.info('All calculations completed.')
-    logger.info('Extracting DFT single point calculation results for comparison...')
-    save_dft_sp_results(args.DFT_sp_folder, done_jobs_record, args.task_id, mol_id_to_smi_dict, semiempirical_methods)
-    logger.info('Extrcating DFT single point calculation results completed.')
-
-else:
-
-    def run_semiempirical_stage():
-        # semiempirical optimization
-        logger.info(f'starting semiempirical geometry optimization for lowest energy FF-optimized conformers...')
-
-        supported_semiempirical_methods = ["GFN2-XTB", "pm7", "am1"]
-        assert args.semiempirical_method in supported_semiempirical_methods or args.semiempirical_method == "all", f"{args.semiempirical_method} not in supported semiempirical methods."
-
-        if args.semiempirical_method == "GFN2-XTB" or args.semiempirical_method == "all":
-            assert XTB_PATH is not None and G16_PATH is not None, f"XTB_PATH and G16_PATH must be provided to use {args.semiempirical_method}"
-        else:
-            assert G16_PATH is not None, f"G16_PATH must be provided to use {args.semiempirical_method}"
-
-        os.makedirs(args.semiempirical_opt_folder, exist_ok=True)
-
-        def run_semiempirical():
-            conf_sdfs = [f"{mol_id}_confs.sdf" for mol_id in done_jobs_record.FF_conf if mol_id not in done_jobs_record.semiempirical_opt]
-
-            for conf_sdf in conf_sdfs:
-                mol_id = os.path.splitext(conf_sdf)[0].split("_")[0]
-                logger.info(f'starting semiempirical optimization calculation for {mol_id} using {args.semiempirical_method}...')
-                start = time.time()
-                os.makedirs(os.path.join(args.semiempirical_opt_folder, mol_id), exist_ok=True)
-                shutil.copyfile(os.path.join(args.FF_conf_folder, mol_id, conf_sdf),
-                                os.path.join(args.semiempirical_opt_folder, mol_id, mol_id + ".sdf"))
-                charge = mol_id_to_charge_dict[mol_id]
-                mult = mol_id_to_mult_dict[mol_id]
-                os.chdir(os.path.join(args.semiempirical_opt_folder, mol_id))
-                try:
-                    semiempirical_opt(mol_id, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs,
-                                    args.gaussian_semiempirical_opt_job_ram, charge, mult, args.semiempirical_method, logger)
-                    done_jobs_record.semiempirical_opt.append(mol_id)
-                    done_jobs_record.save(project_dir, args.task_id)
-                    logger.info(f'semiempirical optimization for {mol_id} completed')
-                except Exception:
-                    logger.error(f'semiempirical optimization for {mol_id} failed')
-                    logger.error(traceback.format_exc())
-                logger.info(f'Walltime: {time.time()-start}')
-                os.chdir(project_dir)
-
-        if args.semiempirical_method == "all":
-            semiempirical_methods = supported_semiempirical_methods
-        else:
-            semiempirical_methods = [args.semiempirical_method] 
-        
-        for semiempirical_method in semiempirical_methods:
-            args.semiempirical_method = semiempirical_method
-            run_semiempirical()
-
-        for mol_id in done_jobs_record.FF_conf:
-            if mol_id not in done_jobs_record.semiempirical_opt:
-                done_jobs_record.FF_conf.remove(mol_id) #if the semiempirical opt failed for all methods, restart from FF_conf
-                done_jobs_record.save(project_dir, args.task_id)
-
-        logger.info('semiempirical optimization finished.')
-        logger.info(f'Overall walltime: {time.time()-start_time}')
-        logger.info('='*80)
-
-    def run_DFT_opt_freq_stage():
-        try:
-            assert G16_PATH is not None
-        except AssertionError as e:
-            logger.error(f"G16_PATH must be provided for DFT optimization and frequency calculations")
-            raise e
-
-        logger.info('starting DFT optimization and frequency calculation for the lowest energy semiempirical-optimized conformer...')
-        os.makedirs(args.DFT_opt_freq_folder, exist_ok=True)
-
-        def run_dft(DFT_opt_freq_theory):
-            logger.info(f"Using title card: {DFT_opt_freq_theory}")
-            semi_opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.semiempirical_opt if mol_id not in done_jobs_record.DFT_opt_freq]
-            for semi_opt_sdf in semi_opt_sdfs:
-                mol_id = os.path.splitext(semi_opt_sdf)[0].split("_")[0]
-                logger.info(f'starting DFT optimization and frequency calculation for {mol_id}...')
-                start = time.time()
-                try:
-                    shutil.rmtree(os.path.join(args.DFT_opt_freq_folder, mol_id))
-                except:
-                    pass
-                os.makedirs(os.path.join(args.DFT_opt_freq_folder, mol_id))
-                shutil.copyfile(os.path.join(args.semiempirical_opt_folder, mol_id, semi_opt_sdf),
-                                os.path.join(args.DFT_opt_freq_folder, mol_id, mol_id + ".sdf"))
-
-                charge = mol_id_to_charge_dict[mol_id]
-                mult = mol_id_to_mult_dict[mol_id]
-                os.chdir(os.path.join(args.DFT_opt_freq_folder, mol_id))
-                try:
-                    dft_scf_opt(mol_id, G16_PATH, DFT_opt_freq_theory, args.DFT_opt_freq_n_procs,
-                                logger, args.DFT_opt_freq_job_ram, charge, mult)
-                    done_jobs_record.DFT_opt_freq.append(mol_id)
-                    done_jobs_record.save(project_dir, args.task_id)
-                    logger.info(f'DFT optimization and frequency calculation for {mol_id} completed')
-                except Exception:
-                    logger.error(f'DFT optimization and frequency calculation for {mol_id} failed')
-                    logger.error(traceback.format_exc())
-                logger.info(f'Walltime: {time.time()-start}')
-                os.chdir(project_dir)
-        
-        run_dft(args.DFT_opt_freq_theory)
-
-        run_dft(args.DFT_opt_freq_theory_backup)
-        for mol_id in done_jobs_record.semiempirical_opt:#redo these species from the beginning next time restarting the workflow
-            if mol_id not in done_jobs_record.DFT_opt_freq:
-                done_jobs_record.FF_conf.remove(mol_id)
-                done_jobs_record.semiempirical_opt.remove(mol_id)
-        done_jobs_record.save(project_dir, args.task_id)
-
-        logger.info('DFT optimization and frequency calculation finished.')
-        logger.info(f'Overall walltime: {time.time()-start_time}')
-        logger.info('='*80)
-
-    def run_COSMO_stage():
-        assert COSMO_DATABASE_PATH is not None and COSMOTHERM_PATH is not None, f"COSMO_DATABASE_PATH and COSMOTHERM_PATH must be provided for Turbomole and COSMO calculations"
-
-        logger.info('starting Turbomole and COSMO calculations for DFT-optimized conformers...')
-        os.makedirs(args.COSMO_folder, exist_ok=True)
-        logger.info('load solvent file...')
-        df_pure = pd.read_csv(os.path.join(submit_dir,args.COSMO_input_pure_solvents))
-        df_pure = df_pure.reset_index()
-
-        if args.xyz_DFT_opt:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt]
-        else:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if len(done_jobs_record.COSMO.get(mol_id, [])) != len(df_pure.index)]
-
-        for opt_sdf in opt_sdfs:
-            mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
-            logger.info(f'starting Turbomole and COSMO calculation for {mol_id}...')
-            start = time.time()
-            os.makedirs(os.path.join(args.COSMO_folder, mol_id), exist_ok=True)
-            if not args.xyz_DFT_opt:
-                shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
-                                os.path.join(args.COSMO_folder, mol_id, mol_id + ".sdf"))
-            charge = mol_id_to_charge_dict[mol_id]
-            mult = mol_id_to_mult_dict[mol_id]
-            os.chdir(os.path.join(args.COSMO_folder, mol_id))
-            try:
-                cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, done_jobs_record, project_dir, args.task_id, xyz_DFT_opt, logger)
-                logger.info(f'Turbomole and COSMO calculation for {mol_id} completed')
-            except:
-                logger.error(f'Turbomole and COSMO calculation for {mol_id} failed.')
-                logger.error(traceback.format_exc())
-            finish = time.time()
-            logger.info(f'Walltime: {finish-start} s')
-            os.chdir(project_dir)
-
-        logger.info('COSMO calculation finished.')
-        logger.info(f'Overall walltime: {time.time()-start_time}')
-        logger.info('='*80)
-
-    def run_DLPNO_stage():
-        try:
-            assert ORCA_PATH is not None
-        except AssertionError as e:
-            logger.error(f"ORCA_PATH must be provided for DLPNO single point calculations")
-            raise e
-
-        logger.info('starting DLPNO single point calculation for the DFT-optimized conformer...')
-        os.makedirs(args.DLPNO_sp_folder, exist_ok=True)
-
-        if args.xyz_DFT_opt:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in df['id'].values if mol_id in xyz_DFT_opt and mol_id not in done_jobs_record.WFT_sp]
-        else:
-            opt_sdfs = [f"{mol_id}_opt.sdf" for mol_id in done_jobs_record.DFT_opt_freq if mol_id not in done_jobs_record.WFT_sp]
-        for opt_sdf in opt_sdfs:
-            mol_id = os.path.splitext(opt_sdf)[0].split("_")[0]
-            logger.info(f'starting DLPNO single point calculation for {mol_id}...')
-            start = time.time()
-            os.makedirs(os.path.join(args.DLPNO_sp_folder, mol_id), exist_ok=True)
-            if not args.xyz_DFT_opt:
-                shutil.copyfile(os.path.join(args.DFT_opt_freq_folder, mol_id, opt_sdf),
-                                os.path.join(args.DLPNO_sp_folder, mol_id, mol_id + ".sdf"))
-            charge = mol_id_to_charge_dict[mol_id]
-            mult = mol_id_to_mult_dict[mol_id]
-            os.chdir(os.path.join(args.DLPNO_sp_folder, mol_id))
-            try:
-                dlpno_sp_calc(mol_id, ORCA_PATH, charge, mult, args.DLPNO_sp_n_procs, args.DLPNO_sp_job_ram, xyz_DFT_opt)
-                done_jobs_record.WFT_sp.append(mol_id)
-                done_jobs_record.save(project_dir, args.task_id)
-                logger.info(f'DLPNO single point calculation for {mol_id} completed')
-            except:
-                logger.error(f'DLPNO single point calculation for {mol_id} failed.')
-                logger.error(traceback.format_exc())
-            logger.info(f'Walltime: {time.time()-start}')
-            os.chdir(project_dir)
-        logger.info('DLPNO single point calculation finished.')
-        logger.info(f'Overall walltime: {time.time()-start_time}')
-        logger.info('='*80)
-
-        for mol_id in done_jobs_record.DFT_opt_freq:
-            if mol_id not in done_jobs_record.WFT_sp:
-                done_jobs_record.FF_conf.remove(mol_id)
-                done_jobs_record.semiempirical_opt.remove(mol_id)
-                done_jobs_record.DFT_opt_freq.remove(mol_id)
-
-    # keep doing COSMO and DLPNO first before restarting failed DFT jobs
-    if not args.skip_DLPNO:
-
-        run_DLPNO_stage()
-
-    if not args.skip_COSMO:
-
-        run_COSMO_stage()
-
-    if not args.skip_semiempirical_opt:
-
-        run_semiempirical_stage()        
-
-    if not args.skip_DFT_opt_freq:
-
-        run_DFT_opt_freq_stage()
-
-    if not args.skip_COSMO:
-
-        run_COSMO_stage()
-
-    if not args.skip_DLPNO:
-
-        run_DLPNO_stage()
-
-    # # DFT QM descriptor calculation
-    # os.makedirs(args.DFT_QM_descriptor_folder, exist_ok=True)
-    # qm_descriptors = dict()
-    # for opt_sdf in opt_sdfs:
-    #     try:
-    #         mol_id = opt_sdf.split('_')[0]
-    #         charge = mol_id_to_charge_dict[mol_id]
-    #     except Exception as e:
-    #         logger.error(f'Cannot determine molecular charge for species {mol_id}')
-
-    #     # if not args.only_DFT:
-    #     try:
-    #         shutil.copyfile(os.path.join(args.semiempirical_opt_folder, opt_sdf),
-    #                         os.path.join(args.DFT_QM_descriptor_folder, opt_sdf))
-    #         time.sleep(1)
-    #     except Exception as e:
-    #         logger.error(f'file IO error for {opt_sdf}')
-
-    # for opt_sdf in opt_sdfs:
-    #     _qm_descriptors = dict()
-    #     try:
-    #         mol_id = opt_sdf.split('_')[0]
-    #         charge = mol_id_to_charge_dict[mol_id]
-    #     except Exception as e:
-    #         logger.error(f'Cannot determine molecular charge for species {mol_id}')
-
-    #     try:
-    #         qm_descriptor = dft_scf_qm_descriptor(args.DFT_QM_descriptor_folder, opt_sdf, G16_PATH, args.DFT_QM_descriptor_theory, args.DFT_QM_descriptor_n_procs,
-    #                                 logger, args.DFT_QM_descriptor_job_ram, charge)
-    #     except Exception as e:
-    #         logger.error('Gaussian optimization for {} failed: {}'.format(os.path.splitext(opt_sdf)[0], e))
-
-    #     try:
-    #         mol_id = opt_sdf.split('_')[0]
-    #         smi = mol_id_to_smi_dict[mol_id]
-    #         qm_descriptors[mol_id] = (smi, qm_descriptor)
-    #         _qm_descriptors[mol_id] = (smi, qm_descriptor)
-    #         with open(f'yamls/{mol_id}_qm_descriptors.yaml', 'w') as output:
-    #             yaml.dump(_qm_descriptors, output)
-    #     except Exception as e:
-    #         logger.error(f'descriptor store error main.py line 143 - 144')
-
-        
-
-        
-
-    # if args.split is None:
-    #     with open('qm_descriptors.yaml', 'w') as output:
-    #         yaml.dump(qm_descriptors, output)
-    # else:
-    #     with open(f'qm_descriptors_{args.split}.yaml', 'w') as output:
-    #         yaml.dump(qm_descriptors, output)
-
-
+print("DFT optimization and frequency calculation done.")
