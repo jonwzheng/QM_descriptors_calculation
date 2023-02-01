@@ -5,10 +5,11 @@ import csv
 import os
 import subprocess
 import numpy as np
+
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
 from .grab_QM_descriptors import read_log
 from .log_parser import G16Log
-
+from lib.parser.dft_opt_freq_parser import parser as dft_opt_freq_parser
 
 def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge):
     basename = os.path.basename(sdf)
@@ -115,22 +116,21 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theor
         with open(outfile, 'w') as out:
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
-        # check for normal termination
-        with open(logfile, "r") as f:
-            lines = f.readlines()
-        if any(["Normal termination" in line for line in reversed(lines)]):
+        # check for convergence
+        failed_job, valid_job = dft_opt_freq_parser(logfile)
+        if valid_job:
             shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
             os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
-            print(f"Optimization of {mol_id} with {level_of_theory} terminates.")
+            print(f"Optimization of {mol_id} with {level_of_theory} converges.")
             return True
         else:
             shutil.copyfile(logfile, os.path.join(subinputs_dir, logfile))
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
-            print(f"Optimization of {mol_id} with {level_of_theory} didn't terminate.")
-            print(lines[-2:])
+            print(f"Optimization of {mol_id} with {level_of_theory} didn't converge.")
+            print(failed_job)
             continue
 
     print(f"{mol_id} failed for all levels of theory.")
