@@ -275,13 +275,14 @@ for _ in range(1):
                     else:
                         semiempirical_opt_tar = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar")
                         failed_job, valid_job = semiempirical_opt_parser(semiempirical_opt_tar, mol_id_to_smi)
+                        ids = str(int(int(mol_id.split("id")[1])/1000))
+                        smi = mol_id_to_smi[mol_id]
+                        charge = mol_id_to_charge[mol_id]
+                        mult = mol_id_to_mult[mol_id]
+                        print(mol_id)
+                        print(smi)
+
                         if valid_job:
-                            ids = str(int(int(mol_id.split("id")[1])/1000))
-                            smi = mol_id_to_smi[mol_id]
-                            charge = mol_id_to_charge[mol_id]
-                            mult = mol_id_to_mult[mol_id]
-                            print(mol_id)
-                            print(smi)
                             mol_id_to_semiempirical_opted_xyz = get_mol_id_to_semiempirical_opted_xyz(valid_job)
 
                             start_time = time.time()
