@@ -43,10 +43,22 @@ parser.add_argument('--semiempirical_opt_folder', type=str, default='semiempiric
                     help='folder for semiempirical optimization')
 parser.add_argument('--gaussian_semiempirical_opt_theory', type=str, default='#opt=(calcall,maxcycle=128,noeig,nomicro,cartesian)',
                     help='level of theory for the Gaussian semiempirical calculation')
-parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=4,
+parser.add_argument('--gaussian_semiempirical_opt_n_procs', type=int, default=16,
                     help='number of process for Gaussian semiempirical calculations')
-parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=2000,
+parser.add_argument('--gaussian_semiempirical_opt_job_ram', type=int, default=8000,
                     help='amount of ram (MB) allocated for each Gaussian semiempirical calculation')
+
+# DFT optimization and frequency calculation
+parser.add_argument('--DFT_opt_freq_folder', type=str, default='DFT_opt_freq',
+                    help='folder for DFT optimization and frequency calculation',)
+parser.add_argument('--DFT_opt_freq_theory', type=str, default='#P opt=(calcfc,maxcycle=128,noeig,nomicro,cartesian) freq scf=(xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
+                    help='level of theory for the DFT calculation')
+parser.add_argument('--DFT_opt_freq_theory_backup', type=str, default='#P opt=(calcall,maxcycle=64,noeig,nomicro,cartesian) freq scf=(tight, xqc) iop(7/33=1) iop(2/9=2000) guess=mix wb97xd/def2svp',
+                    help='level of theory for the DFT calculation if DFT_opt_freq_theory failed')
+parser.add_argument('--DFT_opt_freq_n_procs', type=int, default=16,
+                    help='number of process for DFT calculations')
+parser.add_argument('--DFT_opt_freq_job_ram', type=int, default=62400, #3900*16
+                    help='amount of ram (MB) allocated for each DFT calculation')
 
 # specify paths
 parser.add_argument('--XTB_path', type=str, required=False, default=None,
