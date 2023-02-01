@@ -290,10 +290,11 @@ for _ in range(5):
 
                         else:
                             print(f"All semiempirical opted conformers failed for {mol_id}")
+                            print(failed_job)
                             try:
                                 os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
                                 os.remove(os.path.join(output_dir, FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf"))
-                                os.remove(os.path.join(output_dir, semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar"))
+                                os.rename(os.path.join(output_dir, semiempirical_opt_dir, "outputs", f"outputs_{ids}", f"{mol_id}.tar"), os.path.join(output_dir, semiempirical_opt_dir, "inputs", f"inputs_{ids}", f"{mol_id}.tar"))
                             except FileNotFoundError as e:
                                 print(e)
                             continue

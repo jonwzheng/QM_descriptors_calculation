@@ -131,11 +131,12 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theor
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
             print(f"Optimization of {mol_id} with {level_of_theory} didn't terminate.")
+            print(lines[-10:])
             continue
 
     print(f"{mol_id} failed for all levels of theory.")
     try:
-        os.rename(os.path.join(subinputs_dir, f"{mol_id}.tmp"), os.path.join(subinputs_dir, f"{mol_id}.failed"))
+        os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"), os.path.join(subinputs_dir, f"{mol_id}.failed"))
     except FileNotFoundError:
         pass
 
