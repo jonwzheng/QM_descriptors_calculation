@@ -1,22 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from argparse import ArgumentParser
-
 import os
 import re
 import sys
-import shutil
-sys.path.insert(0, "/home/gridsan/hwpang/RMG_shared/Software/RDMC-main/")
 
 import numpy as np
-import pandas as pd
-import pickle as pkl
 from rdmc.mol import RDKitMol
 from rdmc.external.gaussian import GaussianLog
-
-from joblib import Parallel, delayed
-
 
 periodictable = ["", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
              "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br",
@@ -347,39 +338,3 @@ def parser(g16_log, mol_id, mol_id_to_smi):
         failed_job[mol_id] = dict()
         failed_job[mol_id]['reason'] = "file not found"
         return failed_job, valid_job
-
-# input_smiles_path = sys.argv[1]
-# output_file_name = sys.argv[2]
-# n_jobs = int(sys.argv[3])
-
-# submit_dir = os.getcwd()
-
-# # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
-# # n_jobs = 8
-
-# df = pd.read_csv(input_smiles_path)
-# mol_ids = df['id'].tolist()
-# mol_id_to_smi = dict(zip(df['id'], df['smiles']))
-
-# out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
-
-# failed_jobs = dict()
-# valid_jobs = dict()
-# for failed_job, valid_job in out:
-#     failed_jobs.update(failed_job)
-#     valid_jobs.update(valid_job)
-
-# with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-#     pkl.dump(valid_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
-
-# with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
-#     pkl.dump(failed_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
-
-# print(failed_jobs)
-
-# xyz_DFT_opt = {}
-# for mol_id in valid_jobs:
-#     xyz_DFT_opt[mol_id] = valid_jobs[mol_id]["dft_xyz"]
-
-# with open(f"{output_file_name}_xyz.pkl", "wb") as f:
-#     pkl.dump(xyz_DFT_opt, f, protocol=pkl.HIGHEST_PROTOCOL)
