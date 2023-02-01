@@ -12,7 +12,7 @@ import traceback
 from rdmc.mol import RDKitMol
 
 # algorithm to generate nc conformations
-def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, n_lowest_E_confs_to_save, scratch_dir, save_dir, input_dir):
+def _genConf(smi, mol_id, XTB_path, conf_search_FFs, max_n_conf, max_try, rms, E_cutoff_fraction, rmspost, n_lowest_E_confs_to_save, scratch_dir, suboutputs_dir, subinputs_dir):
     mol = RDKitMol.FromSmiles(smi)
     nr = int(AllChem.CalcNumRotatableBonds(mol._mol))
 
@@ -33,85 +33,89 @@ def _genConf(smi, mol_id, XTB_path, conf_search_FF, max_n_conf, max_try, rms, E_
     pre_adj = Chem.GetAdjacencyMatrix(mol)
     current_dir = os.getcwd()
 
-    for id in ids:
-        if conf_search_FF == "MMFF94s":
-            prop = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant="MMFF94s")
-            ff = AllChem.MMFFGetMoleculeForceField(mol, prop, confId=id)
-            ff.Minimize()
-            en = float(ff.CalcEnergy())
-            econf = (en, id)
-            diz.append(econf)
-        elif conf_search_FF == "GFNFF":
-            scratch_dir_mol_id = os.path.join(scratch_dir, f'{mol_id}_{id}')
-            os.makedirs(scratch_dir_mol_id)
-            os.chdir(scratch_dir_mol_id)
+    for conf_search_FF in conf_search_FFs:
+        for id in ids:
+            if conf_search_FF == "MMFF94s":
+                prop = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant="MMFF94s")
+                ff = AllChem.MMFFGetMoleculeForceField(mol, prop, confId=id)
+                ff.Minimize()
+                en = float(ff.CalcEnergy())
+                econf = (en, id)
+                diz.append(econf)
+            elif conf_search_FF == "GFNFF":
+                scratch_dir_mol_id = os.path.join(scratch_dir, f'{mol_id}_{id}')
+                os.makedirs(scratch_dir_mol_id)
+                os.chdir(scratch_dir_mol_id)
 
-            input_file_mol_id = f'{mol_id}_{id}.sdf'
-            write_mol_to_sdf(mol, input_file_mol_id, id)
+                input_file_mol_id = f'{mol_id}_{id}.sdf'
+                write_mol_to_sdf(mol, input_file_mol_id, id)
 
-            xtb_command = os.path.join(XTB_path, 'xtb')
-            output_file_mol_id = f'{mol_id}_{id}.log'
-            with open(output_file_mol_id, 'w') as out:
-                subprocess.call([xtb_command, '--gfnff', input_file_mol_id, '--opt'],
-                                stdout=out, stderr=out)
-            if os.path.exists(output_file_mol_id):
-                log = XtbLog(output_file_mol_id)
-                if log.termination:
-                    try:
-                        en = float(log.E)
-                    except:
-                        shutil.copyfile(output_file_mol_id, os.path.join(input_dir, output_file_mol_id))
-                        print(f"Error in {output_file_mol_id} file")
-                        raise
-                    opt_mol = load_sdf("xtbopt.sdf")[0]
-                    post_adj = Chem.GetAdjacencyMatrix(opt_mol)
-                    if (pre_adj == post_adj).all():
-                        opt_conf = opt_mol.GetConformer()
-                        conf = mol.GetConformer(id)
-                        for i in range(mol.GetNumAtoms()):
-                            pt = opt_conf.GetAtomPosition(i)
-                            conf.SetAtomPosition(i, (pt.x, pt.y, pt.z))
-                        econf = (en, id)
-                        diz.append(econf)
+                xtb_command = os.path.join(XTB_path, 'xtb')
+                output_file_mol_id = f'{mol_id}_{id}.log'
+                with open(output_file_mol_id, 'w') as out:
+                    subprocess.call([xtb_command, '--gfnff', input_file_mol_id, '--opt'],
+                                    stdout=out, stderr=out)
+                if os.path.exists(output_file_mol_id):
+                    log = XtbLog(output_file_mol_id)
+                    if log.termination:
+                        try:
+                            en = float(log.E)
+                        except:
+                            shutil.copyfile(output_file_mol_id, os.path.join(subinputs_dir, output_file_mol_id))
+                            print(f"Error in {output_file_mol_id} file")
+                            raise
+                        opt_mol = load_sdf("xtbopt.sdf")[0]
+                        post_adj = Chem.GetAdjacencyMatrix(opt_mol)
+                        if (pre_adj == post_adj).all():
+                            opt_conf = opt_mol.GetConformer()
+                            conf = mol.GetConformer(id)
+                            for i in range(mol.GetNumAtoms()):
+                                pt = opt_conf.GetAtomPosition(i)
+                                conf.SetAtomPosition(i, (pt.x, pt.y, pt.z))
+                            econf = (en, id)
+                            diz.append(econf)
+                        else:
+                            print(f"{mol_id}_{id} failed adjacency matrix check")
                     else:
-                        print(f"{mol_id}_{id} failed adjacency matrix check")
-                else:
-                    print(f"{mol_id}_{id} failed optimization")
-            os.chdir(current_dir)
-            shutil.rmtree(scratch_dir_mol_id)
-    
-    if len(diz) == 0:
-        print(f"{mol_id} no conformer found after optimization")
+                        print(f"{mol_id}_{id} failed optimization")
+                os.chdir(current_dir)
+                shutil.rmtree(scratch_dir_mol_id)
+        
+        if len(diz) == 0:
+            print(f"{mol_id} no conformer found after optimization with {conf_search_FF}")
+            continue
+        else:
+            print(f"{len(ids)} conformers found for {mol_id} after optimization with {conf_search_FF}")
+
+        if E_cutoff_fraction:
+            n, diz2 = energy_filter(mol, diz, E_cutoff_fraction)
+        else:
+            n = mol
+            diz2 = diz
+
+        if rmspost and n.GetNumConformers() > 1:
+            o, diz3 = postrmsd(n, diz2, rmspost)
+        else:
+            o = n
+            diz3 = diz2
+        
+        mol = o
+        ids = diz3
+
+        print(f"{len(ids)} conformers found for {mol_id} after rmse and energy cutoff")
+        ids_to_save = [id for (en, id) in ids[:n_lowest_E_confs_to_save]]
+        ens_to_save = [en for (en, id) in ids[:n_lowest_E_confs_to_save]]
+        save_path = os.path.join(suboutputs_dir, '{}_confs.sdf'.format(mol_id))
+        write_mol_to_sdf(mol, save_path, confIds=ids_to_save, confEns=ens_to_save)
         try:
-            os.rename(os.path.join(input_dir, f"{mol_id}.tmp"), os.path.join(input_dir, f"{mol_id}.in"))
+            os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
         except FileNotFoundError:
             pass
         return
-    else:
-        print(f"{len(ids)} conformers found for {mol_id} after optimization")
-
-    if E_cutoff_fraction:
-        n, diz2 = energy_filter(mol, diz, E_cutoff_fraction)
-    else:
-        n = mol
-        diz2 = diz
-
-    if rmspost and n.GetNumConformers() > 1:
-        o, diz3 = postrmsd(n, diz2, rmspost)
-    else:
-        o = n
-        diz3 = diz2
     
-    mol = o
-    ids = diz3
-
-    print(f"{len(ids)} conformers found for {mol_id} after rmse and energy cutoff")
-    ids_to_save = [id for (en, id) in ids[:n_lowest_E_confs_to_save]]
-    ens_to_save = [en for (en, id) in ids[:n_lowest_E_confs_to_save]]
-    save_path = os.path.join(save_dir, '{}_confs.sdf'.format(mol_id))
-    write_mol_to_sdf(mol, save_path, confIds=ids_to_save, confEns=ens_to_save)
+    print(f"{mol_id} failed to find conformers")
     try:
-        os.remove(os.path.join(input_dir, f"{mol_id}.tmp"))
+        os.rename(os.path.join(subinputs_dir, f"{mol_id}.tmp"), os.path.join(subinputs_dir, f"{mol_id}.failed"))
     except FileNotFoundError:
         pass
 

@@ -95,34 +95,46 @@ def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logge
 
     return QM_descriptors_return
 
-def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, level_of_theory, n_procs, job_ram, base_charge, mult, scratch_dir, suboutputs_dir, subinputs_dir):
+def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theories, n_procs, job_ram, base_charge, mult, scratch_dir, suboutputs_dir, subinputs_dir):
     current_dir = os.getcwd()
-    mol_scratch_dir = os.path.join(scratch_dir, mol_id)
-    os.makedirs(mol_scratch_dir)
-    os.chdir(mol_scratch_dir)
 
-    xyz = xyz_semiempirical_opt_dict[mol_id]
-    xyz = str(len(xyz.splitlines())) + "\n" + mol_id + "\n" + xyz
-    g16_command = os.path.join(g16_path, 'g16')
-    head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
+    for level_of_theory in DFT_opt_freq_theories:
+        mol_scratch_dir = os.path.join(scratch_dir, mol_id)
+        os.makedirs(mol_scratch_dir)
+        os.chdir(mol_scratch_dir)
 
-    comfile = mol_id + '.gjf'
-    xyz2com(xyz, head=head, comfile=comfile, charge=base_charge, mult=mult, footer='\n')
+        xyz = xyz_semiempirical_opt_dict[mol_id]
+        xyz = str(len(xyz.splitlines())) + "\n" + mol_id + "\n" + xyz
+        g16_command = os.path.join(g16_path, 'g16')
+        head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
 
-    logfile = mol_id + '.log'
-    outfile = mol_id + '.out'
-    with open(outfile, 'w') as out:
-        subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
+        comfile = mol_id + '.gjf'
+        xyz2com(xyz, head=head, comfile=comfile, charge=base_charge, mult=mult, footer='\n')
 
-    # check for normal termination
-    with open(logfile, "r") as f:
-        lines = f.readlines()
-    if any(["termination" in line for line in reversed(lines)]):
-        shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
-        os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
-    else:
-        raise
-    os.chdir(current_dir)
+        logfile = mol_id + '.log'
+        outfile = mol_id + '.out'
+        with open(outfile, 'w') as out:
+            subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
+
+        # check for normal termination
+        with open(logfile, "r") as f:
+            lines = f.readlines()
+        if any(["Normal termination" in line for line in reversed(lines)]):
+            shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
+            os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+            os.chdir(current_dir)
+            print(f"Optimization of {mol_id} with {level_of_theory} terminates.")
+            return
+        else:
+            os.chdir(current_dir)
+            print(f"Optimization of {mol_id} with {level_of_theory} didn't terminate.")
+            continue
+
+    print(f"{mol_id} failed for all levels of theory.")
+    try:
+        os.rename(os.path.join(subinputs_dir, f"{mol_id}.tmp"), os.path.join(subinputs_dir, f"{mol_id}.failed"))
+    except FileNotFoundError:
+        pass
 
 def dft_scf_sp(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
     sdf = mol_id + ".sdf"
