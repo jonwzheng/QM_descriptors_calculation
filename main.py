@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import os
 import pandas as pd
-import tarfile
+import time
 
 from rdkit import Chem
 from rdmc.mol import RDKitMol
@@ -164,7 +164,10 @@ for _ in range(5):
                     smi = mol_id_to_smi[mol_id]
                     print(mol_id)
                     print(smi)
+                    start_time = time.time()
                     _genConf(smi, mol_id, XTB_PATH, conf_search_FFs, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.scratch_dir, suboutputs_dir, subinputs_dir)
+                    end_time = time.time()
+                    print(f"Time for conformer search for {mol_id} is {end_time - start_time} seconds")
 
 print("Conformer searching with force field done.")
 
@@ -221,7 +224,10 @@ for _ in range(5):
                     for conf_id, mol in enumerate(mols):
                         xyz_FF_dict[mol_id][conf_id] = mol.ToXYZ()
                     
+                    start_time = time.time()
                     semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
+                    end_time = time.time()
+                    print(f"Time for semiempirical optimization for {mol_id} is {end_time - start_time} seconds")
 
 print("Semiempirical optimization done.")
 
@@ -275,7 +281,11 @@ for _ in range(5):
                         print(smi)
                         mol_id_to_semiempirical_opted_xyz = get_mol_id_to_semiempirical_opted_xyz(valid_job)
 
+                        start_time = time.time()
                         dft_scf_opt(mol_id, mol_id_to_semiempirical_opted_xyz, G16_PATH, DFT_opt_freq_theories, args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
+                        end_time = time.time()
+                        print(f"Time for DFT optimization for {mol_id} is {end_time - start_time} seconds")
+                        
                     else:
                         print(f"All semiempirical opted conformers failed for {mol_id}")
                         try:
