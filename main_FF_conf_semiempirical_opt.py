@@ -169,7 +169,7 @@ for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
     os.makedirs(subinputs_dir, exist_ok=True)
     suboutputs_dir = os.path.join(semiempirical_opt_dir, "outputs", f"outputs_{ids}")
     os.makedirs(suboutputs_dir, exist_ok=True)
-    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")) and os.path.exists(os.path.join(FF_conf_dir, "outputs",f"outputs_{ids}", f"{mol_id}_confs.sdf")):
+    if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")) and os.path.exists(os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")):
         if not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.in")) and not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")):
             with open(os.path.join(subinputs_dir, f"{mol_id}.in"), "w") as f:
                 f.write(mol_id)
@@ -212,3 +212,5 @@ for _ in range(5):
                         print(e)
                         print("Continuing...")
                         continue
+
+print("Semiempirical optimization done.")
