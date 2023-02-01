@@ -130,8 +130,6 @@ for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
 
 print("Conformer searching with force field...")
 
-FF_conf_mol_ids = []
-
 for conf_search_FF in conf_search_FFs:
     for _ in range(5):
         for subinputs_folder in os.listdir(os.path.join(FF_conf_dir, "inputs")):
@@ -151,7 +149,6 @@ for conf_search_FF in conf_search_FFs:
                         smi = mol_id_to_smi_dict[mol_id]
                         print(smi)
                         _genConf(smi, mol_id, XTB_PATH, conf_search_FF, args.max_n_conf, args.max_conf_try, args.rmspre, args.E_cutoff_fraction, args.rmspost, args.n_lowest_E_confs_to_save, args.scratch_dir, suboutputs_dir, subinputs_dir)
-                        FF_conf_mol_ids.append(mol_id)
 
 
 print("Conformer searching with force field done.")
@@ -165,7 +162,7 @@ outputs_dir = os.path.join(semiempirical_opt_dir, "outputs")
 os.makedirs(inputs_dir, exist_ok=True)
 os.makedirs(outputs_dir, exist_ok=True)
 
-for mol_id in FF_conf_mol_ids:
+for mol_id, smi in mol_ids_smis[args.task_id:len(mol_ids_smis):args.num_tasks]:
     ids = str(int(int(mol_id.split("id")[1])/1000))
     subinputs_dir = os.path.join(semiempirical_opt_dir, "inputs", f"inputs_{ids}")
     os.makedirs(subinputs_dir, exist_ok=True)
@@ -174,6 +171,7 @@ for mol_id in FF_conf_mol_ids:
     if not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.in")) and not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")) and not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")):
         with open(os.path.join(subinputs_dir, f"{mol_id}.in"), "w") as f:
             f.write(mol_id)
+    print(mol_id)
 
 print("Optimizing conformers with semiempirical method...")
 
