@@ -104,7 +104,6 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theor
         os.chdir(mol_scratch_dir)
 
         xyz = xyz_semiempirical_opt_dict[mol_id]
-        xyz = str(len(xyz.splitlines())) + "\n" + mol_id + "\n" + xyz
         g16_command = os.path.join(g16_path, 'g16')
         head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
 
@@ -125,20 +124,17 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theor
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
             print(f"Optimization of {mol_id} with {level_of_theory} terminates.")
-            return
+            return True
         else:
             shutil.copyfile(logfile, os.path.join(subinputs_dir, logfile))
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
             print(f"Optimization of {mol_id} with {level_of_theory} didn't terminate.")
-            print(lines[-10:])
+            print(lines[-2:])
             continue
 
     print(f"{mol_id} failed for all levels of theory.")
-    try:
-        os.rename(os.path.join(subinputs_dir, f"{mol_id}.tmp"), os.path.join(subinputs_dir, f"{mol_id}.failed"))
-    except FileNotFoundError:
-        pass
+    return False
 
 def dft_scf_sp(mol_id, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge, mult):
     sdf = mol_id + ".sdf"
