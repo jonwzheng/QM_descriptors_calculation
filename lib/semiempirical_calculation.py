@@ -56,9 +56,13 @@ def semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g1
         tar.add(os.path.join(tmp_mol_dir, logfile))
     tar.close()
 
-    # shutil.copy(tar_file, os.path.join(subinputs_dir, tar_file))
     shutil.copy(tar_file, os.path.join(suboutputs_dir, tar_file))
-    os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+    try:
+        os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+    except FileNotFoundError as e:
+        print(e)
+        print(f"{mol_id}.tmp not found in {subinputs_dir}")
+        pass
     shutil.rmtree(tmp_mol_dir)
     os.chdir(current_dir)
 
