@@ -61,7 +61,6 @@ def semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, xtb_path, rdmc_path, g1
         os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
     except FileNotFoundError as e:
         print(e)
-        print(f"{mol_id}.tmp not found in {subinputs_dir}")
         pass
     shutil.rmtree(tmp_mol_dir)
     os.chdir(current_dir)
