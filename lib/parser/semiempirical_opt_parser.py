@@ -417,5 +417,7 @@ def get_mol_id_to_semiempirical_opted_xyz(valid_jobs):
         ens = np.array([conf_dict["semiempirical_energy"]['scf'] for conf_id, conf_dict in valid_jobs[mol_id].items()])
         conf_ids = np.array([conf_id for conf_id, conf_dict in valid_jobs[mol_id].items()])
         lowest_conf_ind = conf_ids[np.argsort(ens)[0]]
-        mol_id_to_semiempirical_opted_xyz[mol_id] = valid_jobs[mol_id][lowest_conf_ind]["semiempirical_xyz_std_ori"]
+        xyz = valid_jobs[mol_id][lowest_conf_ind]["semiempirical_xyz_std_ori"]
+        xyz = str(len(xyz.splitlines())) + "\n" + mol_id + "\n" + xyz
+        mol_id_to_semiempirical_opted_xyz[mol_id] = xyz
     return mol_id_to_semiempirical_opted_xyz
