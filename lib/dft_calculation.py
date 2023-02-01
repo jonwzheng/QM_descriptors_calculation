@@ -96,7 +96,7 @@ def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logge
 
     return QM_descriptors_return
 
-def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theories, n_procs, job_ram, base_charge, mult, scratch_dir, suboutputs_dir, subinputs_dir):
+def dft_scf_opt(mol_id, mol_smi, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theories, n_procs, job_ram, base_charge, mult, scratch_dir, suboutputs_dir, subinputs_dir):
     current_dir = os.getcwd()
 
     for level_of_theory in DFT_opt_freq_theories:
@@ -117,7 +117,7 @@ def dft_scf_opt(mol_id, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theor
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
 
         # check for convergence
-        failed_job, valid_job = dft_opt_freq_parser(logfile)
+        failed_job, valid_job = dft_opt_freq_parser(logfile, mol_id, mol_smi)
         if valid_job:
             shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
             os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))

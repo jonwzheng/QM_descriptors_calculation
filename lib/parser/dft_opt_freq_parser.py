@@ -255,7 +255,7 @@ def load_energies(self, zpe_scale_factor):
 
 # In[71]:
 
-def parser(g16_log, mol_id, mol_id_to_smi):
+def parser(g16_log, mol_id, mol_smi):
 
     failed_job = dict()
     valid_job = dict()
@@ -267,7 +267,6 @@ def parser(g16_log, mol_id, mol_id_to_smi):
         # [4] Calculated as described in 10.1021/ct100326h
         # https://github.com/ReactionMechanismGenerator/RMG-database/blob/main/input/quantum_corrections/data.py
 
-        mol_smi = mol_id_to_smi[mol_id]
         pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
 
         glog = GaussianLog(g16_log)
