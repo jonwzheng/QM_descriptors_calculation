@@ -5,6 +5,7 @@ import csv
 import os
 import subprocess
 import numpy as np
+import time
 
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
 from .grab_QM_descriptors import read_log
@@ -113,11 +114,19 @@ def dft_scf_opt(mol_id, mol_smi, mol_id_to_xyz_dict, g16_path, DFT_opt_freq_theo
 
         logfile = mol_id + '.log'
         outfile = mol_id + '.out'
+
+        start_time = time.time()
         with open(outfile, 'w') as out:
             subprocess.run('{} < {} >> {}'.format(g16_command, comfile, logfile), shell=True, stdout=out, stderr=out)
+        end_time = time.time()
+        print(f"Optimization of {mol_id} with {level_of_theory} took {end_time - start_time} seconds.")
 
         # check for convergence
+        start_time = time.time()
         failed_job, valid_job = dft_opt_freq_parser(logfile, mol_id, mol_smi)
+        end_time = time.time()
+        print(f"Parsing of {mol_id} with {level_of_theory} took {end_time - start_time} seconds.")
+        
         if valid_job:
             shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
             try:

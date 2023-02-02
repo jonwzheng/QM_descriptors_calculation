@@ -285,10 +285,7 @@ for _ in range(1):
                         if valid_job:
                             mol_id_to_semiempirical_opted_xyz = get_mol_id_to_semiempirical_opted_xyz(valid_job)
 
-                            start_time = time.time()
                             converged = dft_scf_opt(mol_id, smi, mol_id_to_semiempirical_opted_xyz, G16_PATH, DFT_opt_freq_theories, args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
-                            end_time = time.time()
-                            print(f"Time for DFT optimization for {mol_id} is {end_time - start_time} seconds")
 
                             if not converged:
                                 print(f"DFT optimization for {mol_id} failed. Trying to optimize lowest energy FF opted conformer with DFT method...")
@@ -301,10 +298,7 @@ for _ in range(1):
                                         mol_id_to_FF_opted_xyz_dict[mol_id] = mol.ToXYZ()
                                         break
                             
-                                start_time = time.time()
                                 converged = dft_scf_opt(mol_id, smi, mol_id_to_FF_opted_xyz_dict, G16_PATH, [args.DFT_opt_freq_theory_backup], args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
-                                end_time = time.time()
-                                print(f"Time for DFT optimization for {mol_id} is {end_time - start_time} seconds")
 
                         else:
                             print(f"All semiempirical opted conformers failed for {mol_id}")
@@ -320,10 +314,7 @@ for _ in range(1):
                                     mol_id_to_FF_opted_xyz_dict[mol_id] = mol.ToXYZ()
                                     break
                             
-                            start_time = time.time()
                             converged = dft_scf_opt(mol_id, smi, mol_id_to_FF_opted_xyz_dict, G16_PATH, [args.DFT_opt_freq_theory_backup], args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
-                            end_time = time.time()
-                            print(f"Time for DFT optimization for {mol_id} is {end_time - start_time} seconds")
 
     print("DFT optimization and frequency calculation done.")
 
