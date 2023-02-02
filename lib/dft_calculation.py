@@ -9,7 +9,7 @@ import numpy as np
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
 from .grab_QM_descriptors import read_log
 from .log_parser import G16Log
-from lib.parser.dft_opt_freq_parser import parser as dft_opt_freq_parser
+from lib.parser.dft_opt_freq_parser import quick_parser as dft_opt_freq_parser
 
 def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge):
     basename = os.path.basename(sdf)

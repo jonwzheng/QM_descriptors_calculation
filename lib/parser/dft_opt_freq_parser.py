@@ -255,6 +255,54 @@ def load_energies(self, zpe_scale_factor):
 
 # In[71]:
 
+def quick_parser(g16_log, mol_id, mol_smi):
+
+    failed_job = dict()
+    valid_job = dict()
+
+    if os.path.isfile(g16_log):
+
+        zpe_scale_factor = 0.986
+        # LevelOfTheory(method='wb97xd',basis='def2svp',software='gaussian')": 0.986,  # [4]
+        # [4] Calculated as described in 10.1021/ct100326h
+        # https://github.com/ReactionMechanismGenerator/RMG-database/blob/main/input/quantum_corrections/data.py
+
+        pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
+
+        glog = GaussianLog(g16_log)
+        post_adj = glog.get_mol(refid=glog.num_all_geoms-1,  # The last geometry in the job
+                                converged=False,
+                                sanitize=False,
+                                backend='openbabel').GetAdjacencyMatrix()
+
+        if not (pre_adj == post_adj).all():
+            failed_job[mol_id] = dict()
+            failed_job[mol_id]['mol_smi'] = mol_smi
+            failed_job[mol_id]['reason'] = 'adjacency matrix'
+            return failed_job, valid_job 
+
+        job_stat = check_job_status(read_log_file(g16_log))
+
+        if not job_stat:
+            failed_job[mol_id] = dict()
+            failed_job[mol_id]['mol_smi'] = mol_smi
+            failed_job[mol_id]['reason'] = 'error termination'
+            return failed_job, valid_job
+
+        if not check_freq(g16_log):
+            failed_job[mol_id] = dict()
+            failed_job[mol_id]['mol_smi'] = mol_smi
+            failed_job[mol_id]['reason'] = 'freq'
+            return failed_job, valid_job
+
+        valid_job[mol_id] = dict()
+        valid_job[mol_id]['mol_smi'] = mol_smi
+        return failed_job, valid_job
+    else:
+        failed_job[mol_id] = dict()
+        failed_job[mol_id]['reason'] = "file not found"
+        return failed_job, valid_job    
+
 def parser(g16_log, mol_id, mol_smi):
 
     failed_job = dict()
