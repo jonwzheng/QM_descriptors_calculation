@@ -129,7 +129,6 @@ def dft_scf_opt(mol_id, mol_smi, xyz_semiempirical_opt_dict, g16_path, DFT_opt_f
             with open(logfile, 'r') as f:
                 lines = f.readlines()
             print("\n".join(lines[-10:]))
-            shutil.copyfile(logfile, os.path.join(subinputs_dir, logfile))
             shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
             os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
             os.chdir(current_dir)
