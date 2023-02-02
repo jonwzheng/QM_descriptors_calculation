@@ -222,13 +222,13 @@ for _ in range(1):
 
                         mol_confs_sdf = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
                         mols = RDKitMol.FromFile(mol_confs_sdf)
-                        xyz_FF_dict = {}
-                        xyz_FF_dict[mol_id] = {}
+                        mol_id_to_FF_opted_xyz_dict = {}
+                        mol_id_to_FF_opted_xyz_dict[mol_id] = {}
                         for conf_id, mol in enumerate(mols):
-                            xyz_FF_dict[mol_id][conf_id] = mol.ToXYZ()
+                            mol_id_to_FF_opted_xyz_dict[mol_id][conf_id] = mol.ToXYZ()
                         
                         start_time = time.time()
-                        semiempirical_opt(mol_id, charge, mult, xyz_FF_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
+                        semiempirical_opt(mol_id, charge, mult, mol_id_to_FF_opted_xyz_dict, XTB_PATH, RDMC_PATH, G16_PATH, args.gaussian_semiempirical_opt_theory, args.gaussian_semiempirical_opt_n_procs, args.gaussian_semiempirical_opt_job_ram, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
                         end_time = time.time()
                         print(f"Time for semiempirical optimization for {mol_id} is {end_time - start_time} seconds")
 
@@ -294,15 +294,15 @@ for _ in range(1):
                                 print(f"DFT optimization for {mol_id} failed. Trying to optimize lowest energy FF opted conformer with DFT method...")
                                 mol_confs_sdf = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
                                 mols = RDKitMol.FromFile(mol_confs_sdf)
-                                xyz_FF_dict = {}
-                                xyz_FF_dict[mol_id] = {}
+                                mol_id_to_FF_opted_xyz_dict = {}
+                                mol_id_to_FF_opted_xyz_dict[mol_id] = {}
                                 for conf_id, mol in enumerate(mols):
                                     if conf_id == 0:
-                                        xyz_FF_dict[mol_id] = mol.ToXYZ()
+                                        mol_id_to_FF_opted_xyz_dict[mol_id] = mol.ToXYZ()
                                         break
                             
                                 start_time = time.time()
-                                converged = dft_scf_opt(mol_id, smi, xyz_FF_dict, G16_PATH, DFT_opt_freq_theories, args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
+                                converged = dft_scf_opt(mol_id, smi, mol_id_to_FF_opted_xyz_dict, G16_PATH, DFT_opt_freq_theories, args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
                                 end_time = time.time()
                                 print(f"Time for DFT optimization for {mol_id} is {end_time - start_time} seconds")
 
@@ -313,15 +313,15 @@ for _ in range(1):
                             print("Trying to optimize lowest energy FF opted conformer with DFT method...")
                             mol_confs_sdf = os.path.join(FF_conf_dir, "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
                             mols = RDKitMol.FromFile(mol_confs_sdf)
-                            xyz_FF_dict = {}
-                            xyz_FF_dict[mol_id] = {}
+                            mol_id_to_FF_opted_xyz_dict = {}
+                            mol_id_to_FF_opted_xyz_dict[mol_id] = {}
                             for conf_id, mol in enumerate(mols):
                                 if conf_id == 0:
-                                    xyz_FF_dict[mol_id] = mol.ToXYZ()
+                                    mol_id_to_FF_opted_xyz_dict[mol_id] = mol.ToXYZ()
                                     break
                             
                             start_time = time.time()
-                            converged = dft_scf_opt(mol_id, smi, xyz_FF_dict, G16_PATH, DFT_opt_freq_theories, args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
+                            converged = dft_scf_opt(mol_id, smi, mol_id_to_FF_opted_xyz_dict, G16_PATH, DFT_opt_freq_theories, args.DFT_opt_freq_n_procs, args.DFT_opt_freq_job_ram, charge, mult, args.scratch_dir, suboutputs_dir, subinputs_dir)
                             end_time = time.time()
                             print(f"Time for DFT optimization for {mol_id} is {end_time - start_time} seconds")
 

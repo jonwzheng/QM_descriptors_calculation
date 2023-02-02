@@ -96,7 +96,7 @@ def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logge
 
     return QM_descriptors_return
 
-def dft_scf_opt(mol_id, mol_smi, xyz_semiempirical_opt_dict, g16_path, DFT_opt_freq_theories, n_procs, job_ram, base_charge, mult, scratch_dir, suboutputs_dir, subinputs_dir):
+def dft_scf_opt(mol_id, mol_smi, mol_id_to_xyz_dict, g16_path, DFT_opt_freq_theories, n_procs, job_ram, base_charge, mult, scratch_dir, suboutputs_dir, subinputs_dir):
     current_dir = os.getcwd()
 
     for level_of_theory in DFT_opt_freq_theories:
@@ -104,7 +104,7 @@ def dft_scf_opt(mol_id, mol_smi, xyz_semiempirical_opt_dict, g16_path, DFT_opt_f
         os.makedirs(mol_scratch_dir)
         os.chdir(mol_scratch_dir)
 
-        xyz = xyz_semiempirical_opt_dict[mol_id]
+        xyz = mol_id_to_xyz_dict[mol_id]
         g16_command = os.path.join(g16_path, 'g16')
         head = '%chk={}.chk\n%nprocshared={}\n%mem={}mb\n{}\n'.format(mol_id, n_procs, job_ram, level_of_theory)
 
