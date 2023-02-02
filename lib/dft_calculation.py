@@ -120,7 +120,10 @@ def dft_scf_opt(mol_id, mol_smi, xyz_semiempirical_opt_dict, g16_path, DFT_opt_f
         failed_job, valid_job = dft_opt_freq_parser(logfile, mol_id, mol_smi)
         if valid_job:
             shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
-            os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+            try:
+                os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+            except FileNotFoundError:
+                pass
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
             print(f"Optimization of {mol_id} with {level_of_theory} converged.")
@@ -130,7 +133,10 @@ def dft_scf_opt(mol_id, mol_smi, xyz_semiempirical_opt_dict, g16_path, DFT_opt_f
                 lines = f.readlines()
             print("\n".join(lines[-10:]))
             shutil.copyfile(logfile, os.path.join(suboutputs_dir, logfile))
-            os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+            try:
+                os.remove(os.path.join(subinputs_dir, f"{mol_id}.tmp"))
+            except FileNotFoundError:
+                pass
             os.chdir(current_dir)
             shutil.rmtree(mol_scratch_dir)
             print(f"Optimization of {mol_id} with {level_of_theory} didn't converge.")
