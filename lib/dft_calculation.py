@@ -10,7 +10,7 @@ import time
 from .file_parser import mol2xyz, xyz2com, write_mol_to_sdf
 from .grab_QM_descriptors import read_log
 from .log_parser import G16Log
-from lib.parser.dft_opt_freq_parser import quick_parser as dft_opt_freq_parser
+from lib.parser.dft_opt_freq_parser import dft_opt_freq_parser
 
 def dft_scf_qm_descriptor(folder, sdf, g16_path, level_of_theory, n_procs, logger, job_ram, base_charge):
     basename = os.path.basename(sdf)
@@ -123,7 +123,7 @@ def dft_scf_opt(mol_id, mol_smi, mol_id_to_xyz_dict, g16_path, DFT_opt_freq_theo
 
         # check for convergence
         start_time = time.time()
-        failed_job, valid_job = dft_opt_freq_parser(logfile, mol_id, mol_smi)
+        failed_job, valid_job = dft_opt_freq_parser(mol_id, mol_smi, logfile, parse_data=False)
         end_time = time.time()
         print(f"Parsing of {mol_id} with {level_of_theory} took {end_time - start_time} seconds.")
         

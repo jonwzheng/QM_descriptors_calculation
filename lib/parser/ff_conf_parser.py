@@ -4,13 +4,14 @@
 import os
 from rdmc.mol import RDKitMol
 
-def ff_conf_parser(mol_id, mol_smi):
+def ff_conf_parser(mol_id, mol_smi, mol_confs_sdf=None):
 
     failed_job = dict()
     valid_job = dict()
 
-    ids = str(int(int(mol_id.split("id")[1])/1000)) 
-    mol_confs_sdf = os.path.join("output", "FF_conf", "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
+    if mol_confs_sdf is None:
+        ids = str(int(int(mol_id.split("id")[1])/1000)) 
+        mol_confs_sdf = os.path.join("output", "FF_conf", "outputs", f"outputs_{ids}", f"{mol_id}_confs.sdf")
 
     if os.path.isfile(mol_confs_sdf):
 

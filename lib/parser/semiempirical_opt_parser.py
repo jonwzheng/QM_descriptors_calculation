@@ -339,19 +339,20 @@ def get_title_card(member, tar, flag=b"Initial command:"):
             break
     return title_card.decode()
 
-def parser(mol_confs_tar, mol_id_to_smi):
+def semiempirical_opt_parser(mol_id, mol_smi, mol_confs_tar=None):
 
-    mol_id = mol_confs_tar.split("/")[-1].split(".")[0]
-    ids = str(int(int(mol_id.split("id")[1])/1000)) 
     valid_job = dict()
     failed_job = dict()
+
+    if mol_confs_tar is None:
+        ids = str(int(int(mol_id.split("id")[1])/1000)) 
+        mol_confs_tar = os.path.join("output", "semiempirical_opt", "outputs", f"outputs_{ids}", f"{mol_id}.tar")
 
     if os.path.isfile(mol_confs_tar):
 
         valid_job[mol_id] = dict()
         failed_job[mol_id] = dict()
 
-        mol_smi = mol_id_to_smi[mol_id]
         pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
 
         tar = tarfile.open(mol_confs_tar)
