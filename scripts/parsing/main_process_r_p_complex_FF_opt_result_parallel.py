@@ -6,9 +6,6 @@ import pickle as pkl
 import pandas as pd
 from joblib import Parallel, delayed
 
-# import sys
-# sys.path.insert(0, "/home/gridsan/hwpang/RMG_shared/Software/RDMC-main/")
-
 from rdkit import Chem
 from rdmc.mol import RDKitMol
 
@@ -21,13 +18,16 @@ def parser(ts_id, submit_dir):
         r_smi, p_smi = ts_smi.split(">>")
         ts_xyz = ts_id_to_xyz[ts_id]
         ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
-        ts_mol = ts_mol._mol
-        ts_mol.SetProp("_Name", ts_id)
+        ts_mol._mol.SetProp("_Name", ts_id)
         for member in tar:
             if "_r.sdf" in member.name:
                 f = tar.extractfile(member)
                 mols = Chem.ForwardSDMolSupplier(f, removeHs=False)
                 r_mol = [mol for mol in mols][0]
+                r_mol = RDKitMol.FromMol(r_mol)
+                if any(atom.GetFormalCharge() != 0 for atom in r_mol._mol.GetAtoms()):
+                    return None
+
             elif "_p.sdf" in member.name:
                 f = tar.extractfile(member)
                 mols = Chem.ForwardSDMolSupplier(f, removeHs=False)
