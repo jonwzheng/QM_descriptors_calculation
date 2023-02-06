@@ -43,7 +43,6 @@ with open(os.path.join(f'{output_file_name}_failed.pkl'), 'wb') as outfile:
     pkl.dump(failed_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
 print(f"Total number of molecules: {len(mol_ids)}")
-print(f"Total number of failed molecules: {len(failed_jobs)}")
-print(failed_jobs)
 all_failed_jobs = [job for job in failed_jobs.values() if "reason" in job]
 print(f"Total number of all failed molecules: {len(all_failed_jobs)}")
+print(all_failed_jobs)
