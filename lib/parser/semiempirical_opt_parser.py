@@ -372,8 +372,8 @@ def semiempirical_opt_parser(mol_id, mol_smi, mol_confs_tar=None):
             xyz, _, _ = load_geometry(member, tar)
             try:
                 post_mol = RDKitMol.FromXYZ(xyz, header=False, sanitize=False,)
-            except rdkit.Chem.rdchem.AtomValenceException:
-                failed_job[mol_id][conf_id] = 'AtomValenceException'
+            except Exception as e:
+                failed_job[mol_id][conf_id] = f"rdkit failed with {e}"
                 continue
             post_adj = post_mol.GetAdjacencyMatrix()
             if (pre_adj == post_adj).all():

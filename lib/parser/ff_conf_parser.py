@@ -20,7 +20,7 @@ def ff_conf_parser(mol_id, mol_smi, mol_confs_sdf=None):
 
         pre_adj = RDKitMol.FromSmiles(mol_smi).GetAdjacencyMatrix()
         
-        mols = RDKitMol.FromFile(mol_confs_sdf)
+        mols = RDKitMol.FromFile(mol_confs_sdf, removeHs=False, sanitize=False)
         for conf_id, mol in enumerate(mols):
             post_adj = mol.GetAdjacencyMatrix()
             try:
