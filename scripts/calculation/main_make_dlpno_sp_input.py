@@ -91,7 +91,7 @@ outputs_dir = os.path.join(DLPNO_sp_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
 mol_ids_smis = zip(mol_ids, smiles_list)
-for mol_id, smi in mol_ids_smis[args.task_id:args.num_tasks:len(mol_ids_smis)]:
+for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
     if mol_id in xyz_DFT_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
         subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
