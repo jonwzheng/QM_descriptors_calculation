@@ -135,7 +135,7 @@ for _ in range(5):
                     charge = mol_id_to_charge_dict[mol_id]
                     mult = mol_id_to_mult_dict[mol_id]
                     coords = xyz_DFT_opt_dict[mol_id]
-                    tmp_mol_dir = os.path.join(subinputs_dir, mol_id)
+                    tmp_mol_dir = os.path.join(suboutputs_dir, mol_id)
                     os.makedirs(tmp_mol_dir, exist_ok=True)
                     cosmo_calc(mol_id, COSMOTHERM_PATH, COSMO_DATABASE_PATH, charge, mult, args.COSMO_temperatures, df_pure, coords, args.scratch_dir, tmp_mol_dir, suboutputs_dir, subinputs_dir)
 
