@@ -91,7 +91,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             print(f"COSMO calculation failed for {mol_id} {row.cosmo_name}")
             return 
         else:
-            shutil.copy(tabfile, os.path.join(tmp_mol_dir, tabfile))
+            shutil.copyfile(tabfile, os.path.join(tmp_mol_dir, tabfile))
             print(f"COSMO calculation done for {mol_id} {row.cosmo_name}")
 
     #tar the cosmo, energy and tab files
@@ -110,9 +110,13 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         
     tar.close()
 
-    shutil.copy(tar_file, os.path.join(save_dir, tar_file))
-    os.remove(os.path.join(input_dir, f"{mol_id}.tmp"))
-    shutil.rmtree(tmp_mol_dir)
+    shutil.copyfile(tar_file, os.path.join(save_dir, tar_file))
+    try:
+        os.remove(os.path.join(input_dir, f"{mol_id}.tmp"))
+        shutil.rmtree(tmp_mol_dir)
+    except FileNotFoundError as e:
+        print(e)
+        print("continuing...")
     os.chdir(current_dir)
     shutil.rmtree(scratch_dir_mol_id)
     

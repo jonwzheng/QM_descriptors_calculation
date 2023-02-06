@@ -102,7 +102,7 @@ print("Making helper input files...")
 with open(args.xyz_DFT_opt_dict, "rb") as f:
     xyz_DFT_opt_dict = pkl.load(f)
 
-mol_ids_smis = zip(mol_ids, smiles_list)
+mol_ids_smis = list(zip(mol_ids, smiles_list))
 for mol_id, smi in mol_ids_smis[args.task_id:args.num_tasks:len(mol_ids_smis)]:
     if mol_id in xyz_DFT_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
