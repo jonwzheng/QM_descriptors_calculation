@@ -7,7 +7,7 @@ import pandas as pd
 import pickle as pkl
 from joblib import Parallel, delayed
 
-from lib.parser.ff_conf_parser import ff_conf_parser as parser
+from lib.parser.ff_conf_parser import ff_conf_parser
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
@@ -17,7 +17,7 @@ df = pd.read_csv(input_smiles_path)
 mol_ids = list(df.id)
 mol_id_to_smi = dict(zip(df.id, df.smiles))
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id, mol_id_to_smi[mol_id]) for mol_id in mol_ids)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(ff_conf_parser)(mol_id, mol_id_to_smi[mol_id]) for mol_id in mol_ids)
 
 failed_jobs = dict()
 valid_jobs = dict()
