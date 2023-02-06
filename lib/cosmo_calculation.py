@@ -77,7 +77,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         if os.path.exists(os.path.join(tmp_mol_dir, tabfile)):
             continue
 
-        print(f"Running COSMO calculation for {mol_id} in {row.cosmo_name}...")
+        print(f"Running COSMO calculation for {mol_id} in {index} {row.cosmo_name}...")
 
         script = generate_cosmo_input(mol_id, cosmotherm_path, cosmo_database_path, T_list, row)
         
@@ -88,11 +88,11 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         subprocess.run(f'{cosmo_command} {inpfile}', shell=True)
 
         if not os.path.exists(tabfile):
-            print(f"COSMO calculation failed for {mol_id} {row.cosmo_name}")
+            print(f"COSMO calculation failed for {mol_id} in {index} {row.cosmo_name}")
             return 
         else:
             shutil.copyfile(tabfile, os.path.join(tmp_mol_dir, tabfile))
-            print(f"COSMO calculation done for {mol_id} {row.cosmo_name}")
+            print(f"COSMO calculation done for {mol_id} in {index} {row.cosmo_name}")
 
     #tar the cosmo, energy and tab files
     tar_file = f"{mol_id}.tar"
