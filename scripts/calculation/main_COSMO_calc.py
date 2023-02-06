@@ -103,7 +103,7 @@ with open(args.xyz_DFT_opt_dict, "rb") as f:
     xyz_DFT_opt_dict = pkl.load(f)
 
 mol_ids_smis = list(zip(mol_ids, smiles_list))
-for mol_id, smi in mol_ids_smis[args.task_id:args.num_tasks:len(mol_ids_smis)]:
+for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
     if mol_id in xyz_DFT_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
         subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
