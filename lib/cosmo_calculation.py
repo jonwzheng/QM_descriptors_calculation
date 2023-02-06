@@ -30,6 +30,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         shutil.copy(os.path.join(tmp_mol_dir, cosmofile), cosmofile)
     else:
         #turbomole
+        print(f"Running Turbomole for {mol_id}...")
+
         os.makedirs("xyz")
         xyz_mol_id = f'{mol_id}.xyz'
         with open(os.path.join("xyz", xyz_mol_id), "w+") as f:
@@ -63,6 +65,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         else:
             print(f"Turbomole calculation failed for {mol_id}")
             return
+        
+        print(f"Turbomole calculation done for {mol_id}")
 
     # prepare for cosmo calculation
     for index, row in df_pure.iterrows():
@@ -73,6 +77,8 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         if os.path.exists(os.path.join(tmp_mol_dir, tabfile)):
             continue
 
+        print(f"Running COSMO calculation for {mol_id} in {row.cosmo_name}...")
+
         script = generate_cosmo_input(mol_id, cosmotherm_path, cosmo_database_path, T_list, row)
         
         with open(inpfile, "w+") as f:
@@ -82,10 +88,11 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         subprocess.run(f'{cosmo_command} {inpfile}', shell=True)
 
         if not os.path.exists(tabfile):
-            print(f"Turbomole calculation failed for {mol_id} {cosmo_name}")
+            print(f"COSMO calculation failed for {mol_id} {row.cosmo_name}")
             return 
         else:
             shutil.copy(tabfile, os.path.join(tmp_mol_dir, tabfile))
+            print(f"COSMO calculation done for {mol_id} {row.cosmo_name}")
 
     #tar the cosmo, energy and tab files
     tar_file = f"{mol_id}.tar"
