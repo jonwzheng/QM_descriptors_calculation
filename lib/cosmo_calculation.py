@@ -55,6 +55,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 break
         else:
             print(f"Turbomole calculation failed for {mol_id}")
+            os.chdir(current_dir)
             return
 
         for file in os.listdir("EnergyfilesBP-TZVPD-FINE-COSMO-SP"):
@@ -64,6 +65,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
                 break
         else:
             print(f"Turbomole calculation failed for {mol_id}")
+            os.chdir(current_dir)
             return
         
         print(f"Turbomole calculation done for {mol_id}")
@@ -89,6 +91,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
 
         if not os.path.exists(tabfile):
             print(f"COSMO calculation failed for {mol_id} in {index} {row.cosmo_name}")
+            os.chdir(current_dir)
             return 
         else:
             shutil.copyfile(tabfile, os.path.join(tmp_mol_dir, tabfile))
@@ -104,7 +107,14 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         solvent = row.cosmo_name
         cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
         tabfile = os.path.join(tmp_mol_dir, f'{mol_id}_{cosmo_name}.tab')
-        each_data_list = read_cosmo_tab_result(tabfile)
+        try:
+            each_data_list = read_cosmo_tab_result(tabfile)
+        except FileNotFoundError as e:
+            print(e)
+            print("Assuming done by other worker. Return...")
+            os.chdir(current_dir)
+            shutil.rmtree(scratch_dir_mol_id)
+            return
         each_data_list = get_dHsolv_value(each_data_list)
         tar.add(tabfile)
         
@@ -116,7 +126,10 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         shutil.rmtree(tmp_mol_dir)
     except FileNotFoundError as e:
         print(e)
-        print("continuing...")
+        print("Assuming done by other worker. Return...")
+        os.chdir(current_dir)
+        shutil.rmtree(scratch_dir_mol_id)
+        return
     os.chdir(current_dir)
     shutil.rmtree(scratch_dir_mol_id)
     
