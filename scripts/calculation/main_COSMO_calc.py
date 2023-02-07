@@ -111,11 +111,12 @@ for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
         os.makedirs(suboutputs_dir, exist_ok=True)
         mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
         tmp_mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.tmp")
-        if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")) and not os.path.exists(mol_id_path) and not os.path.exists(tmp_mol_id_path):
+        if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.tar")):
             os.makedirs(subinputs_dir, exist_ok=True)
-            with open(mol_id_path, "w+") as f:
-                f.write(mol_id)
-            print(mol_id)
+            if not os.path.exists(mol_id_path) and not os.path.exists(tmp_mol_id_path):
+                with open(mol_id_path, "w+") as f:
+                    f.write(mol_id)
+                print(mol_id)
 
 print("Starting COSMO calculations...")
 for _ in range(5):
