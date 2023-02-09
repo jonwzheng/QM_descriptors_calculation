@@ -26,15 +26,13 @@ def read_cosmo_tab_result_from_tar(f):
         if b"Nr Compound" in line:
             line = f.readline()
             solvent_name = line.split()[1].decode('utf-8')
-            solvent_smiles = solvent_name_to_smi[solvent_name]
             line = f.readline()
             solute_name = line.split()[1].decode('utf-8')
-            solute_smiles = mol_id_to_smi[solute_name]
             result_values = line.split()[2:6]  # H (in bar), ln(gamma), pv (vapor pressure in bar), Gsolv (kcal/mol)
             result_values = [result_value.decode('utf-8') for result_value in result_values]
             # save the result as one list
             each_data_list.append(
-                [solvent_name, solvent_smiles, solute_name, solute_smiles, temp] + result_values + [None])
+                [solvent_name, None, solute_name, None, temp] + result_values + [None])
             # initialize everything
             solvent_name, solute_name, temp = None, None, None
             result_values = None
@@ -57,9 +55,9 @@ def get_dHsolv_value(each_data_list):
     each_data_list[ind_298][9] = '%.8f' % dHsolv_298
     return each_data_list
 
-def parser(mol_id):
+def parser(mol_id, mol_smi):
     ids = str(int(int(mol_id.split("id")[1])/1000))
-    tar_file_path = os.path.join(submit_dir, "output", "COSMO_calc", "outputs", f"outputs_{ids}", f"{mol_id}.tar")
+    tar_file_path = os.path.join("output", "COSMO_calc", "outputs", f"outputs_{ids}", f"{mol_id}.tar")
     if os.path.isfile(tar_file_path):
         each_data_lists = []
         tar = tarfile.open(tar_file_path)
@@ -74,16 +72,25 @@ def parser(mol_id):
     else:
         return None
 
-def main(input_smiles_path, output_file_name, n_jobs):
+def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
 
     submit_dir = os.getcwd()
 
-    df = pd.read_csv(input_smiles_path)
-    mol_ids = list(df.id)
+    df_solute = pd.read_csv(input_smiles_path)
+    mol_ids = list(df_solute.id)
+    mol_smis = list(df_solute.smiles)
+    mol_id_to_mol_smi = dict(zip(mol_ids, mol_smis))
+
+    df_solvent = pd.read_csv(solvent_path)
+    solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, df_solvent.smiles))
 
     out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in tqdm(mol_ids))
     failed_mol_ids = [mol_ids[i] for i in range(len(mol_ids)) if out[i] is None]
     out = [x for x in out if x is not None]
+    for each_data_lists in out:
+        for each_data_list in each_data_lists:
+            each_data_list[1] = solvent_name_to_smi[each_data_list[0]]
+            each_data_list[3] = mol_id_to_mol_smi[each_data_list[2]]
 
     csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
 
@@ -100,10 +107,10 @@ def main(input_smiles_path, output_file_name, n_jobs):
             for each_data_list in each_data_lists:
                 csvwriter.writerows(each_data_list)
 
-    df = pd.read_csv(csv_file)
+    df_cos,o = pd.read_csv(csv_file)
 
     with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-        pkl.dump(df, outfile, protocol=pkl.HIGHEST_PROTOCOL)
+        pkl.dump(df_cosmo, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
     with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
         pkl.dump(failed_mol_ids, outfile, protocol=pkl.HIGHEST_PROTOCOL)
@@ -117,8 +124,9 @@ if __name__ == "__main__":
     input_smiles_path = sys.argv[1]
     output_file_name = sys.argv[2]
     n_jobs = int(sys.argv[3])
+    solvent_path = sys.argv[4]
 
     # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
     # n_jobs = 8
     # output_file_name = "test"
-    main(input_smiles_path, output_file_name, n_jobs)
+    main(input_smiles_path, output_file_name, n_jobs, solvent_path)
