@@ -1,6 +1,3 @@
 LLSUB*
-lib/__pycache__
-XTB_opt
-MMFF_conf
-DFT
-submit.sh
+__pycache__
+.pyc
