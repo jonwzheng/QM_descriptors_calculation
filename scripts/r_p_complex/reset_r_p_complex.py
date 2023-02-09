@@ -62,7 +62,7 @@ df = pd.read_csv(args.input_smiles, index_col=0)
 assert len(df['id']) == len(set(df['id'])), "ids must be unique"
 
 ts_ids = list(df["id"])
-rxn_smiles_list = list(df["rxn_smiles"])
+rxn_smiles_list = list(df["rxn_smi"])
 dft_xyz_list = list(df["dft_xyz"])
 ts_id_to_rxn_smi = dict(zip(ts_ids, rxn_smiles_list))
 ts_id_to_dft_xyz = dict(zip(ts_ids, dft_xyz_list))

@@ -12,6 +12,11 @@ source /state/partition1/llgrid/pkg/anaconda/anaconda3-2022b/etc/profile.d/conda
 conda activate rdmc_env
 which python
 
+#RDMC for gaussian-xtb
+RDMC_PATH=/home/gridsan/groups/RMG/Software/RDMC-main
+export PATH=$RDMC_PATH:$PATH
+export PYTHONPATH=$RDMC_PATH:$PYTHONPATH
+
 #QMD
 QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_workflow
 export PYTHONPATH=$QMD_PATH:$PYTHONPATH
