@@ -114,7 +114,7 @@ def load_geometry(self, periodictable=periodictable, initial=False, input_geom=F
                     while line != ' ': 
                         data = line.split()
                         symbol.append(data[0])
-                        coord.append([float(data[2]), float(data[3]), float(data[4])])
+                        coord.append([float(data[1]), float(data[2]), float(data[3])])
                         line = f.readline()
                     break
 
