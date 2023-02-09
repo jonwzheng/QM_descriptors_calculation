@@ -93,7 +93,7 @@ def make_input_file_from_xyz(symbols, coords):
 # In[85]:
 
 
-def load_geometry(self, periodictable=periodictable, initial=False, input=False):
+def load_geometry(self, periodictable=periodictable, initial=False, input_geom=False):
     """
     Return the optimum geometry of the molecular configuration from the
     Gaussian log file. If multiple such geometries are identified, only the
@@ -107,13 +107,13 @@ def load_geometry(self, periodictable=periodictable, initial=False, input=False)
         while line != '':
             # Automatically determine the number of atoms
 
-            if input:
+            if input_geom:
                 if 'Symbolic Z-matrix:' in line:
                     for i in range(2):
                         line = f.readline()
                     while line != ' ': 
                         data = line.split()
-                        symbol.append(int(data[0]))
+                        symbol.append(data[0])
                         coord.append([float(data[2]), float(data[3]), float(data[4])])
                         line = f.readline()
                     break
@@ -134,7 +134,7 @@ def load_geometry(self, periodictable=periodictable, initial=False, input=False)
                 break
 
     number = np.array(number)
-    if not input:
+    if not input_geom:
         symbol = [periodictable[x] for x in number]
 
     xyz_str = make_input_file_from_xyz(symbol, coord)
@@ -303,7 +303,7 @@ def dft_opt_freq_parser(mol_id, mol_smi, g16_log=None, parse_data=True):
                 if parse_data:
                     failed_job[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
                     failed_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-                    failed_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input=True)[0]
+                    failed_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input_geom=True)[0]
                     failed_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
                     failed_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
                     failed_job[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
@@ -323,7 +323,7 @@ def dft_opt_freq_parser(mol_id, mol_smi, g16_log=None, parse_data=True):
                     failed_job[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
                     failed_job[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
                     failed_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-                    failed_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input=True)[0]
+                    failed_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input_geom=True)[0]
                     failed_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
                     failed_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
                     failed_job[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
@@ -342,7 +342,7 @@ def dft_opt_freq_parser(mol_id, mol_smi, g16_log=None, parse_data=True):
                 valid_job[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
                 valid_job[mol_id]['dft_xyz'] = load_geometry(g16_log)[0]
                 valid_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True)[0]
-                valid_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input=True)[0]
+                valid_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input_geom=True)[0]
                 valid_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
                 valid_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
                 valid_job[mol_id]['dft_wall'] = get_wall(read_log_file(g16_log))
