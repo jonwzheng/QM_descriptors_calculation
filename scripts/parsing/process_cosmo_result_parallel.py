@@ -100,11 +100,17 @@ def main(input_smiles_path, output_file_name, n_jobs):
             for each_data_list in each_data_lists:
                 csvwriter.writerows(each_data_list)
 
+    df = pd.read_csv(csv_file)
+
+    with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
+        pkl.dump(df, outfile, protocol=pkl.HIGHEST_PROTOCOL)
+
     with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
         pkl.dump(failed_mol_ids, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
     print(f"Failed mol ids: {len(failed_mol_ids)}")
     print(failed_mol_ids)
+    os.remove(csv_file)
 
 if __name__ == "__main__":
 
