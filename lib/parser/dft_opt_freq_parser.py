@@ -111,7 +111,7 @@ def load_geometry(self, periodictable=periodictable, initial=False, input_geom=F
                 if 'Symbolic Z-matrix:' in line:
                     for i in range(2):
                         line = f.readline()
-                    while line != ' ': 
+                    while line.strip() != '':
                         data = line.split()
                         symbol.append(data[0])
                         coord.append([float(data[1]), float(data[2]), float(data[3])])
