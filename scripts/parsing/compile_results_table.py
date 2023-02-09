@@ -224,8 +224,8 @@ logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 logging.warning("Concatenating hashed tables")
 df_merged = pd.concat(list(hashed_table_df_dict.values()), ignore_index=True)
 
-logging.warning("First row")
-logging.warning(list(df_merged.iloc[0]))
+logging.warning("Row 1")
+logging.warning(list(df_merged.iloc[1]))
 
 logging.warning("Saving all results table")
 if job_type == "reactants_products":
