@@ -56,13 +56,12 @@ class OrcaLog(object):
             raise LogError('Unable to find energy in Orca output file.')
         return e_elect
 
-def parser(mol_id):
+def parser(mol_id, mol_smi):
 
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
     orca_log = os.path.join("output", "DLPNO_sp", "outputs", f"outputs_{ids}", f"{mol_id}.log")
     failed_jobs = dict()
     valid_job = dict()
-    mol_smi = mol_id_to_smi[mol_id]
 
     if os.path.isfile(orca_log):
 
@@ -85,34 +84,34 @@ def parser(mol_id):
         failed_jobs[mol_id]['reason'] = "file not found"
     return failed_jobs, valid_job
 
-input_smiles_path = sys.argv[1]
-output_file_name = sys.argv[2]
-n_jobs = int(sys.argv[3])
+def main(input_smiles_path, output_file_name, n_jobs):
 
-submit_dir = os.getcwd()
+    df = pd.read_csv(input_smiles_path)
+    mol_ids = df['id'].tolist()
+    mol_id_to_smi = dict(zip(df['id'].tolist(), df['smiles'].tolist()))
 
-# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
-# n_jobs = 8
+    out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id, mol_id_to_smi[mol_id]) for mol_id in mol_ids)
 
-df = pd.read_csv(input_smiles_path)
-mol_ids = df['id'].tolist()
-mol_id_to_smi = dict(zip(df['id'].tolist(), df['smiles'].tolist()))
+    failed_jobs = dict()
+    valid_jobs = dict()
+    for failed_job, valid_job in out:
+        failed_jobs.update(failed_job)
+        valid_jobs.update(valid_job)
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
+    with open(os.path.join(f'{output_file_name}.pkl'), 'wb') as outfile:
+        pkl.dump(valid_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
-failed_jobs = dict()
-valid_jobs = dict()
-for failed_job, valid_job in out:
-    failed_jobs.update(failed_job)
-    valid_jobs.update(valid_job)
+    with open(os.path.join(f'{output_file_name}_failed.pkl'), 'wb') as outfile:
+        pkl.dump(failed_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
-with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(valid_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
+    print(f"Total number of jobs: {len(mol_ids)}")
+    print(f"Number of failed jobs: {len(failed_jobs)}")
+    print(failed_jobs)
 
-with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
-    pkl.dump(failed_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
+if __name__ == "__main__":
 
-print(f"Total number of jobs: {len(mol_ids)}")
-print(f"Number of failed jobs: {len(failed_jobs)}")
-print(failed_jobs)
+    input_smiles_path = sys.argv[1]
+    output_file_name = sys.argv[2]
+    n_jobs = int(sys.argv[3])
 
+    main(input_smiles_path, output_file_name, n_jobs)
