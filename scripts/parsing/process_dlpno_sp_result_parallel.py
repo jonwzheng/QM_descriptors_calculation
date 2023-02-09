@@ -59,7 +59,7 @@ class OrcaLog(object):
 def parser(mol_id):
 
     ids = str(int(int(mol_id.split("id")[1])/1000)) 
-    orca_log = os.path.join(submit_dir, "output", "DLPNO_sp", "outputs", f"outputs_{ids}", f"{mol_id}.log")
+    orca_log = os.path.join("output", "DLPNO_sp", "outputs", f"outputs_{ids}", f"{mol_id}.log")
     failed_jobs = dict()
     valid_job = dict()
     mol_smi = mol_id_to_smi[mol_id]
@@ -112,4 +112,7 @@ with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
 with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
     pkl.dump(failed_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
+print(f"Total number of jobs: {len(mol_ids)}")
+print(f"Number of failed jobs: {len(failed_jobs)}")
 print(failed_jobs)
+
