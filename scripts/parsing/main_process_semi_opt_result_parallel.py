@@ -3,11 +3,9 @@
 
 import os
 import sys
-
-import numpy as np
 import pandas as pd
 import pickle as pkl
-
+from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from radical_workflow.parser.semiempirical_opt_parser import semiempirical_opt_parser
@@ -28,7 +26,7 @@ mol_ids = list(df.id)
 ##
 # mol_ids = mol_ids[:500]
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(semiempirical_opt_parser)(mol_id, mol_id_to_smi[mol_id]) for mol_id in mol_ids)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(semiempirical_opt_parser)(mol_id, mol_id_to_smi[mol_id]) for mol_id in tqdm(mol_ids))
 
 failed_jobs = dict()
 valid_jobs = dict()

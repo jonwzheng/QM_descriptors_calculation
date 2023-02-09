@@ -4,7 +4,7 @@ import os
 import sys
 import pandas as pd
 import pickle as pkl
-
+from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from radical_workflow.parser.dft_opt_freq_parser import dft_opt_freq_parser
@@ -20,7 +20,7 @@ df = pd.read_csv(input_smiles_path)
 mol_ids = df['id'].tolist()
 mol_id_to_smi = dict(zip(df['id'], df['smiles']))
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(dft_opt_freq_parser)(mol_id, mol_id_to_smi[mol_id]) for mol_id in mol_ids)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(dft_opt_freq_parser)(mol_id, mol_id_to_smi[mol_id]) for mol_id in tqdm(mol_ids))
 
 failed_jobs = dict()
 valid_jobs = dict()

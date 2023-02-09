@@ -5,6 +5,7 @@ import tarfile
 import pickle as pkl
 import pandas as pd
 from joblib import Parallel, delayed
+from tqdm import tqdm
 from radical_workflow.calculation.utils import REPLACE_LETTER
 
 def read_cosmo_tab_result_from_tar(f):
@@ -91,7 +92,7 @@ mol_ids = list(df.id)
 df_solvent = pd.read_csv(solvent_path)
 solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, df_solvent.smiles))
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in mol_ids)
+out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in tqdm(mol_ids))
 failed_mol_ids = [mol_ids[i] for i in range(len(mol_ids)) if out[i] is None]
 out = [x for x in out if x is not None]
 
