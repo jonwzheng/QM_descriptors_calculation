@@ -90,9 +90,9 @@ def fill_column(results_dict, hashed_table_df_dict, mol_id_to_index_dict, conf=F
                 for prop_name in success_dict[mol_id][min_energy_conf_id]:
                     columns_dict[f"{prop_name}_min_energy_conf"][index] = success_dict[mol_id][min_energy_conf_id][prop_name]
 
-        for column_name, column in columns_dict.items():
-            if not any(prop_name in column_name for prop_name in prop_names_to_remove):
-                df[column_name] = column
+        df2 = pd.DataFrame({column_name: column for column_name, column in columns_dict.items() if column_name not in prop_names_to_remove})
+        df = pd.concat([df, df2], axis=1)
+        hashed_table_df_dict[project] = df
 
     logging.warning("="*20)
 
