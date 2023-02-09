@@ -204,7 +204,7 @@ def combine_cosmo_results(results_dict, mol_id_to_index_dict):
     df = pd.DataFrame(columns=header)
     for project, cosmo_result in results_dict.items():
         cosmo_result["project"] = project
-        df = df.append(cosmo_result, ignore_index=True)
+        df = pd.concat([df, cosmo_result], axis=0)
     return df
 
 # logging.warning("Filling cosmo results")
