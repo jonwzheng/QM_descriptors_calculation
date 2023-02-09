@@ -115,6 +115,7 @@ def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
     with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
         pkl.dump(failed_mol_ids, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
+    print(f"Total number of jobs: {len(mol_ids)}")
     print(f"Failed mol ids: {len(failed_mol_ids)}")
     print(failed_mol_ids)
     os.remove(csv_file)
