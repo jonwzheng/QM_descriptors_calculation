@@ -74,51 +74,45 @@ def parser(mol_id):
     else:
         return None
 
-input_smiles_path = sys.argv[1]
-output_file_name = sys.argv[2]
-n_jobs = int(sys.argv[3])
-solvent_path = sys.argv[4]
+def main(input_smiles_path, output_file_name, n_jobs):
 
-submit_dir = os.getcwd()
+    submit_dir = os.getcwd()
 
-# input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
-# n_jobs = 8
-# output_file_name = "test"
+    df = pd.read_csv(input_smiles_path)
+    mol_ids = list(df.id)
 
-df = pd.read_csv(input_smiles_path)
-mol_id_to_smi = dict(zip(df.id, df.smiles))
-mol_ids = list(df.id)
+    out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in tqdm(mol_ids))
+    failed_mol_ids = [mol_ids[i] for i in range(len(mol_ids)) if out[i] is None]
+    out = [x for x in out if x is not None]
 
-df_solvent = pd.read_csv(solvent_path)
-solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, df_solvent.smiles))
+    csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
 
-out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in tqdm(mol_ids))
-failed_mol_ids = [mol_ids[i] for i in range(len(mol_ids)) if out[i] is None]
-out = [x for x in out if x is not None]
+    header = ['solvent_name', 'solvent_smiles', 'solute_name', 'solute_smiles', 'temp (K)',
+            'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
 
-csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
+    with open(csv_file , 'w') as csvfile:
+        # creating a csv writer object
+        csvwriter = csv.writer(csvfile)
+        # writing the header
+        csvwriter.writerow(header)
 
-header = ['solvent_name', 'solvent_smiles', 'solute_name', 'solute_smiles', 'temp (K)',
-        'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
+        for each_data_lists in out:
+            for each_data_list in each_data_lists:
+                csvwriter.writerows(each_data_list)
 
-with open(csv_file , 'w') as csvfile:
-    # creating a csv writer object
-    csvwriter = csv.writer(csvfile)
-    # writing the header
-    csvwriter.writerow(header)
+    with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
+        pkl.dump(failed_mol_ids, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
-    for each_data_lists in out:
-        for each_data_list in each_data_lists:
-            csvwriter.writerows(each_data_list)
+    print(f"Failed mol ids: {len(failed_mol_ids)}")
+    print(failed_mol_ids)
 
-df_result = pd.read_csv(csv_file)
+if __name__ == "__main__":
 
-with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
-    pkl.dump(df_result, outfile, protocol=pkl.HIGHEST_PROTOCOL)
+    input_smiles_path = sys.argv[1]
+    output_file_name = sys.argv[2]
+    n_jobs = int(sys.argv[3])
 
-with open(os.path.join(submit_dir, f'{output_file_name}_failed.pkl'), 'wb') as outfile:
-    pkl.dump(failed_mol_ids, outfile, protocol=pkl.HIGHEST_PROTOCOL)
-
-print(failed_mol_ids)
-
-os.remove(csv_file)
+    # input_smiles_path = "reactants_products_wb97xd_and_xtb_opted_ts_combo_results_hashed_chart_aug11b.csv"
+    # n_jobs = 8
+    # output_file_name = "test"
+    main(input_smiles_path, output_file_name, n_jobs)
