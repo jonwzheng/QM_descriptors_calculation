@@ -87,7 +87,7 @@ def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
     out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in tqdm(mol_ids))
     failed_mol_ids = [mol_ids[i] for i in range(len(mol_ids)) if out[i] is None]
     out = [x for x in out if x is not None]
-    for each_data_lists in out:
+    for each_data_lists in tqdm(out):
         for each_data_list in each_data_lists:
             for each_data in each_data_list:
                 each_data[1] = solvent_name_to_smi[each_data[0]]
