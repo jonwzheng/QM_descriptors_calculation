@@ -107,7 +107,7 @@ def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
             for each_data_list in each_data_lists:
                 csvwriter.writerows(each_data_list)
 
-    df_cos,o = pd.read_csv(csv_file)
+    df_cosmo = pd.read_csv(csv_file)
 
     with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
         pkl.dump(df_cosmo, outfile, protocol=pkl.HIGHEST_PROTOCOL)
