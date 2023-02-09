@@ -18,7 +18,10 @@ class OrcaLog(object):
             error = None
             for line in reversed(lines):
                 # check for common error messages
-                if 'ORCA finished by error termination in SCF' in line:
+                if 'This wavefunction IS NOT CONVERGED!' in line:
+                    error = 'This wavefunction IS NOT CONVERGED!'
+                    break
+                elif 'ORCA finished by error termination in SCF' in line:
                     error = 'SCF'
                     break
                 elif 'ORCA finished by error termination in MDCI' in line:
@@ -32,6 +35,7 @@ class OrcaLog(object):
                     break
                 elif 'ORCA finished by error termination in GTOInt' in line:
                     error = 'GTOInt'
+                    break
                 elif 'ORCA TERMINATED NORMALLY' in line:
                     break
         return error
