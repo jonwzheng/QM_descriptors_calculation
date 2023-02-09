@@ -3,10 +3,12 @@
 
 import os
 import re
-
 import numpy as np
+
 from rdmc.mol import RDKitMol
 from rdmc.external.gaussian import GaussianLog
+
+from .utils import make_xyz_str
 
 periodictable = ["", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
              "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br",
@@ -79,17 +81,6 @@ def get_wall(self):
             CPU = tuple([days, hours, mins, secs])
             return CPU
 
-
-# In[60]:
-
-
-def make_input_file_from_xyz(symbols, coords):
-    xyz_str = ''
-    for s, c in zip(symbols, coords):
-        xyz_str = xyz_str + f'{s}  {c[0]: .10f}  {c[1]: .10f}  {c[2]: .10f}\n'
-    return xyz_str
-
-
 # In[85]:
 
 
@@ -137,7 +128,7 @@ def load_geometry(self, periodictable=periodictable, initial=False, input_geom=F
     if not input_geom:
         symbol = [periodictable[x] for x in number]
 
-    xyz_str = make_input_file_from_xyz(symbol, coord)
+    xyz_str = make_xyz_str(symbol, coord)
     return xyz_str, step
 
 

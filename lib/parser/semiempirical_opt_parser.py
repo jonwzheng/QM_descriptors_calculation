@@ -5,10 +5,11 @@ import os
 import re
 import tarfile
 import numpy as np
-
-from rdmc.mol import RDKitMol
 import rdkit
 
+from rdmc.mol import RDKitMol
+
+from .utils import make_xyz_str
 
 periodictable = ["", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
              "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br",
@@ -111,7 +112,7 @@ def load_geometry(member, tar, periodictable=periodictable, initial=False):
     for x in zip(idx, symbol, coord):
         xyz_dict[x[0]] = (x[1], tuple(x[2]))
 
-    xyz_str = make_input_file_from_xyz(symbol, coord)
+    xyz_str = make_xyz_str(symbol, coord)
     return xyz_str, xyz_dict, step
 
 

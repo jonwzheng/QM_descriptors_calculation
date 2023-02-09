@@ -4,6 +4,23 @@
 import os
 from rdmc.mol import RDKitMol
 
+from .utils import make_xyz_str
+
+def load_geometry(mol):
+    xyz = mol.ToXYZ(header=False)
+
+    # to standardize the xyz format
+    symbols, coords = [], []
+    for line in xyz.splitlines():
+        line = line.split()
+        symbols.append(line[0])
+        coords.append([float(x) for x in line[1:]])
+    xyz_str = make_xyz_str(symbols, coords)
+    return xyz_str
+
+def load_energy(mol):
+    return mol.GetProp("ConfEnergies")
+
 def ff_conf_parser(mol_id, mol_smi, mol_confs_sdf=None):
 
     failed_job = dict()
@@ -31,8 +48,8 @@ def ff_conf_parser(mol_id, mol_smi, mol_confs_sdf=None):
             
             if (pre_adj == post_adj).all():
                 valid_job[mol_id][conf_id] = {}
-                xyz = mol.ToXYZ()
-                en = mol.GetProp("ConfEnergies")
+                xyz = get_geometry(mol)
+                en = get_energy(mol)
                 valid_job[mol_id][conf_id]["ff_xyz"] = xyz
                 valid_job[mol_id][conf_id]["ff_energy"] = en
             else:
