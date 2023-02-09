@@ -5,7 +5,7 @@ import tarfile
 import pickle as pkl
 import pandas as pd
 from joblib import Parallel, delayed
-from lib.utils import REPLACE_LETTER
+from radical_workflow.calculation.utils import REPLACE_LETTER
 
 def read_cosmo_tab_result_from_tar(f):
     """

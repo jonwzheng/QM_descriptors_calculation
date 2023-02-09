@@ -10,7 +10,7 @@ import pickle as pkl
 
 from joblib import Parallel, delayed
 
-from lib.parser.semiempirical_opt_parser import semiempirical_opt_parser
+from radical_workflow.parser.semiempirical_opt_parser import semiempirical_opt_parser
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]

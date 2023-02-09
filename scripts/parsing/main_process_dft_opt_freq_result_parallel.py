@@ -7,7 +7,7 @@ import pickle as pkl
 
 from joblib import Parallel, delayed
 
-from lib.parser.dft_opt_freq_parser import dft_opt_freq_parser
+from radical_workflow.parser.dft_opt_freq_parser import dft_opt_freq_parser
 
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
