@@ -1,6 +1,7 @@
 import os
 import tarfile
 import shutil
+import rdkit.Chem as Chem
 
 from rdmc.mol import RDKitMol
 from rdmc.forcefield import OpenBabelFF
@@ -9,7 +10,7 @@ from rdmc.ts import get_formed_and_broken_bonds
 from radical_workflow.calculation.semiempirical_calculation import run_xtb_opt
 from radical_workflow.calculation.utils import mol2charge, mol2mult, mol2xyz
 
-def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, subinputs_dir, suboutputs_dir, scratch_dir):
+def reset_r_p_complex_semi_opt(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, subinputs_dir, suboutputs_dir, scratch_dir):
     current_dir = os.path.abspath(os.getcwd())
 
     r_complex_smi, p_complex_smi = rxn_smi.split(">>")
@@ -19,32 +20,32 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
 
     formed_bonds, broken_bonds = get_formed_and_broken_bonds(r_complex, p_complex)
     
-    rmol_id = f"{ts_id}_r"
-    rmol_scratch_dir = os.path.join(scratch_dir, rmol_id)
+    r_complex_id = f"{ts_id}_r"
+    rmol_scratch_dir = os.path.join(scratch_dir, r_complex_id)
     os.makedirs(rmol_scratch_dir)
     os.chdir(rmol_scratch_dir)
     new_r_complex = reset_r_complex(ts_mol, r_complex, formed_bonds)
     xyz = mol2xyz(new_r_complex)
     charge = mol2charge(new_r_complex)
     mult = mol2mult(new_r_complex)
-    run_xtb_opt(xyz, charge, mult, rmol_id, rdmc_path, g16_path, n_procs, job_ram, level_of_theory)
-    # shutil.copyfile(f"{rmol_id}.gjf", os.path.join(suboutputs_dir, f"{rmol_id}.gjf"))
-    # shutil.copyfile(f"{rmol_id}.log", os.path.join(suboutputs_dir, f"{rmol_id}.log"))
-    # shutil.copyfile(f"{rmol_id}.out", os.path.join(suboutputs_dir, f"{rmol_id}.out"))
+    run_xtb_opt(xyz, charge, mult, r_complex_id, rdmc_path, g16_path, n_procs, job_ram, level_of_theory)
+    # shutil.copyfile(f"{r_complex_id}.gjf", os.path.join(suboutputs_dir, f"{r_complex_id}.gjf"))
+    # shutil.copyfile(f"{r_complex_id}.log", os.path.join(suboutputs_dir, f"{r_complex_id}.log"))
+    # shutil.copyfile(f"{r_complex_id}.out", os.path.join(suboutputs_dir, f"{r_complex_id}.out"))
     os.chdir(current_dir)
 
-    pmol_id = f"{ts_id}_p"
-    pmol_scratch_dir = os.path.join(scratch_dir, pmol_id)
+    p_complex_id = f"{ts_id}_p"
+    pmol_scratch_dir = os.path.join(scratch_dir, p_complex_id)
     os.makedirs(pmol_scratch_dir)
     os.chdir(pmol_scratch_dir) 
     new_p_complex = reset_p_complex(new_r_complex, p_complex, broken_bonds)
     xyz = mol2xyz(new_p_complex)
     charge = mol2charge(new_p_complex)
     mult = mol2mult(new_p_complex)
-    run_xtb_opt(xyz, charge, mult, pmol_id, rdmc_path, g16_path, n_procs, job_ram, level_of_theory)
-    # shutil.copyfile(f"{pmol_id}.gjf", os.path.join(suboutputs_dir, f"{pmol_id}.gjf"))
-    # shutil.copyfile(f"{pmol_id}.log", os.path.join(suboutputs_dir, f"{pmol_id}.log"))
-    # shutil.copyfile(f"{pmol_id}.out", os.path.join(suboutputs_dir, f"{pmol_id}.out"))
+    run_xtb_opt(xyz, charge, mult, p_complex_id, rdmc_path, g16_path, n_procs, job_ram, level_of_theory)
+    # shutil.copyfile(f"{p_complex_id}.gjf", os.path.join(suboutputs_dir, f"{p_complex_id}.gjf"))
+    # shutil.copyfile(f"{p_complex_id}.log", os.path.join(suboutputs_dir, f"{p_complex_id}.log"))
+    # shutil.copyfile(f"{p_complex_id}.out", os.path.join(suboutputs_dir, f"{p_complex_id}.out"))
     os.chdir(current_dir)
 
     ts_scratch_dir = os.path.join(scratch_dir, ts_id)
@@ -54,8 +55,8 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     #tar the cosmo, energy and tab files
     tar_file = f"{ts_id}.tar"
     tar = tarfile.open(tar_file, "w")
-    tar.add(os.path.join(rmol_scratch_dir, f"{rmol_id}.log"))
-    tar.add(os.path.join(pmol_scratch_dir, f"{pmol_id}.log"))
+    tar.add(os.path.join(rmol_scratch_dir, f"{r_complex_id}.log"))
+    tar.add(os.path.join(pmol_scratch_dir, f"{p_complex_id}.log"))
     tar.close()
 
     shutil.copyfile(tar_file, os.path.join(suboutputs_dir, tar_file))
@@ -69,53 +70,45 @@ def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theo
     shutil.rmtree(pmol_scratch_dir)
     shutil.rmtree(ts_scratch_dir)
 
-def reset_r_p_complex_FF_opt(rxn_smi, ts_xyz, ts_id, subinputs_dir, suboutputs_dir, scratch_dir):
+def reset_r_p_complex_ff_opt(rxn_smi, ts_xyz, ts_id, subinputs_dir, suboutputs_dir, scratch_dir):
     current_dir = os.path.abspath(os.getcwd())
 
     r_complex_smi, p_complex_smi = rxn_smi.split(">>")
-    r_complex = RDKitMol.FromSmiles(r_complex_smi)
-    p_complex = RDKitMol.FromSmiles(p_complex_smi)
+    r_complex = RDKitMol.FromSmiles(r_complex_smi, removeHs=False, sanitize=False)
+    p_complex = RDKitMol.FromSmiles(p_complex_smi, removeHs=False, sanitize=False)
     ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
 
     formed_bonds, broken_bonds = get_formed_and_broken_bonds(r_complex, p_complex)
     
-    rmol_id = f"{ts_id}_r"
-    rmol_scratch_dir = os.path.join(scratch_dir, rmol_id)
+    r_complex_id = f"{ts_id}_r"
+    rmol_scratch_dir = os.path.join(scratch_dir, r_complex_id)
     os.makedirs(rmol_scratch_dir)
     os.chdir(rmol_scratch_dir)
     new_r_complex = reset_r_complex(ts_mol, r_complex, formed_bonds)
-    new_r_complex.ToSDFFile(f"{rmol_id}.sdf")
     os.chdir(current_dir)
 
-    pmol_id = f"{ts_id}_p"
-    pmol_scratch_dir = os.path.join(scratch_dir, pmol_id)
+    p_complex_id = f"{ts_id}_p"
+    pmol_scratch_dir = os.path.join(scratch_dir, p_complex_id)
     os.makedirs(pmol_scratch_dir)
     os.chdir(pmol_scratch_dir) 
     new_p_complex = reset_p_complex(new_r_complex, p_complex, broken_bonds)
-    new_p_complex.ToSDFFile(f"{pmol_id}.sdf")
+
+    sdf_file = f"{ts_id}_r_p.sdf"
+    writer = Chem.rdmolfiles.SDWriter(sdf_file)
+    writer.write(new_r_complex._mol)
+    writer.write(new_p_complex._mol)
+    writer.close()
+
+    shutil.copyfile(sdf_file, os.path.join(suboutputs_dir, sdf_file))
     os.chdir(current_dir)
 
-    ts_scratch_dir = os.path.join(scratch_dir, ts_id)
-    os.makedirs(ts_scratch_dir)
-    os.chdir(ts_scratch_dir)
-
-    #tar the cosmo, energy and tab files
-    tar_file = f"{ts_id}.tar"
-    tar = tarfile.open(tar_file, "w")
-    tar.add(os.path.join(rmol_scratch_dir, f"{rmol_id}.sdf"))
-    tar.add(os.path.join(pmol_scratch_dir, f"{pmol_id}.sdf"))
-    tar.close()
-
-    shutil.copyfile(tar_file, os.path.join(suboutputs_dir, tar_file))
-    os.chdir(current_dir)
     try:
         os.remove(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
     except FileNotFoundError:
-        print("File not found")
+        print("File not found. Continuing...")
         print(os.path.join(subinputs_dir, f"{ts_id}.tmp"))
     shutil.rmtree(rmol_scratch_dir)
     shutil.rmtree(pmol_scratch_dir)
-    shutil.rmtree(ts_scratch_dir)
 
 def reset_r_complex(ts_mol, r_complex, formed_bonds):
     # copy current r_complex and set new positions
