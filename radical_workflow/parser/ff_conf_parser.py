@@ -48,8 +48,8 @@ def ff_conf_parser(mol_id, mol_smi, mol_confs_sdf=None):
             
             if (pre_adj == post_adj).all():
                 valid_job[mol_id][conf_id] = {}
-                xyz = get_geometry(mol)
-                en = get_energy(mol)
+                xyz = load_geometry(mol)
+                en = load_energy(mol)
                 valid_job[mol_id][conf_id]["ff_xyz"] = xyz
                 valid_job[mol_id][conf_id]["ff_energy"] = en
             else:
