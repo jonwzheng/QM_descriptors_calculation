@@ -89,8 +89,9 @@ def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
     out = [x for x in out if x is not None]
     for each_data_lists in out:
         for each_data_list in each_data_lists:
-            each_data_list[1] = solvent_name_to_smi[each_data_list[0]]
-            each_data_list[3] = mol_id_to_mol_smi[each_data_list[2]]
+            for each_data in each_data_list:
+                each_data[1] = solvent_name_to_smi[each_data[0]]
+                each_data[3] = mol_id_to_mol_smi[each_data[2]]
 
     csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
 
