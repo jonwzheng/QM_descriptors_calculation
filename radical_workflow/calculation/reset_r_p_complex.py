@@ -6,8 +6,8 @@ from rdmc.mol import RDKitMol
 from rdmc.forcefield import OpenBabelFF
 from rdmc.ts import get_formed_and_broken_bonds
 
-from lib.semiempirical_calculation import run_xtb_opt
-from lib.utils import mol2charge, mol2mult, mol2xyz
+from radical_workflow.calculation.semiempirical_calculation import run_xtb_opt
+from radical_workflow.calculation.utils import mol2charge, mol2mult, mol2xyz
 
 def reset_r_p_complex(rxn_smi, ts_xyz, ts_id, rdmc_path, g16_path, level_of_theory, n_procs, job_ram, subinputs_dir, suboutputs_dir, scratch_dir):
     current_dir = os.path.abspath(os.getcwd())
