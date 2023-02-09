@@ -55,7 +55,7 @@ def get_dHsolv_value(each_data_list):
     each_data_list[ind_298][9] = '%.8f' % dHsolv_298
     return each_data_list
 
-def parser(mol_id, mol_smi):
+def parser(mol_id):
     ids = str(int(int(mol_id.split("id")[1])/1000))
     tar_file_path = os.path.join("output", "COSMO_calc", "outputs", f"outputs_{ids}", f"{mol_id}.tar")
     if os.path.isfile(tar_file_path):
