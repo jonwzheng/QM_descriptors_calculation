@@ -6,7 +6,7 @@ import time
 from rdkit import Chem
 from rdmc.mol import RDKitMol
 
-from lib.FF_conf_generation import _genConf
+from lib.ff_conf_generation import _genConf
 from lib.semiempirical_calculation import semiempirical_opt
 from lib.dft_calculation import dft_scf_opt
 from lib.parser.semiempirical_opt_parser import semiempirical_opt_parser, get_mol_id_to_semiempirical_opted_xyz
