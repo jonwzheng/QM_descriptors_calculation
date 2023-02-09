@@ -237,11 +237,9 @@ elif job_type == "ts":
 
 logging.warning("Saving cosmo results table")
 if job_type == "reactants_products":
-    with open("./calculations/reactants_products_aug11b_sep1a_filtered_cosmo_results_table.pkl", "wb") as f:
-        pkl.dump(df_cosmo, f, protocol=pkl.HIGHEST_PROTOCOL)
+    df_cosmo.to_csv("./calculations/reactants_products_aug11b_sep1a_filtered_cosmo_results_table.csv", index=False)
 elif job_type == "ts":
-    with open("./calculations/ts_sep1a_cosmo_results_table.pkl", "wb") as f:
-        pkl.dump(df_cosmo, f, protocol=pkl.HIGHEST_PROTOCOL)
+    df_cosmo.to_csv("./calculations/ts_sep1a_cosmo_results_table.csv", index=False)
 
 logging.warning("Done")
 end_time = time.time()
