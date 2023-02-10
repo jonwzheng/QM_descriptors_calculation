@@ -20,19 +20,19 @@ elif job_type == "ts":
     projects = ["sep1a"]
 logging.warning(f"projects = {projects}")
 
-logging.warning("Loading hashed tables")
-hashed_table_df_dict = {}
+logging.warning("Loading inputs tables")
+inputs_df_dict = {}
 if job_type == "reactants_products":
-    hashed_table_df_dict["aug11b"] = pd.read_csv("./calculations/aug11b/inputs/reactants_products_aug11b_inputs.csv", index_col=0)
-    hashed_table_df_dict["sep1a_filtered"] = pd.read_csv("./calculations/sep1a_filtered/inputs/reactants_products_sep1a_filtered_inputs.csv", index_col=0)
+    inputs_df_dict["aug11b"] = pd.read_csv("./calculations/aug11b/inputs/reactants_products_aug11b_inputs.csv", index_col=0)
+    inputs_df_dict["sep1a_filtered"] = pd.read_csv("./calculations/sep1a_filtered/inputs/reactants_products_sep1a_filtered_inputs.csv", index_col=0)
 elif job_type == "ts":
-    hashed_table_df_dict["sep1a"] = pd.read_csv("./calculations/sep1a/inputs/ts_sep1a_inputs.csv", index_col=0)
+    inputs_df_dict["sep1a"] = pd.read_csv("./calculations/sep1a/inputs/ts_sep1a_inputs.csv", index_col=0)
 
-for project, df in hashed_table_df_dict.items():
+for project, df in inputs_df_dict.items():
     df["project"] = [project for i in df.index]
 
 mol_id_to_index_dict = {}
-for project, df in hashed_table_df_dict.items():
+for project, df in inputs_df_dict.items():
     mol_id_to_index_dict[project] = {}
     for index, mol_id in zip(df.index, df.id):
         mol_id_to_index_dict[project][mol_id] = index
@@ -45,8 +45,8 @@ def find_min_energy_conf(mol_dict):
     lowest_conf_ind = conf_ids[np.argsort(ens)[0]]
     return lowest_conf_ind
 
-def fill_column(results_dict, hashed_table_df_dict, mol_id_to_index_dict, conf=False, semiempirical=False):
-    for project, df in hashed_table_df_dict.items():
+def fill_column(results_dict, inputs_df_dict, mol_id_to_index_dict, conf=False, semiempirical=False):
+    for project, df in inputs_df_dict.items():
         
         success_dict = results_dict[project]
         
@@ -92,7 +92,7 @@ def fill_column(results_dict, hashed_table_df_dict, mol_id_to_index_dict, conf=F
 
         df2 = pd.DataFrame({column_name: column for column_name, column in columns_dict.items() if column_name not in prop_names_to_remove})
         df = pd.concat([df, df2], axis=1)
-        hashed_table_df_dict[project] = df
+        inputs_df_dict[project] = df
 
     logging.warning("="*20)
 
@@ -107,12 +107,12 @@ if job_type == "reactants_products":
 
     logging.warning("Filling ff results")
     start_time_1 = time.time()
-    fill_column(ff_results_dict, hashed_table_df_dict, mol_id_to_index_dict, conf=True)
+    fill_column(ff_results_dict, inputs_df_dict, mol_id_to_index_dict, conf=True)
     end_time_1 = time.time()
     logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 
     logging.warning("Columns")
-    logging.warning(hashed_table_df_dict[projects[0]].columns)
+    logging.warning(inputs_df_dict[projects[0]].columns)
 
     logging.warning("Loading semiempirical results")
     semi_results_dict = {}
@@ -123,12 +123,12 @@ if job_type == "reactants_products":
 
     logging.warning("Filling semiempirical results")
     start_time_1 = time.time()
-    fill_column(semi_results_dict, hashed_table_df_dict, mol_id_to_index_dict, conf=True, semiempirical=True)
+    fill_column(semi_results_dict, inputs_df_dict, mol_id_to_index_dict, conf=True, semiempirical=True)
     end_time_1 = time.time()
     logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 
     logging.warning("Columns")
-    logging.warning(hashed_table_df_dict[projects[0]].columns)
+    logging.warning(inputs_df_dict[projects[0]].columns)
 
     logging.warning("Loading dft results")
     dft_results_dict = {}
@@ -139,12 +139,12 @@ if job_type == "reactants_products":
 
     logging.warning("Filling dft results")
     start_time_1 = time.time()
-    fill_column(dft_results_dict, hashed_table_df_dict, mol_id_to_index_dict, conf=False)
+    fill_column(dft_results_dict, inputs_df_dict, mol_id_to_index_dict, conf=False)
     end_time_1 = time.time()
     logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 
     logging.warning("Columns")
-    logging.warning(hashed_table_df_dict[projects[0]].columns)
+    logging.warning(inputs_df_dict[projects[0]].columns)
 
 logging.warning("Loading dlpno results")
 dlpno_results_dict = {}
@@ -159,12 +159,12 @@ elif job_type == "ts":
 
 logging.warning("Filling dlpno results")
 start_time_1 = time.time()
-fill_column(dlpno_results_dict, hashed_table_df_dict, mol_id_to_index_dict, conf=False)
+fill_column(dlpno_results_dict, inputs_df_dict, mol_id_to_index_dict, conf=False)
 end_time_1 = time.time()
 logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 
 logging.warning("Columns")
-logging.warning(hashed_table_df_dict[projects[0]].columns)
+logging.warning(inputs_df_dict[projects[0]].columns)
 
 logging.warning("Loading cosmo results")
 cosmo_results_dict = {}
@@ -179,7 +179,7 @@ elif job_type == "ts":
 
 def fill_column_cosmo(results_dict, hased_table_df_dict, mol_id_to_index_dict):
     props = ['H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
-    for project, df in hashed_table_df_dict.items():
+    for project, df in inputs_df_dict.items():
         cosmo_result = results_dict[project]
 
         solvent_names = cosmo_result["solvent_name"].unique()
@@ -209,41 +209,41 @@ def combine_cosmo_results(results_dict, mol_id_to_index_dict):
 
 # logging.warning("Filling cosmo results")
 # start_time_1 = time.time()
-# fill_column_cosmo(cosmo_results_dict, hashed_table_df_dict, mol_id_to_index_dict)
+# fill_column_cosmo(cosmo_results_dict, inputs_df_dict, mol_id_to_index_dict)
 # end_time_1 = time.time()
 # logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 # logging.warning("Columns")
-# logging.warning(hashed_table_df_dict[projects[0]].columns)
+# logging.warning(inputs_df_dict[projects[0]].columns)
 
 logging.warning("Combining cosmo results")
 start_time_1 = time.time()
-df_cosmo = combine_cosmo_results(cosmo_results_dict, mol_id_to_index_dict)
+cosmo_df_merged = combine_cosmo_results(cosmo_results_dict, mol_id_to_index_dict)
 end_time_1 = time.time()
 logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 
 logging.warning("Concatenating hashed tables")
-df_merged = pd.concat(list(hashed_table_df_dict.values()), ignore_index=True)
+results_df_merged = pd.concat(list(inputs_df_dict.values()), ignore_index=True)
 
 if job_type == "reactants_products":
-    df_merged["dft_input_xyz_source"] = [None for _ in df_merged.index]
-    df_merged.loc[df_merged["dft_input_xyz"] != None,"dft_input_xyz_source"] = "semiempirical_xyz_min_energy_conf"
-    df_merged.loc[(df_merged["ff_xyz_conf_0"] == df_merged["dft_input_xyz"]), "dft_input_xyz_source"] = "ff_xyz_conf_0"
+    results_df_merged["dft_input_xyz_source"] = [None for _ in results_df_merged.index]
+    results_df_merged.loc[results_df_merged["dft_input_xyz"] != None,"dft_input_xyz_source"] = "semiempirical_xyz_min_energy_conf"
+    results_df_merged.loc[(results_df_merged["ff_xyz_conf_0"] == results_df_merged["dft_input_xyz"]), "dft_input_xyz_source"] = "ff_xyz_conf_0"
 
 logging.warning("Saving all results table")
 if job_type == "reactants_products":
     with open("./calculations/reactants_products_aug11b_sep1a_filtered_gfnff_xtb_wb97xd_dlpno_results_table.pkl", "wb") as f:
-        pkl.dump(df_merged, f, protocol=pkl.HIGHEST_PROTOCOL)
+        pkl.dump(results_df_merged, f, protocol=pkl.HIGHEST_PROTOCOL)
 elif job_type == "ts":
     with open("./calculations/ts_sep1a_dlpno_results_table.pkl", "wb") as f:
-        pkl.dump(df_merged, f, protocol=pkl.HIGHEST_PROTOCOL)
+        pkl.dump(results_df_merged, f, protocol=pkl.HIGHEST_PROTOCOL)
 
 logging.warning("Saving cosmo results table")
 if job_type == "reactants_products":
     with open("./calculations/reactants_products_aug11b_sep1a_filtered_cosmo_results_table.pkl", "wb") as f:
-        pkl.dump(df_cosmo, f, protocol=pkl.HIGHEST_PROTOCOL)
+        pkl.dump(cosmo_df_merged, f, protocol=pkl.HIGHEST_PROTOCOL)
 elif job_type == "ts":
     with open("./calculations/ts_sep1a_cosmo_results_table.pkl", "wb") as f:
-        pkl.dump(df_cosmo, f, protocol=pkl.HIGHEST_PROTOCOL)
+        pkl.dump(cosmo_df_merged, f, protocol=pkl.HIGHEST_PROTOCOL)
 
 logging.warning("Done")
 end_time = time.time()
