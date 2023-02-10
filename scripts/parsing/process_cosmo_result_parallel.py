@@ -96,22 +96,17 @@ def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
                 each_data[1] = solvent_name_to_smi[each_data[0]]
                 each_data[3] = mol_id_to_mol_smi[each_data[2]]
 
-    csv_file = os.path.join(submit_dir, f'{output_file_name}.csv')
-
-    header = ['solvent_name', 'solvent_smiles', 'solute_name', 'solute_smiles', 'temp (K)',
+    headers = ['solvent_name', 'solvent_smiles', 'solute_name', 'solute_smiles', 'temp (K)',
             'H (bar)', 'ln(gamma)', 'Pvap (bar)', 'Gsolv (kcal/mol)', 'Hsolv (kcal/mol)']
 
-    with open(csv_file , 'w') as csvfile:
-        # creating a csv writer object
-        csvwriter = csv.writer(csvfile)
-        # writing the header
-        csvwriter.writerow(header)
+    cosmo_data_dict = {header: [] for header in headers}
+    for each_data_lists in tqdm(out):
+        for each_data_list in each_data_lists:
+            for each_data in each_data_list:
+                for i, header in enumerate(headers):
+                    cosmo_data_dict[header].append(each_data[i])
 
-        for each_data_lists in out:
-            for each_data_list in each_data_lists:
-                csvwriter.writerows(each_data_list)
-
-    df_cosmo = pd.read_csv(csv_file)
+    df_cosmo = pd.DataFrame(cosmo_data_dict)
 
     with open(os.path.join(submit_dir, f'{output_file_name}.pkl'), 'wb') as outfile:
         pkl.dump(df_cosmo, outfile, protocol=pkl.HIGHEST_PROTOCOL)
@@ -122,7 +117,6 @@ def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
     print(f"Total number of jobs: {len(mol_ids)}")
     print(f"Failed mol ids: {len(failed_mol_ids)}")
     print(failed_mol_ids)
-    os.remove(csv_file)
 
 if __name__ == "__main__":
 
