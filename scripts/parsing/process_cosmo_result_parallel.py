@@ -78,11 +78,14 @@ def main(input_smiles_path, output_file_name, n_jobs, solvent_path):
 
     df_solute = pd.read_csv(input_smiles_path)
     mol_ids = list(df_solute.id)
-    mol_smis = list(df_solute.smiles)
+    if 'smiles' in df_solute.columns:
+        mol_smis = list(df_solute.smiles)
+    else:
+        mol_smis = list(df_solute.rxn_smi)
     mol_id_to_mol_smi = dict(zip(mol_ids, mol_smis))
 
     df_solvent = pd.read_csv(solvent_path)
-    solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, df_solvent.smiles))
+    solvent_name_to_smi = dict(zip(df_solvent.cosmo_name, mol_smis))
 
     out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(mol_id) for mol_id in tqdm(mol_ids))
     failed_mol_ids = [mol_ids[i] for i in range(len(mol_ids)) if out[i] is None]
