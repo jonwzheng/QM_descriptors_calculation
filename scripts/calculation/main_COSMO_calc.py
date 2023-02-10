@@ -21,8 +21,6 @@ parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
 parser.add_argument('--scratch_dir', type=str, required=True,
                     help='scfratch directory')
-parser.add_argument('--xyz_DFT_opt_dict', type=str, default=None,
-                    help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
 parser.add_argument('--task_id', type=int, default=0,
                     help='task id for the calculation',)
 parser.add_argument('--num_tasks', type=int, default=1,
@@ -53,13 +51,16 @@ parser.add_argument('--ORCA_path', type=str, required=False, default=None,
 args = parser.parse_args()
 
 # input files
-with open(args.xyz_DFT_opt_dict, "rb") as f:
-    xyz_DFT_opt_dict = pkl.load(f)
-
 df = pd.read_csv(args.input_smiles, index_col=0)
 
-# create id to smile mapping
-mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
+if "smiles" in df.columns:
+    mol_smis = list(df.smiles)
+elif "rxn_smi" in df.columns:
+    mol_smis = list(df.rxn_smi)
+else:
+    raise ValueError("Cannot find smiles or rxn_smi in input file.")
+
+mol_id_to_smi_dict = dict(zip(df.id, mol_smis))
 mol_id_to_charge_dict = dict()
 mol_id_to_mult_dict = dict()
 for k, v in mol_id_to_smi_dict.items():
@@ -98,9 +99,6 @@ outputs_dir = os.path.join(COSMO_dir, "outputs")
 os.makedirs(outputs_dir, exist_ok=True)
 
 print("Making helper input files...")
-
-with open(args.xyz_DFT_opt_dict, "rb") as f:
-    xyz_DFT_opt_dict = pkl.load(f)
 
 mol_ids_smis = list(zip(mol_ids, smiles_list))
 for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
