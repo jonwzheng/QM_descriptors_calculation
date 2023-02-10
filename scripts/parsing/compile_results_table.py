@@ -223,9 +223,11 @@ logging.warning(f"Time taken: {end_time_1 - start_time_1}")
 
 logging.warning("Concatenating hashed tables")
 df_merged = pd.concat(list(hashed_table_df_dict.values()), ignore_index=True)
-df_merged["dft_input_xyz_source"] = [None for _ in df_merged.index]
-df_merged.loc[df_merged["dft_input_xyz"] != None,"dft_input_xyz_source"] = "semiempirical_xyz_min_energy_conf"
-df_merged.loc[(df_merged["ff_xyz_conf_0"] == df_merged["dft_input_xyz"]), "dft_input_xyz_source"] = "ff_xyz_conf_0"
+
+if job_type == "reactants_products":
+    df_merged["dft_input_xyz_source"] = [None for _ in df_merged.index]
+    df_merged.loc[df_merged["dft_input_xyz"] != None,"dft_input_xyz_source"] = "semiempirical_xyz_min_energy_conf"
+    df_merged.loc[(df_merged["ff_xyz_conf_0"] == df_merged["dft_input_xyz"]), "dft_input_xyz_source"] = "ff_xyz_conf_0"
 
 logging.warning("Saving all results table")
 if job_type == "reactants_products":
