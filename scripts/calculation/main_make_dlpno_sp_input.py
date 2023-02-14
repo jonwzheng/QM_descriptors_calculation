@@ -4,7 +4,7 @@ import pickle as pkl
 import pandas as pd
 import rdkit.Chem as Chem
 
-from lib.wft_calculation import generate_dlpno_sp_input
+from radical_workflow.calculation.wft_calculation import generate_dlpno_sp_input
 
 parser = ArgumentParser()
 parser.add_argument('--input_smiles', type=str, required=True,
@@ -20,7 +20,7 @@ parser.add_argument('--num_tasks', type=int, default=1,
 
 #dlpno sp
 parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
-parser.add_argument('--DLPNO_sp_n_procs', type=int, default=22,
+parser.add_argument('--DLPNO_sp_n_procs', type=int, default=24,
                     help='number of process for DLPNO calculations')
 parser.add_argument('--DLPNO_sp_job_ram', type=int, default=3900,
                     help='amount of ram (MB) per core allocated for each DLPNO calculation')
@@ -99,14 +99,15 @@ for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
         subinputs_dir = os.path.join(inputs_dir, f"inputs_{ids}")
         suboutputs_dir = os.path.join(outputs_dir, f"outputs_{ids}")
         os.makedirs(suboutputs_dir, exist_ok=True)
-        mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
-        if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.log")) and not os.path.exists(mol_id_path):
+        if not os.path.exists(os.path.join(suboutputs_dir, f"{mol_id}.log")):
             os.makedirs(subinputs_dir, exist_ok=True)
-            charge = mol_id_to_charge_dict[mol_id]
-            mult = mol_id_to_mult_dict[mol_id]
-            coords = xyz_DFT_opt_dict[mol_id].strip()
-            script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
+            mol_id_path = os.path.join(subinputs_dir, f"{mol_id}.in")
+            if not os.path.exists(os.path.join(subinputs_dir, f"{mol_id}.tmp")) and not os.path.exists(mol_id_path):
+                charge = mol_id_to_charge_dict[mol_id]
+                mult = mol_id_to_mult_dict[mol_id]
+                coords = xyz_DFT_opt_dict[mol_id].strip()
+                script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
 
-            with open(mol_id_path, "w+") as f:
-                f.write(script)
-            print(mol_id)
+                with open(mol_id_path, "w+") as f:
+                    f.write(script)
+                print(mol_id)
