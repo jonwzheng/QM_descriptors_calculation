@@ -42,7 +42,9 @@ echo $PATH
 
 #inputs
 input_smiles=$1
+echo $input_smiles
 output_name=$2
+echo $output_name
 xyz_DFT_opt_dict=${output_name}_dft_opted_results_xyz.pkl
 DLPNO_sp_n_procs=24
 DLPNO_sp_job_ram=4000
