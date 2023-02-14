@@ -12,7 +12,7 @@ source /state/partition1/llgrid/pkg/anaconda/anaconda3-2022b/etc/profile.d/conda
 conda activate rdmc_env
 which python
 
-#RDMC for gaussian-xtb
+#RDMC
 RDMC_PATH=/home/gridsan/groups/RMG/Software/RDMC-main
 export PATH=$RDMC_PATH:$PATH
 export PYTHONPATH=$RDMC_PATH:$PYTHONPATH
@@ -20,13 +20,15 @@ export PYTHONPATH=$RDMC_PATH:$PYTHONPATH
 #QMD
 QMD_PATH=/home/gridsan/groups/RMG/Software/QM_descriptors_calculation-radical_workflow
 export PYTHONPATH=$QMD_PATH:$PYTHONPATH
-input_smiles=../../../ts_calculations/calculations/feb9a/inputs/ts_feb9a_inputs.csv
+
+#input
+input_smiles=$1
 
 scratch_dir=$TMPDIR/$USER/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$LLSUB_RANK-$LLSUB_SIZE
 mkdir -p $scratch_dir
 echo $scratch_dir
 
 #r p complex semi opt
-python $QMD_PATH/scripts/calculation/ff_opt_r_p_complex.py.py --input_smiles $input_smiles --RDMC_path $RDMC_PATH --scratch_dir $scratch_dir
+python $QMD_PATH/scripts/r_p_complex/reset_r_p_complex.py --input_smiles $input_smiles --RDMC_path $RDMC_PATH --scratch_dir $scratch_dir --task_id $LLSUB_RANK --num_tasks $LLSUB_SIZE
 
 rm -rf $scratch_dir
