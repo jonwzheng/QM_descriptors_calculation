@@ -111,3 +111,5 @@ for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
                 with open(mol_id_path, "w+") as f:
                     f.write(script)
                 print(mol_id)
+
+print("Done!")
