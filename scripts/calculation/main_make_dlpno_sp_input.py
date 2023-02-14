@@ -94,7 +94,7 @@ os.makedirs(outputs_dir, exist_ok=True)
 
 print("Make dlpno input files...")
 
-mol_ids_smis = zip(mol_ids, smiles_list)
+mol_ids_smis = list(zip(mol_ids, smiles_list))
 for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
     if mol_id in xyz_DFT_opt_dict:
         ids = str(int(int(mol_id.split("id")[1])/1000))
