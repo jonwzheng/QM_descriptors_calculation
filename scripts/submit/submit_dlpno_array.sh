@@ -112,14 +112,14 @@ for i in {1..5}; do
                                 cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
                                 rm $folder/$input.tmp
                             else
-                                echo "failed"
+                                echo "failed - unknown error"
                                 cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
                                 mv $folder/$input.tmp $folder/$input.in
                             fi
                         fi
                     fi
                 else
-                    echo "failed"
+                    echo "failed - no log file"
                     mv $folder/$input.tmp $folder/$input.in
                 fi
                 cd $SubmitDir
@@ -192,14 +192,14 @@ for i in {1..5}; do
                                 cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
                                 rm $folder/$input.tmp
                             else
-                                echo "failed"
+                                echo "failed - unknown error"
                                 cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
                                 mv $folder/$input.tmp $folder/$input.in
                             fi
                         fi
                     fi
                 else
-                    echo "failed"
+                    echo "failed - no log file"
                     mv $folder/$input.tmp $folder/$input.in
                 fi
                 cd $SubmitDir
