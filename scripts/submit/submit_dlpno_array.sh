@@ -113,6 +113,7 @@ for i in {1..5}; do
                                 rm $folder/$input.tmp
                             else
                                 echo "failed"
+                                cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
                                 mv $folder/$input.tmp $folder/$input.in
                             fi
                         fi
@@ -192,6 +193,7 @@ for i in {1..5}; do
                                 rm $folder/$input.tmp
                             else
                                 echo "failed"
+                                cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
                                 mv $folder/$input.tmp $folder/$input.in
                             fi
                         fi
