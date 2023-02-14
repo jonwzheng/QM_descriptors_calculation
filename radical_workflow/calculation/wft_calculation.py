@@ -51,25 +51,22 @@ def dlpno_sp_calc(mol_id, orca_path, charge, mult, n_procs, job_ram, xyz_DFT_opt
         os.chdir(mol_dir)
         raise RuntimeError(f"ORCA calculation failed for {mol_id}")
 
-def generate_dlpno_sp_input(xyz_str: str,
-                                charge: int,
-                                multiplicity: int,
-                                memory_mb: int,
-                                cpu_threads: int,
-                                ) -> str:
+def generate_dlpno_sp_input(level_of_theory: str,
+                            xyz_str: str,
+                            charge: int,
+                            multiplicity: int,
+                            memory_mb: int,
+                            cpu_threads: int,
+                            ) -> str:
     """
     Modified from ACS
     """
+    
+    script = f"""!{level_of_theory}
 
-    if multiplicity == 1:
-        reference = 'rHF'
-    elif multiplicity == 2:
-        reference = 'uHF'
-    else:
-        raise NotImplementedError
-
-    script = f"""!{reference} dlpno-ccsd(t) def2-svp def2-svp/c TightSCF NormalPNO
-!sp 
+%mdci
+UseFullLmp2Guess False
+end
 
 %maxcore {memory_mb}
 %pal

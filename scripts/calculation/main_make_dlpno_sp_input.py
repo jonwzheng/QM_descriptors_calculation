@@ -19,10 +19,12 @@ parser.add_argument('--num_tasks', type=int, default=1,
                     help='number of tasks for the calculation',)
 
 #dlpno sp
-parser.add_argument('--DLPNO_sp_folder', type=str, default='DLPNO_sp')
+parser.add_argument('--DLPNO_sp_folder', type=str, required=True, option=['DLPNO_sp', 'DLPNO_sp_f12'],)
+parser.add_argument('--DLPNO_level_of_theory', type=str, required=True, option=['uHF dlpno-ccsd(t) def2-svp def2-svp/c TightSCF NormalPNO', 'uHF UNO DLPNO-CCSD(T)-F12D cc-pvtz-f12 def2/J cc-pvqz/c cc-pvqz-f12-cabs RIJCOSX VeryTightSCF NormalPNO'],
+                    help='level of theory for DLPNO calculation')
 parser.add_argument('--DLPNO_sp_n_procs', type=int, default=24,
                     help='number of process for DLPNO calculations')
-parser.add_argument('--DLPNO_sp_job_ram', type=int, default=3900,
+parser.add_argument('--DLPNO_sp_job_ram', type=int, default=4000,
                     help='amount of ram (MB) per core allocated for each DLPNO calculation')
 
 # specify paths
@@ -106,7 +108,7 @@ for mol_id, smi in mol_ids_smis[args.task_id::args.num_tasks]:
                 charge = mol_id_to_charge_dict[mol_id]
                 mult = mol_id_to_mult_dict[mol_id]
                 coords = xyz_DFT_opt_dict[mol_id].strip()
-                script = generate_dlpno_sp_input(coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
+                script = generate_dlpno_sp_input(args.DLPNO_level_of_theory, coords, charge, mult, args.DLPNO_sp_job_ram, args.DLPNO_sp_n_procs)
 
                 with open(mol_id_path, "w+") as f:
                     f.write(script)
