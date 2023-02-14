@@ -105,6 +105,7 @@ for i in {1..5}; do
                             echo "done with error termination"
                             cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
                             rm $folder/$input.tmp
+                        else
                             if grep -Fq "The basis set was either not assigned or not available for this element" $input.log
                             then
                                 echo "basis set not available"
@@ -114,9 +115,6 @@ for i in {1..5}; do
                                 echo "failed"
                                 mv $folder/$input.tmp $folder/$input.in
                             fi
-                        else
-                            echo "failed"
-                            mv $folder/$input.tmp $folder/$input.in
                         fi
                     fi
                 else
@@ -186,6 +184,7 @@ for i in {1..5}; do
                             echo "done with error termination"
                             cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
                             rm $folder/$input.tmp
+                        else
                             if grep -Fq "The basis set was either not assigned or not available for this element" $input.log
                             then
                                 echo "basis set not available"
@@ -195,9 +194,6 @@ for i in {1..5}; do
                                 echo "failed"
                                 mv $folder/$input.tmp $folder/$input.in
                             fi
-                        else
-                            echo "failed"
-                            mv $folder/$input.tmp $folder/$input.in
                         fi
                     fi
                 else
