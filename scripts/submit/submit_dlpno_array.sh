@@ -99,24 +99,25 @@ for i in {1..5}; do
                         echo "done"
                         cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
                         rm $folder/$input.tmp
+                    elif grep -Fq "ORCA finished by error termination" $input.log
+                    then
+                        echo "done with error termination"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
+                        rm $folder/$input.tmp
+                    elif grep -Fq "The basis set was either not assigned or not available for this element" $input.log
+                    then
+                        echo "basis set not available"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
+                        rm $folder/$input.tmp
+                    elif grep -Fq "This wavefunction IS NOT FULLY CONVERGED!" $input.log
+                    then
+                        echo "wavefunction not converged"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
+                        rm $folder/$input.tmp
                     else
-                        if grep -Fq "ORCA finished by error termination" $input.log
-                        then
-                            echo "done with error termination"
-                            cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
-                            rm $folder/$input.tmp
-                        else
-                            if grep -Fq "The basis set was either not assigned or not available for this element" $input.log
-                            then
-                                echo "basis set not available"
-                                cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
-                                rm $folder/$input.tmp
-                            else
-                                echo "failed - unknown error"
-                                cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
-                                mv $folder/$input.tmp $folder/$input.in
-                            fi
-                        fi
+                        echo "failed - unknown error"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
+                        mv $folder/$input.tmp $folder/$input.in
                     fi
                 else
                     echo "failed - no log file"
@@ -179,24 +180,25 @@ for i in {1..5}; do
                         echo "done"
                         cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
                         rm $folder/$input.tmp
+                    elif grep -Fq "ORCA finished by error termination" $input.log
+                    then
+                        echo "done with error termination"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
+                        rm $folder/$input.tmp
+                    elif grep -Fq "The basis set was either not assigned or not available for this element" $input.log
+                    then
+                        echo "basis set not available"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
+                        rm $folder/$input.tmp
+                    elif grep -Fq "This wavefunction IS NOT FULLY CONVERGED!" $input.log
+                    then
+                        echo "wavefunction not converged"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
+                        rm $folder/$input.tmp
                     else
-                        if grep -Fq "ORCA finished by error termination" $input.log
-                        then
-                            echo "done with error termination"
-                            cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
-                            rm $folder/$input.tmp
-                        else
-                            if grep -Fq "The basis set was either not assigned or not available for this element" $input.log
-                            then
-                                echo "basis set not available"
-                                cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
-                                rm $folder/$input.tmp
-                            else
-                                echo "failed - unknown error"
-                                cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
-                                mv $folder/$input.tmp $folder/$input.in
-                            fi
-                        fi
+                        echo "failed - unknown error"
+                        cp $input.log $SubmitDir/output/$DLPNO_sp_folder/inputs/inputs_$folderind/
+                        mv $folder/$input.tmp $folder/$input.in
                     fi
                 else
                     echo "failed - no log file"
