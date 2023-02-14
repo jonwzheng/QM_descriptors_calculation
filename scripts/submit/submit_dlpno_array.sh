@@ -100,7 +100,7 @@ for i in {1..5}; do
                         cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
                         rm $folder/$input.tmp
                     else
-                        if [ grep -Fq "ORCA finished by error termination" $input.log ] || [ grep -Fq "The basis set was either not assigned or not available for this element" $input.log ]
+                        if [[ grep -Fq "ORCA finished by error termination" $input.log || grep -Fq "The basis set was either not assigned or not available for this element" $input.log ]]
                         then
                             echo "done with error termination or basis set not available"
                             cp $input.log $SubmitDir/output/$DLPNO_sp_folder/outputs/outputs_$folderind/
