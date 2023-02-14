@@ -11,8 +11,8 @@ import traceback
 
 from rdkit import Chem
 
-from lib.wft_calculation import generate_dlpno_sp_input
-from lib.cosmo_calculation import cosmo_calc
+from radical_workflow.calculation.wft_calculation import generate_dlpno_sp_input
+from radical_workflow.calculation.cosmo_calculation import cosmo_calc
 
 parser = ArgumentParser()
 parser.add_argument('--input_smiles', type=str, required=True,

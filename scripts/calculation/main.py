@@ -6,10 +6,10 @@ import time
 from rdkit import Chem
 from rdmc.mol import RDKitMol
 
-from lib.ff_conf_generation import _genConf
-from lib.semiempirical_calculation import semiempirical_opt
-from lib.dft_calculation import dft_scf_opt
-from lib.parser.semiempirical_opt_parser import semiempirical_opt_parser, get_mol_id_to_semiempirical_opted_xyz
+from radical_workflow.calculation.ff_conf_generation import _genConf
+from radical_workflow.calculation.semiempirical_calculation import semiempirical_opt
+from radical_workflow.calculation.dft_calculation import dft_scf_opt
+from radical_workflow.parser.semiempirical_opt_parser import semiempirical_opt_parser, get_mol_id_to_semiempirical_opted_xyz
 
 parser = ArgumentParser()
 parser.add_argument('--input_smiles', type=str, required=True,
