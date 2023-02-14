@@ -38,8 +38,6 @@ parser.add_argument('--COSMOtherm_path', type=str, required=False, default=None,
                     help='path to COSMOthermo')
 parser.add_argument('--COSMO_database_path', type=str, required=False, default=None,
                     help='path to COSMO_database')
-parser.add_argument('--ORCA_path', type=str, required=False, default=None,
-                    help='path to ORCA')
 
 args = parser.parse_args()
 
