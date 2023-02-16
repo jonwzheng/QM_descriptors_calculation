@@ -65,14 +65,27 @@ def parser(ts_id):
 input_smiles_path = sys.argv[1]
 output_file_name = sys.argv[2]
 n_jobs = int(sys.argv[3])
-ts_id_to_xyz_path = sys.argv[4]
+try:
+    ts_id_to_xyz_path = sys.argv[4]
+except IndexError:
+    ts_id_to_xyz_path = None
 
 df = pd.read_csv(input_smiles_path)
-ts_id_to_smi = dict(zip(df.id, df.rxn_smiles))
+if "rxn_smi" in df.columns:
+    rxn_smis = df.rxn_smi
+elif "rxn_smiles" in df.columns:
+    rxn_smis = df.rxn_smiles
+else:
+    raise ValueError("No reaction smiles provided")
+ts_id_to_smi = dict(zip(df.id, rxn_smis))
 ts_ids = list(df.id)
-# ts_ids = list(df.id)[:10]
-with open(ts_id_to_xyz_path, "rb") as f:
-    ts_id_to_xyz = pkl.load(f)
+if ts_id_to_xyz_path is not None:
+    with open(ts_id_to_xyz_path, "rb") as f:
+        ts_id_to_xyz = pkl.load(f)
+elif "dft_xyz" in df.columns:
+    ts_id_to_xyz = dict(zip(df.id, df.dft_xyz))
+else:
+    raise ValueError("No xyz file provided")
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(ts_id) for ts_id in ts_ids)
 out = [x for x in out if x is not None]
