@@ -89,6 +89,10 @@ else:
 
 out = Parallel(n_jobs=n_jobs, backend="multiprocessing", verbose=5)(delayed(parser)(ts_id) for ts_id in ts_ids)
 out = [x for x in out if x is not None]
+
+print(f"Number of TS: {len(ts_ids)}")
+print(f"Number of valid TS, r complex, and p complex: {len(out)}")
+
 csv_file = os.path.join(f'{output_file_name}.csv')
 ts_writer = Chem.rdmolfiles.SDWriter(os.path.join(f'{output_file_name}_ts.sdf'))
 r_writer = Chem.rdmolfiles.SDWriter(os.path.join(f'{output_file_name}_reactants.sdf'))
