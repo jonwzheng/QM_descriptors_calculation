@@ -14,8 +14,8 @@ def parser(ts_id):
     ts_smi = ts_id_to_smi[ts_id]
     r_smi, p_smi = ts_smi.split(">>")
 
-    pre_r_mol = Chem.MolFromSmiles(r_smi, removeHs=False, sanitize=False)
-    pre_p_mol = Chem.MolFromSmiles(p_smi, removeHs=False, sanitize=False)
+    pre_r_mol = RDKitMol.FromSmiles(r_smi, removeHs=False, sanitize=False)
+    pre_p_mol = RDKitMol.FromSmiles(p_smi, removeHs=False, sanitize=False)
 
     pre_r_adj = pre_r_mol.GetAdjacencyMatrix()
     pre_p_adj = pre_p_mol.GetAdjacencyMatrix()
