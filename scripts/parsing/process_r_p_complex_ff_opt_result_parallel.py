@@ -14,8 +14,8 @@ def parser(ts_id):
     ts_smi = ts_id_to_smi[ts_id]
     r_smi, p_smi = ts_smi.split(">>")
 
-    pre_r_mol = RDKitMol.FromSmiles(r_smi, removeHs=False, sanitize=False)
-    pre_p_mol = RDKitMol.FromSmiles(p_smi, removeHs=False, sanitize=False)
+    pre_r_mol = RDKitMol.FromSmiles(r_smi, removeHs=False, sanitize=True)
+    pre_p_mol = RDKitMol.FromSmiles(p_smi, removeHs=False, sanitize=True)
 
     pre_r_adj = pre_r_mol.GetAdjacencyMatrix()
     pre_p_adj = pre_p_mol.GetAdjacencyMatrix()
@@ -31,18 +31,18 @@ def parser(ts_id):
         for member in tar:
             if "_r.sdf" in member.name:
                 f = tar.extractfile(member)
-                mols = Chem.ForwardSDMolSupplier(f, removeHs=False, sanitize=False)
+                mols = Chem.ForwardSDMolSupplier(f, removeHs=False, sanitize=True)
                 r_mol = [mol for mol in mols][0]
                 r_mol = RDKitMol.FromMol(r_mol)
 
             elif "_p.sdf" in member.name:
                 f = tar.extractfile(member)
-                mols = Chem.ForwardSDMolSupplier(f, removeHs=False, sanitize=False)
+                mols = Chem.ForwardSDMolSupplier(f, removeHs=False, sanitize=True)
                 p_mol = [mol for mol in mols][0]  
                 p_mol = RDKitMol.FromMol(p_mol)
         tar.close()
     elif os.path.exists(sdf_file_path):
-        r_mol, p_mol = Chem.ForwardSDMolSupplier(sdf_file_path, removeHs=False, sanitize=False)
+        r_mol, p_mol = Chem.ForwardSDMolSupplier(sdf_file_path, removeHs=False, sanitize=True)
         r_mol = RDKitMol.FromMol(r_mol)
         p_mol = RDKitMol.FromMol(p_mol)
     else:
