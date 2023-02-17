@@ -85,7 +85,7 @@ for i in {1..5}; do
             then
                 echo "input $input"
                 mv $folder/$input.in $folder/$input.tmp
-                ScratchDir=$HOME/scratch/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$input
+                ScratchDir=$TMPDIR/$USER/orca/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$input
                 echo "ScratchDir $ScratchDir"
                 mkdir -p $ScratchDir
 
@@ -166,7 +166,7 @@ for i in {1..5}; do
             then
                 echo "input $input"
                 mv $folder/$input.in $folder/$input.tmp
-                ScratchDir=$HOME/scratch/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$input
+                ScratchDir=$TMPDIR/$USER/orca/$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID-$input
                 echo "ScratchDir $ScratchDir"
                 mkdir -p $ScratchDir
 
