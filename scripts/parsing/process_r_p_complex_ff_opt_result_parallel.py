@@ -24,8 +24,8 @@ def parser(ts_id):
     ts_mol = RDKitMol.FromXYZ(ts_xyz, header=False, sanitize=False)
     ts_mol._mol.SetProp("_Name", ts_id)
     
-    tar_file_path = os.path.join("output", "r_p_complex_FF_opt", "outputs", f"outputs_{ids}", f"{ts_id}.tar")
-    sdf_file_path = os.path.join("output", "r_p_complex_FF_opt", "outputs", f"outputs_{ids}", f"{ts_id}_r_p.sdf")
+    tar_file_path = os.path.join("output", "r_p_complex_ff_opt", "outputs", f"outputs_{ids}", f"{ts_id}.tar")
+    sdf_file_path = os.path.join("output", "r_p_complex_ff_opt", "outputs", f"outputs_{ids}", f"{ts_id}_r_p.sdf")
     if os.path.exists(tar_file_path):
         tar = tarfile.open(tar_file_path)
         for member in tar:

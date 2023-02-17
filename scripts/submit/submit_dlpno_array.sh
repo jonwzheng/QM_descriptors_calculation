@@ -90,6 +90,7 @@ for i in {1..5}; do
                 mkdir -p $ScratchDir
 
                 cd $ScratchDir
+                echo $PATH
                 cp $folder/$input.tmp $input.in
                 $orcadir/orca $input.in > $input.log
                 if [ -e $input.log ]
@@ -171,6 +172,7 @@ for i in {1..5}; do
                 mkdir -p $ScratchDir
 
                 cd $ScratchDir
+                echo $PATH
                 cp $folder/$input.tmp $input.in
                 $orcadir/orca $input.in > $input.log
                 if [ -e $input.log ]
