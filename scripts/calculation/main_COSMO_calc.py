@@ -21,6 +21,8 @@ parser.add_argument('--output_folder', type=str, default='output',
                     help='output folder name')
 parser.add_argument('--scratch_dir', type=str, required=True,
                     help='scfratch directory')
+parser.add_argument('--xyz_DFT_opt_dict', type=str, default=None,
+                    help='pickle file containing a dictionary to map between the mol_id and DFT-optimized xyz for following calculations',)
 parser.add_argument('--task_id', type=int, default=0,
                     help='task id for the calculation',)
 parser.add_argument('--num_tasks', type=int, default=1,
@@ -51,6 +53,9 @@ parser.add_argument('--ORCA_path', type=str, required=False, default=None,
 args = parser.parse_args()
 
 # input files
+with open(args.xyz_DFT_opt_dict, "rb") as f:
+    xyz_DFT_opt_dict = pkl.load(f)
+
 df = pd.read_csv(args.input_smiles, index_col=0)
 
 if "smiles" in df.columns:
