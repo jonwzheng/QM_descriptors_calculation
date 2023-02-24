@@ -48,10 +48,6 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             subprocess.run(f'calculate -l {txtfile} -m BP-TZVPD-FINE-COSMO-SP -f xyz -din xyz > {logfile}', shell=True, stdout=out, stderr=out)
             subprocess.run(f'calculate -l {txtfile} -m BP-TZVPD-GAS-SP -f xyz -din xyz > {logfile}', shell=True, stdout=out, stderr=out)
 
-        #copy the log and out files
-        shutil.copyfile(logfile, os.path.join(tmp_mol_dir, logfile))
-        shutil.copyfile(outfile, os.path.join(tmp_mol_dir, outfile))
-
         #copy the cosmo and energy files
         for file in os.listdir("CosmofilesBP-TZVPD-FINE-COSMO-SP"):
             if file.endswith("cosmo"):
@@ -80,6 +76,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
         cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
         inpfile = f'{mol_id}_{cosmo_name}.inp'
         tabfile = f'{mol_id}_{cosmo_name}.tab'
+        outfile = f'{mol_id}_{cosmo_name}.out'
 
         if os.path.exists(os.path.join(tmp_mol_dir, tabfile)):
             continue
@@ -100,6 +97,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             return 
         else:
             shutil.copyfile(tabfile, os.path.join(tmp_mol_dir, tabfile))
+            shutil.copyfile(outfile, os.path.join(tmp_mol_dir, outfile))
             print(f"COSMO calculation done for {mol_id} in {index} {row.cosmo_name}")
 
     #tar the cosmo, energy and tab files
@@ -107,13 +105,12 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
     tar = tarfile.open(tar_file, "w")
     tar.add(os.path.join(tmp_mol_dir, energyfile))
     tar.add(os.path.join(tmp_mol_dir, cosmofile))
-    tar.add(os.path.join(tmp_mol_dir, logfile))
-    tar.add(os.path.join(tmp_mol_dir, outfile))
 
     for index, row in df_pure.iterrows():
         solvent = row.cosmo_name
         cosmo_name = "".join(letter if letter not in REPLACE_LETTER else REPLACE_LETTER[letter] for letter in row.cosmo_name)
         tabfile = os.path.join(tmp_mol_dir, f'{mol_id}_{cosmo_name}.tab')
+        outfile = os.path.join(tmp_mol_dir, f'{mol_id}_{cosmo_name}.out')
         try:
             each_data_list = read_cosmo_tab_result(tabfile)
         except FileNotFoundError as e:
@@ -124,6 +121,7 @@ def cosmo_calc(mol_id, cosmotherm_path, cosmo_database_path, charge, mult, T_lis
             return
         each_data_list = get_dHsolv_value(each_data_list)
         tar.add(tabfile)
+        tar.add(outfile)
         
     tar.close()
 
