@@ -65,7 +65,11 @@ with open(args.xyz_DFT_opt_dict, "rb") as f:
 assert ORCA_PATH is not None, "ORCA_PATH must be provided for dlpno sp calc"
 
 # create id to smile mapping
-mol_id_to_smi_dict = dict(zip(df.id, df.smiles))
+if "smiles" in df.columns:
+    smiles_list = list(df.smiles)
+elif "rxn_smi" in df.columns:
+    smiles_list = list(df.rxn_smi)
+mol_id_to_smi_dict = dict(zip(df.id, smiles_list))
 mol_id_to_charge_dict = dict()
 mol_id_to_mult_dict = dict()
 for k, v in mol_id_to_smi_dict.items():

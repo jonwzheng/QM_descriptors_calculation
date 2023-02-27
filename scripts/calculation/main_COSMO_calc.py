@@ -96,8 +96,11 @@ COSMO_DATABASE_PATH = args.COSMO_database_path
 assert COSMOTHERM_PATH is not None and COSMO_DATABASE_PATH is not None, "COSMOTHERM_PATH and COSMO_DATABASE_PATH must be provided for COSMO calc"
 
 print("Making inputs and outputs dir...")
-mol_ids = list(df["id"])
-smiles_list = list(df["smiles"])
+mol_ids = list(df.id)
+if "smiles" in df.columns:
+    smiles_list = list(df.smiles)
+elif "rxn_smi" in df.columns:
+    smiles_list = list(df.rxn_smi)
 inputs_dir = os.path.join(COSMO_dir, "inputs")
 os.makedirs(inputs_dir, exist_ok=True)
 outputs_dir = os.path.join(COSMO_dir, "outputs")
