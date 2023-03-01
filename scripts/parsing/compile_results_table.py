@@ -24,23 +24,24 @@ elif job_type == "ts":
     projects = ["sep1a"]
 logging.warning(f"projects = {projects}")
 
+logging.warning("Loading inputs tables")
+inputs_df_dict = {}
+if job_type == "reactants_products":
+    inputs_df_dict["aug11b"] = pd.read_csv("./calculations/aug11b/inputs/reactants_products_aug11b_inputs.csv", index_col=0)
+    inputs_df_dict["sep1a_filtered"] = pd.read_csv("./calculations/sep1a_filtered/inputs/reactants_products_sep1a_filtered_inputs.csv", index_col=0)
+elif job_type == "ts":
+    inputs_df_dict["sep1a"] = pd.read_csv("./calculations/sep1a/inputs/ts_sep1a_inputs.csv", index_col=0)
+
+mol_id_to_index_dict = {}
+for project, df in inputs_df_dict.items():
+    mol_id_to_index_dict[project] = {}
+    for index, mol_id in zip(df.index, df.id):
+        mol_id_to_index_dict[project][mol_id] = index
+
 if not only_cosmo:
-    logging.warning("Loading inputs tables")
-    inputs_df_dict = {}
-    if job_type == "reactants_products":
-        inputs_df_dict["aug11b"] = pd.read_csv("./calculations/aug11b/inputs/reactants_products_aug11b_inputs.csv", index_col=0)
-        inputs_df_dict["sep1a_filtered"] = pd.read_csv("./calculations/sep1a_filtered/inputs/reactants_products_sep1a_filtered_inputs.csv", index_col=0)
-    elif job_type == "ts":
-        inputs_df_dict["sep1a"] = pd.read_csv("./calculations/sep1a/inputs/ts_sep1a_inputs.csv", index_col=0)
 
     for project, df in inputs_df_dict.items():
         df["project"] = [project for i in df.index]
-
-    mol_id_to_index_dict = {}
-    for project, df in inputs_df_dict.items():
-        mol_id_to_index_dict[project] = {}
-        for index, mol_id in zip(df.index, df.id):
-            mol_id_to_index_dict[project][mol_id] = index
 
     prop_names_to_remove = ["mol_smi"]
 
