@@ -13,7 +13,10 @@ start_time = time.time()
 n_jobs = int(sys.argv[1])
 logging.warning(f"n_jobs = {n_jobs}")
 job_type = sys.argv[2]
-only_cosmo = bool(sys.argv[3])
+only_cosmo = False
+if len(sys.argv) == 4:
+    if sys.argv[3] == "True":
+        only_cosmo = True
 
 if job_type == "reactants_products":
     projects = ["aug11b", "sep1a_filtered"]
