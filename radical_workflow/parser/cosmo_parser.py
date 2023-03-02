@@ -48,7 +48,7 @@ def get_dHsolv_value(each_data_list):
     each_data_list[ind_298][9] = '%.8f' % dHsolv_298
     return each_data_list
 
-def cosmo_parser(mol_id, tar_file_path=None):
+def cosmo_parser(mol_id, tar_file_path=None, solvent_name=None):
     if tar_file_path is None:
         ids = str(int(int(mol_id.split("id")[1])/1000))
         tar_file_path = os.path.join("output", "COSMO_calc", "outputs", f"outputs_{ids}", f"{mol_id}.tar")
@@ -57,6 +57,9 @@ def cosmo_parser(mol_id, tar_file_path=None):
         tar = tarfile.open(tar_file_path)
         for member in tar:
             if ".tab" in member.name:
+                if solvent_name is not None:
+                    if solvent_name not in member.name:
+                        continue
                 f = tar.extractfile(member)
                 each_data_list = read_cosmo_tab_result_from_tar(f)
                 each_data_list = get_dHsolv_value(each_data_list)
