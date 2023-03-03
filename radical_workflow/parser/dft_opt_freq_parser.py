@@ -298,8 +298,8 @@ def dft_opt_freq_parser(mol_id, mol_smi, g16_log=None, parse_data=True):
                 if parse_data:
                     failed_job[mol_id]['dft_xyz_std_ori'] = load_geometry(g16_log, standard_orientation=True)[0]
                     failed_job[mol_id]['dft_initial_xyz_std_ori'] = load_geometry(g16_log, initial=True, standard_orientation=True)[0]
-                    failed_job[mol_id]['dft_xyz'] = load_geometry(g16_log, standard_orientation=False)[0]
-                    failed_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True, standard_orientation=False)[0]
+                    failed_job[mol_id]['dft_xyz_input_ori'] = load_geometry(g16_log, standard_orientation=False)[0]
+                    failed_job[mol_id]['dft_initial_xyz_input_ori'] = load_geometry(g16_log, initial=True, standard_orientation=False)[0]
                     failed_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input_geom=True)[0]
                     failed_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
                     failed_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
@@ -320,8 +320,8 @@ def dft_opt_freq_parser(mol_id, mol_smi, g16_log=None, parse_data=True):
                     failed_job[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
                     failed_job[mol_id]['dft_xyz_std_ori'] = load_geometry(g16_log, standard_orientation=True)[0]
                     failed_job[mol_id]['dft_initial_xyz_std_ori'] = load_geometry(g16_log, initial=True, standard_orientation=True)[0]
-                    failed_job[mol_id]['dft_xyz'] = load_geometry(g16_log, standard_orientation=False)[0]
-                    failed_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True, standard_orientation=False)[0]
+                    failed_job[mol_id]['dft_xyz_input_ori'] = load_geometry(g16_log, standard_orientation=False)[0]
+                    failed_job[mol_id]['dft_initial_xyz_input_ori'] = load_geometry(g16_log, initial=True, standard_orientation=False)[0]
                     failed_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input_geom=True)[0]
                     failed_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
                     failed_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))
@@ -341,8 +341,8 @@ def dft_opt_freq_parser(mol_id, mol_smi, g16_log=None, parse_data=True):
                 valid_job[mol_id]['dft_freq_neg'] = not check_neg_freq(load_freq(g16_log))
                 valid_job[mol_id]['dft_xyz_std_ori'] = load_geometry(g16_log, standard_orientation=True)[0]
                 valid_job[mol_id]['dft_initial_xyz_std_ori'] = load_geometry(g16_log, initial=True, standard_orientation=True)[0]
-                valid_job[mol_id]['dft_xyz'] = load_geometry(g16_log, standard_orientation=False)[0]
-                valid_job[mol_id]['dft_initial_xyz'] = load_geometry(g16_log, initial=True, standard_orientation=False)[0]
+                valid_job[mol_id]['dft_xyz_input_ori'] = load_geometry(g16_log, standard_orientation=False)[0]
+                valid_job[mol_id]['dft_initial_xyz_input_ori'] = load_geometry(g16_log, initial=True, standard_orientation=False)[0]
                 valid_job[mol_id]['dft_input_xyz'] = load_geometry(g16_log, input_geom=True)[0]
                 valid_job[mol_id]['dft_steps'] = load_geometry(g16_log)[1]
                 valid_job[mol_id]['dft_cpu'] = get_cpu(read_log_file(g16_log))

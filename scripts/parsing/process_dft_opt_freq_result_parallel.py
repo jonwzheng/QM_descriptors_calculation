@@ -43,9 +43,9 @@ with open(os.path.join(f'{output_file_name}_xyz_std_ori.pkl'), 'wb') as outfile:
 
 mol_id_to_DFT_opted_xyz = {}
 for mol_id, valid_job in valid_jobs.items():
-    mol_id_to_DFT_opted_xyz[mol_id] = valid_job['dft_xyz']
+    mol_id_to_DFT_opted_xyz[mol_id] = valid_job['dft_xyz_input_ori']
 
-with open(os.path.join(f'{output_file_name}_xyz.pkl'), 'wb') as outfile:
+with open(os.path.join(f'{output_file_name}_xyz_input_ori.pkl'), 'wb') as outfile:
     pkl.dump(mol_id_to_DFT_opted_xyz, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
 print(f"Total number of molecules: {len(mol_ids)}")
