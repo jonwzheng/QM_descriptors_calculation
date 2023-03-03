@@ -109,7 +109,7 @@ def load_geometry(self, periodictable=periodictable, initial=False, input_geom=F
                         line = f.readline()
                     break
 
-            if 'Input orientation:' in line:
+            if 'Standard orientation:' in line:
                 step += 1
                 number, coord = [], []
                 for i in range(5):
