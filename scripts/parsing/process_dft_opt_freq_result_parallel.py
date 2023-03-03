@@ -34,6 +34,13 @@ with open(os.path.join(f'{output_file_name}.pkl'), 'wb') as outfile:
 with open(os.path.join(f'{output_file_name}_failed.pkl'), 'wb') as outfile:
     pkl.dump(failed_jobs, outfile, protocol=pkl.HIGHEST_PROTOCOL)
 
+mol_id_to_DFT_opted_xyz_std_ori = {}
+for mol_id, valid_job in valid_jobs.items():
+    mol_id_to_DFT_opted_xyz_std_ori[mol_id] = valid_job['dft_xyz_std_ori']
+
+with open(os.path.join(f'{output_file_name}_xyz_std_ori.pkl'), 'wb') as outfile:
+    pkl.dump(mol_id_to_DFT_opted_xyz_std_ori, outfile, protocol=pkl.HIGHEST_PROTOCOL)
+
 mol_id_to_DFT_opted_xyz = {}
 for mol_id, valid_job in valid_jobs.items():
     mol_id_to_DFT_opted_xyz[mol_id] = valid_job['dft_xyz']
