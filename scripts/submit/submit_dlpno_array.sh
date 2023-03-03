@@ -14,7 +14,7 @@ echo "Running on node : $SLURMD_NODENAME"
 echo "Current directory : $(pwd)"
 echo "============================================================"
 
-# conda activate rdmc_env
+conda activate rdmc_env
 which python
 
 #RDMC
@@ -44,7 +44,7 @@ input_smiles=$1
 echo $input_smiles
 output_name=$2
 echo $output_name
-xyz_DFT_opt_dict=${output_name}_dft_opted_results_xyz.pkl
+xyz_DFT_opt_dict=${output_name}_dft_opted_results_xyz_input_ori.pkl
 DLPNO_sp_n_procs=24
 DLPNO_sp_job_ram=4000
 
