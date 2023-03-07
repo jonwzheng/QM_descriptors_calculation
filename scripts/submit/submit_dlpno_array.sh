@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH -J orca
+#SBATCH -J $1
 #SBATCH -o slurm-orca_%A-%a.out
 #SBATCH --ntasks=24
 #SBATCH --cpus-per-task=1
@@ -40,9 +40,9 @@ which orca
 echo $PATH
 
 #inputs
-input_smiles=$1
+input_smiles=$2
 echo $input_smiles
-output_name=$2
+output_name=$3
 echo $output_name
 xyz_DFT_opt_dict=${output_name}_dft_opted_results_xyz_input_ori.pkl
 DLPNO_sp_n_procs=24
