@@ -64,13 +64,14 @@ with open(args.xyz_DFT_opt_dict, "rb") as f:
 
 assert ORCA_PATH is not None, "ORCA_PATH must be provided for dlpno sp calc"
 
+mol_ids = list(df["id"])
 # create id to smile mapping
 if "smiles" in df.columns:
     smiles_list = list(df.smiles)
 elif "rxn_smi" in df.columns:
     smiles_list = list(df.rxn_smi)
     smiles_list = [smi.split(">>")[1] for smi in smiles_list] # use the product smiles
-mol_id_to_smi_dict = dict(zip(df.id, smiles_list))
+mol_id_to_smi_dict = dict(zip(mol_ids, smiles_list))
 mol_id_to_charge_dict = dict()
 mol_id_to_mult_dict = dict()
 for k, v in mol_id_to_smi_dict.items():
@@ -90,8 +91,6 @@ for k, v in mol_id_to_smi_dict.items():
         num_radical_elec += atom.GetNumRadicalElectrons()
     mol_id_to_mult_dict[k] =  num_radical_elec + 1
 
-mol_ids = list(df["id"])
-smiles_list = list(df["smiles"])
 inputs_dir = os.path.join(DLPNO_sp_dir, "inputs")
 os.makedirs(inputs_dir, exist_ok=True)
 outputs_dir = os.path.join(DLPNO_sp_dir, "outputs")
